@@ -8,9 +8,9 @@ using System.Windows;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("RabbitMQ SendClient")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Middleware using the RabbitMQ communication interface using Serial and Modbus communication to enable dumb devices IoT access.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("McMaster University")]
 [assembly: AssemblyProduct("RabbitMQ SendClient")]
 [assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]

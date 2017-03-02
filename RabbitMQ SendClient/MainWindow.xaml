@@ -5,8 +5,197 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RabbitMQ_SendClient"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
-    <Grid>
-        
+       Title="RabbitMQ Message Sender" Height="376" Width="525" WindowStartupLocation="CenterScreen"
+        ResizeMode="CanMinimize" SizeToContent="WidthAndHeight" BorderBrush="#FF2D2D30" Background="#FF414147"
+        Foreground="#FF1C1C1C" Closing="MainWindow_OnClosing">
+    <Grid Margin="0,0,0,1">
+        <TabControl x:Name="tabControl" HorizontalAlignment="Left" Height="300" Margin="10,10,0,0"
+                    VerticalAlignment="Top" Width="497">
+            <TabItem Header="Server Settings">
+                <UniformGrid>
+                    <Grid Background="#FFE5E5E5">
+                        <Grid Margin="10,0,361,233">
+                            <TextBlock x:Name="textBlock1" HorizontalAlignment="Left" TextWrapping="Wrap"
+                                       Text="Server Address:" VerticalAlignment="Top" />
+                            <TextBox x:Name="txtServerAddress" HorizontalAlignment="Left" Height="23" Margin="0,16,0,0"
+                                     TextWrapping="Wrap" Text="192.168.0.10" VerticalAlignment="Top" Width="120"
+                                     TextChanged="txtServerAddress_TextChanged"
+                                     LostFocus="TxtServerAddress_OnLostFocus"
+                                     KeyDown="TxtServerAddress_OnKeyDown" />
+                        </Grid>
+                        <Grid Margin="10,44,361,189">
+                            <TextBlock x:Name="textBlock2" HorizontalAlignment="Left" TextWrapping="Wrap"
+                                       Text="User Name:" VerticalAlignment="Top" RenderTransformOrigin="0.204,0.312" />
+                            <TextBox x:Name="txtUserName" HorizontalAlignment="Left" Height="23" Margin="0,16,0,0"
+                                     TextWrapping="Wrap" Text="User" VerticalAlignment="Top" Width="120" />
+                        </Grid>
+                        <Grid Margin="10,88,361,145">
+                            <TextBlock x:Name="textBlock3" HorizontalAlignment="Left" TextWrapping="Wrap"
+                                       Text="Password:" VerticalAlignment="Top" RenderTransformOrigin="0.204,0.312" />
+                            <PasswordBox x:Name="pwdPassword" HorizontalAlignment="Left" Margin="0,16,0,0"
+                                         VerticalAlignment="Top" Height="23" Width="120" Password="Factory1" />
+                        </Grid>
+                        <Grid Margin="10,132,361,101">
+                            <TextBlock x:Name="textBlock4" HorizontalAlignment="Left" TextWrapping="Wrap"
+                                       Text="Server Port:" VerticalAlignment="Top" RenderTransformOrigin="0.204,0.312" />
+                            <TextBox x:Name="txtServerPort" HorizontalAlignment="Left" Height="23" Margin="0,16,0,0"
+                                     TextWrapping="Wrap" Text="5672" VerticalAlignment="Top" Width="120" />
+                        </Grid>
+                        <TextBlock x:Name="textBlock5" HorizontalAlignment="Left" Margin="135,0,0,0"
+                                   TextWrapping="Wrap" Text="Virtual Host:" VerticalAlignment="Top" />
+                        <TextBox x:Name="txtVirtualHost" HorizontalAlignment="Left" Height="23" Margin="135,16,0,0"
+                                 TextWrapping="Wrap" Text="Default" VerticalAlignment="Top" Width="120"
+                                 TextChanged="txtVirtualHost_TextChanged" ToolTip="DO NOT CHANGE UNLESS YOU ARE SURE!" />
+                        <TextBlock x:Name="textBlock6" HorizontalAlignment="Left" Margin="135,44,0,0"
+                                   TextWrapping="Wrap" Text="Exchange Name:" VerticalAlignment="Top" />
+                        <TextBox x:Name="txtExchangeName" HorizontalAlignment="Left" Height="23" Margin="135,60,0,0"
+                                 TextWrapping="Wrap" Text="Default" VerticalAlignment="Top" Width="120"
+                                 TextChanged="txtExchangeName_TextChanged" />
+                        <TextBox x:Name="txtChannelName" HorizontalAlignment="Left" Height="23" Margin="135,104,0,0"
+                                 TextWrapping="Wrap" Text="Default" VerticalAlignment="Top" Width="120"
+                                 TextChanged="txtChannelName_TextChanged" />
+                        <TextBlock x:Name="textBlock7" HorizontalAlignment="Left" Margin="135,88,0,0"
+                                   TextWrapping="Wrap" Text="Channel Name:" VerticalAlignment="Top" />
+                        <TextBlock x:Name="textBlock10" HorizontalAlignment="Left" Margin="10,189,0,0"
+                                   TextWrapping="Wrap" Text="Heartbeat" VerticalAlignment="Top" />
+                        <Grid Margin="10,205,10,49" Width="471">
+                            <Slider x:Name="sldHeartBeat" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Width="471" Maximum="120" Minimum="5" Value="30" SmallChange="1"
+                                    ValueChanged="sldHeartBeat_ValueChanged" />
+                            <TextBlock x:Name="txtHeartbeat" HorizontalAlignment="Left" Margin="199,1"
+                                       TextWrapping="Wrap" Text="30" VerticalAlignment="Top" Width="73"
+                                       TextAlignment="Center" IsHitTestVisible="False" IsEnabled="False"
+                                       ScrollViewer.VerticalScrollBarVisibility="Disabled" />
+                        </Grid>
+                        <TextBlock x:Name="textBlock8" HorizontalAlignment="Left" Margin="10,228,0,0"
+                                   TextWrapping="Wrap" Text="Network Recovery Interval" VerticalAlignment="Top" />
+
+                        <Grid Margin="10,244,10,10" Width="471">
+                            <Slider x:Name="sldNetworokRecInt" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Width="471" Maximum="30" SmallChange="1" Minimum="1" Value="5"
+                                    ValueChanged="sldNetworokRecInt_ValueChanged" />
+                            <TextBlock x:Name="NetworkRecIntervalTxt" Margin="199,1" TextWrapping="Wrap" Text="5"
+                                       Width="73" TextAlignment="Center" IsHitTestVisible="False" IsEnabled="False" />
+                        </Grid>
+                        <TextBlock x:Name="textBlock9" HorizontalAlignment="Left" Margin="135,132,0,0"
+                                   TextWrapping="Wrap" Text="Network Auto Recovery" VerticalAlignment="Top" />
+                        <ComboBox x:Name="cboAutoRecovery" HorizontalAlignment="Left" Margin="135,148,0,0"
+                                  VerticalAlignment="Top" Width="120"
+                                  SelectionChanged="cboAutoRecovery_SelectionChanged" SelectedIndex="0">
+                            <ComboBoxItem Content="True" />
+                            <ComboBoxItem Content="False" />
+                        </ComboBox>
+                        <GroupBox x:Name="groupBox" Header="Server Connection" HorizontalAlignment="Left"
+                                  Margin="265,2,0,0" VerticalAlignment="Top" Width="144">
+                            <StackPanel>
+                                <RadioButton x:Name="srvEnabled" Content="Enable" HorizontalAlignment="Left"
+                                             Height="18" Margin="10,10,0,0" VerticalAlignment="Top"
+                                             Checked="srvEnabled_Checked" />
+                                <RadioButton x:Name="srvDisabled" Content="Disable" HorizontalAlignment="Left"
+                                             Height="18" Margin="10,10,0,0" VerticalAlignment="Top" IsChecked="True"
+                                             Checked="srvDisabled_Checked" />
+                            </StackPanel>
+                        </GroupBox>
+                        <GroupBox x:Name="groupBox1" Header="Generate Requirements" HorizontalAlignment="Left"
+                                  Margin="265,86,0,0" VerticalAlignment="Top">
+                            <StackPanel>
+                                <CheckBox x:Name="GenerateExchange" Content="Generate Exchange"
+                                          HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"
+                                          Checked="GenerateExchange_Checked" Unchecked="GenerateExchange_Checked" />
+                                <CheckBox x:Name="GenerateChannel" Content="Generate Channel"
+                                          HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"
+                                          Checked="GenerateChannel_Checked" Unchecked="GenerateChannel_Checked" />
+                            </StackPanel>
+
+                        </GroupBox>
+                    </Grid>
+                </UniformGrid>
+            </TabItem>
+            <TabItem x:Name="TabMessageSettings" Header="Message Type Settings" IsEnabled="False">
+                <Grid Background="#FFE5E5E5">
+                    <ComboBox x:Name="cboMessageType" HorizontalAlignment="Left" Margin="10,10,0,0"
+                              VerticalAlignment="Top" Width="120" SelectionChanged="cboMessageType_SelectionChanged" />
+                    <TabControl x:Name="CommunicationTabControl" HorizontalAlignment="Left" Height="225"
+                                Margin="10,37,0,0" VerticalAlignment="Top" Width="471">
+                        <TabItem Header="Serial">
+                            <Grid Background="#FFE5E5E5">
+                                <ComboBox x:Name="cboPortNames" HorizontalAlignment="Left" Margin="10,26,0,0"
+                                          VerticalAlignment="Top" Width="120"
+                                          SelectionChanged="cboPortNames_SelectionChanged" />
+                                <TextBlock x:Name="textBlock11" HorizontalAlignment="Left" Margin="10,10,0,0"
+                                           TextWrapping="Wrap" Text="COM Port:" VerticalAlignment="Top" />
+                                <TextBlock x:Name="textBlock12" HorizontalAlignment="Left" Margin="10,53,0,0"
+                                           TextWrapping="Wrap" Text="Baud Rate:" VerticalAlignment="Top" />
+                                <ComboBox x:Name="cboBaudRate" HorizontalAlignment="Left" Margin="10,69,0,0"
+                                          VerticalAlignment="Top" Width="120" IsEnabled="False"
+                                          SelectionChanged="cboBaudRate_SelectionChanged" />
+                                <ComboBox x:Name="cboDataBits" HorizontalAlignment="Left" Margin="10,112,0,0"
+                                          VerticalAlignment="Top" Width="120" IsEnabled="False"
+                                          SelectionChanged="cboDataBits_SelectionChanged" />
+                                <TextBlock x:Name="textBlock13" HorizontalAlignment="Left" Margin="10,96,0,0"
+                                           TextWrapping="Wrap" Text="Data Bits:" VerticalAlignment="Top" />
+                                <TextBlock x:Name="textBlock14" HorizontalAlignment="Left" Margin="135,10,0,0"
+                                           TextWrapping="Wrap" Text="Parity" VerticalAlignment="Top"
+                                           RenderTransformOrigin="1.271,0.522" />
+                                <ComboBox x:Name="cboParity" HorizontalAlignment="Left" Margin="135,26,0,0"
+                                          VerticalAlignment="Top" Width="120" IsEnabled="False" />
+                                <TextBlock x:Name="textBlock15" HorizontalAlignment="Left" Margin="135,53,0,0"
+                                           TextWrapping="Wrap" Text="Stop Bits:" VerticalAlignment="Top" />
+                                <ComboBox x:Name="cboStopBits" HorizontalAlignment="Left" Margin="135,69,0,0"
+                                          VerticalAlignment="Top" Width="120" IsEnabled="False" />
+                                <TextBlock x:Name="textBlock16" HorizontalAlignment="Left" Margin="135,99,0,0"
+                                           TextWrapping="Wrap" Text="Flow Control:" VerticalAlignment="Top" />
+                                <ComboBox x:Name="cboFlowControl" HorizontalAlignment="Left" Margin="135,112,0,0"
+                                          VerticalAlignment="Top" Width="120" IsEnabled="False"
+                                          SelectionChanged="cboFlowControl_SelectionChanged" />
+                                <TextBlock x:Name="textBlock17" HorizontalAlignment="Left" Margin="10,139,0,0"
+                                           TextWrapping="Wrap" Text="Read Timeout:" VerticalAlignment="Top"
+                                           RenderTransformOrigin="-0.395,0.146" />
+                                <Slider x:Name="sldReadTimeout" Margin="10,155,0,24" VerticalAlignment="Center"
+                                        Width="445" HorizontalAlignment="Left" Maximum="1000" Minimum="50"
+                                        SmallChange="0.5" Value="250" IsEnabled="False"
+                                        ValueChanged="sldReadTimeout_ValueChanged" />
+                                <TextBlock x:Name="txtReadTimeout" Margin="196,156,0,25" TextWrapping="Wrap" Text="250"
+                                           VerticalAlignment="Center" HorizontalAlignment="Left" Width="73"
+                                           TextAlignment="Center" IsHitTestVisible="False" IsEnabled="False" />
+                            </Grid>
+
+                        </TabItem>
+                        <TabItem Header="Modbus">
+                            <Grid Background="#FFE5E5E5" />
+                        </TabItem>
+                    </TabControl>
+
+                </Grid>
+            </TabItem>
+            <TabItem Header="Message Settings">
+                <Grid Background="#FFE5E5E5">
+                    <ComboBox x:Name="cbxMessageType" HorizontalAlignment="Left" Margin="10,21,0,0"
+                              VerticalAlignment="Top" Width="120" Text="Message Type:"
+                              SelectionChanged="cbxMessageType_SelectionChanged" />
+                    <TextBlock x:Name="textBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap"
+                               Text="Message Type:" VerticalAlignment="Top" />
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="tabTesting" Header="Testing" IsEnabled="False">
+                <UniformGrid>
+                    <Grid Background="#FFE5E5E5">
+
+                        <TextBox x:Name="MessageToSend" ToolTip="Enter Messsage" HorizontalContentAlignment="Stretch" UndoLimit="600" SpellCheck.IsEnabled="True" Height="215"
+                                 VerticalAlignment="Center" Margin="10,10,10,50" GotFocus="MessageToSend_OnGotFocus" Text="Enter Message Here:" />
+                        <Button x:Name="btnSendMessage" Content="Send Test Message" HorizontalAlignment="Left"
+                                Margin="367,228,0,0" VerticalAlignment="Top" Width="114"
+                                RenderTransformOrigin="0.667,-0.75" Click="btnSendMessage_Click" />
+                    </Grid>
+
+                </UniformGrid>
+
+            </TabItem>
+        </TabControl>
+        <StatusBar HorizontalAlignment="Center" Height="25" VerticalAlignment="Top" BorderThickness="0,1,0,0"
+                   MinWidth="517" Margin="2,315,0,0">
+            <TextBlock x:Name="txtServStatus" Text="Connection Status: Disabled" Height="23" />
+            <TextBlock x:Name="txtMessageType" TextWrapping="Wrap" Text="Using: Serial" />
+        </StatusBar>
     </Grid>
 </Window>
