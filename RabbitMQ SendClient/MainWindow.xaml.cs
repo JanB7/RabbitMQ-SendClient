@@ -1,20 +1,23 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using PostSharp.Patterns.Diagnostics;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
+using System.IO.Ports;
+using System.Linq;
+using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.IO;
-using RabbitMQ.Client;
-using Newtonsoft.Json;
-using System.IO.Ports;
-using System.Net;
-using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Windows.Input;
-using RabbitMQ.Client.Framing.Impl;
+using System.Windows.Threading;
+using CheckBox = System.Windows.Controls.CheckBox;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MessageBox = System.Windows.Forms.MessageBox;
 
@@ -44,8 +47,6 @@ public enum BaudRates
     BaudRate115200 = 115200,
     BaudRate230400 = 230400
 }
-
-
 
 public struct JsonObject
 {
@@ -93,7 +94,6 @@ public struct SerialCommunication
     public int ReadTimeout;
 };
 
-
 namespace RabbitMQ_SendClient
 {
     /// <summary>
@@ -101,33 +101,36 @@ namespace RabbitMQ_SendClient
     /// </summary>
     public partial class MainWindow : Window, IDisposable
     {
-        private readonly SerialPort _serialPort = new SerialPort();
-        static TraceSource ts = new TraceSource("MainWindow");
+        private static readonly List<SerialPort> SerialPort = new List<SerialPort>();
+        private static TraceSource ts = new TraceSource("MainWindow"); //to be implimented
+
+        private readonly DispatcherTimer _systemTimer = new DispatcherTimer();
 
         private static IConnectionFactory _factory = new ConnectionFactory();
         private static IConnection _connection;
         private static IModel _channel;
 
+        private static readonly string DeviceName = Environment.MachineName;
 
-        static readonly string DeviceName = Environment.MachineName;
-        private IDictionary<int, string> errorType { get; set; } = new Dictionary<int, string>()
+        private IDictionary<int, string> ErrorType { get; set; } = new Dictionary<int, string>()
         {
-            {1001,"RabbitMQ Exception - Broker Unreachable"}
+            {0001, "Null Reference Exception" },
+            {1001, "RabbitMQ Exception - Connection Already Closed" },
+            {1003, "RabbitMQ Exception - Broker Unreachable"},
+            {1002, "RabbitMQ Exception - Authentication Failure" },
+            {1004, "RabbitMQ Exception - Channel Already Allocated and in Use" },
+            {1005, "RabbitMQ Exception - Connection Failure" },
+            {1006, "RabbitMQ Exception - Operation Interrupted" },
+            {1007, "RabbitMQ Exception - Packet Not Recognized" },
+            {1008, "RabbitMQ Exception - Possible Authentication Failure" },
+            {1009, "RabbitMQ Exception - Connection Already Closed" },
+            {1010, "RabbitMQ Exception - Protocol Version Mismatch" },
+            {1011, "RabbitMQ Exception - Unsupported Method" },
+            {1012, "RabbitMQ Exception - Unsupported Method Field" },
+            {1013, "RabbitMQ Exception - Wire Formatting" }
         };
 
-
-
-        protected SerialCommunication SerialSetup = new SerialCommunication()
-        {
-            ComPort = "COM1",
-            BaudRate = BaudRates.BaudRate9600,
-            SerialBits = 8,
-            SerialParity = Parity.None,
-            SerialStopBits = StopBits.One,
-            FlowControl = Handshake.None,
-            RtsEnable = false,
-            ReadTimeout = 250
-        };
+        private readonly SerialCommunication[] _serialSetup = new SerialCommunication[System.IO.Ports.SerialPort.GetPortNames().Length];
 
         protected static ServerInformation ServerSetup = new ServerInformation()
         {
@@ -146,6 +149,7 @@ namespace RabbitMQ_SendClient
             NetworkRecoveryInterval = 5
         };
 
+        [LogException]
         public MainWindow()
         {
             InitializeComponent();
@@ -154,11 +158,24 @@ namespace RabbitMQ_SendClient
             cboAutoRecovery.SelectedIndex = 0;
 
             //Serial Communication Setup
-            var ports = SerialPort.GetPortNames();
             cboMessageType.Items.Add("Serial");
             cboMessageType.Items.Add("Modbus");
+            cboMessageType.Items.Add("OPC");
             cboMessageType.SelectedIndex = 0;
 
+            InitializeSerialPorts();
+            InitializeBaudRates();
+            InitializeDataBits();
+            InitializeStopBits();
+            InitializeParity();
+            InitializeHandshake();
+            InitializeHeartBeatTimer();
+        }
+
+        [LogException]
+        private void InitializeSerialPorts()
+        {
+            var ports = System.IO.Ports.SerialPort.GetPortNames();
             if (ports.Length == 0)
             {
                 cboPortNames.IsEnabled = false;
@@ -167,56 +184,186 @@ namespace RabbitMQ_SendClient
             }
             else
             {
-                foreach (var port in ports)
+                try
                 {
-                    cboPortNames.Items.Add(port);
-                }
-                cboPortNames.SelectedIndex = 0;
-                SerialSetup.ComPort = cboPortNames.Items[cboPortNames.SelectedIndex].ToString();
+                    var index = 0;
+                    foreach (var port in ports)
+                    {
+                        var cb = new CheckBox
+                        {
+                            Name = "cbo" + port,
+                            Content = port
+                        };
+                        cb.Checked += CbOnChecked;
+                        cb.Unchecked += CbOnChecked;
 
+                        cboPortNames.Items.Add(cb);
+                        cboPortNames.RegisterName(cb.Name, cb);
+                        var serialComm = new SerialCommunication()
+                        {
+                            ComPort = port,
+                            BaudRate = BaudRates.BaudRate9600,
+                            SerialBits = 8,
+                            SerialParity = Parity.None,
+                            SerialStopBits = StopBits.One,
+                            FlowControl = Handshake.None,
+                            RtsEnable = false,
+                            ReadTimeout = 250
+                        };
+
+                        _serialSetup[index] = serialComm;
+                        var serialPort = new SerialPort(port);
+                        SerialPort.Add(serialPort);
+                        index++;
+                    }
+                    cboPortNames.SelectedIndex = 0;
+                }
+                catch (Exception e)
+                {
+                    var message = e.Message + "\nError in Port Enumeration";
+                    MessageBox.Show(message, e.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        [LogException]
+        private void InitializeBaudRates()
+        {
+            try
+            {
                 foreach (var rate in Enum.GetValues(typeof(BaudRates)))
                 {
                     cboBaudRate.Items.Add(rate);
                 }
-                cboBaudRate.Text = BaudRates.BaudRate9600.ToString();
-                cboBaudRate.IsEnabled = true;
 
-                for (int i = 4; i != 9; i++)
+                cboBaudRate.SelectedIndex = cboBaudRate.Items.IndexOf(BaudRates.BaudRate9600.ToString());
+                cboBaudRate.IsEnabled = true;
+            }
+            catch (Exception exception)
+            {
+                var message = exception.Message + "\nError in BaudRate Enumeration";
+                MessageBox.Show(message, exception.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        [LogException]
+        private void InitializeDataBits()
+        {
+            try
+            {
+                for (var i = 4; i != 9; i++)
                 {
                     cboDataBits.Items.Add(i);
                 }
-                cboDataBits.SelectedIndex = cboDataBits.Items.Count - 1;
+                //cboDataBits.SelectedIndex = cboDataBits.Items.Count - 1;
                 cboDataBits.IsEnabled = true;
+            }
+            catch (Exception e)
+            {
+                var message = e.Message + "\nError in DataBits Enumeration";
+                MessageBox.Show(message, e.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
 
+        [LogException]
+        private void InitializeStopBits()
+        {
+            try
+            {
                 foreach (var stopBit in Enum.GetValues(typeof(StopBits)))
                 {
                     cboStopBits.Items.Add(stopBit);
                 }
-                cboStopBits.SelectedIndex = 0;
+                //cboStopBits.SelectedIndex = 0;
                 cboStopBits.IsEnabled = true;
+            }
+            catch (Exception e)
+            {
+                var message = e.Message + "\nError in StopBits Enumeration";
+                MessageBox.Show(message, e.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
 
+        [LogException]
+        private void InitializeParity()
+        {
+            try
+            {
                 foreach (var parity in Enum.GetValues(typeof(Parity)))
                 {
                     cboParity.Items.Add(parity);
                 }
-                cboParity.SelectedIndex = 0;
+                //cboParity.SelectedIndex = 0;
                 cboParity.IsEnabled = true;
+            }
+            catch (Exception e)
+            {
+                var message = e.Message + "\nError in Parity Enumeration";
+                MessageBox.Show(message, e.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
 
+        [LogException]
+        private void InitializeHandshake()
+        {
+            try
+            {
                 foreach (var shake in Enum.GetValues(typeof(Handshake)))
                 {
                     cboFlowControl.Items.Add(shake);
                 }
-                cboFlowControl.SelectedIndex = 0;
+                //cboFlowControl.SelectedIndex = 0;
                 cboFlowControl.IsEnabled = true;
 
                 sldReadTimeout.IsEnabled = true;
             }
+            catch (Exception e)
+            {
+                var message = e.Message + "\nError in Handshake Enumeration";
+                MessageBox.Show(message, e.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
 
+        [LogException]
+        private void InitializeHeartBeatTimer()
+        {
+            try
+            {
+                _systemTimer.Tick += SystemTimerOnTick;
+                _systemTimer.Interval = TimeSpan.FromMilliseconds(500);
+            }
+            catch (Exception e)
+            {
+                var message = e.Message + "\nError in Timer Initialization";
+                MessageBox.Show(message, e.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void CbOnChecked(object sender, RoutedEventArgs routedEventArgs)
+        {
+            //prevents execution during initialization
+            if (!IsInitialized) return;
+
+            Serial_Port_Initialize(SerialPort[cboPortNames.SelectedIndex], cboPortNames.SelectedIndex);
+        }
+
+        private void SystemTimerOnTick(object sender, EventArgs eventArgs)
+        {
+            if (!IsInitialized) return;
+
+            if (srvEnabled.IsChecked != null && (!_connection.IsOpen && srvEnabled.IsChecked.Value))
+            {
+                txtServStatus.Text = "Server Status: Recovering";
+            }
+            else
+            {
+                txtServStatus.Text = _connection.IsOpen ? "Server Status: Connected" : "Server Status: Disconnected";
+            }
         }
 
         protected static bool PublishMessage(JsonObject message, string exchangeName)
         {
-            var success = false;
+            bool success;
             try
             {
                 var output = JsonConvert.SerializeObject(message);
@@ -259,11 +406,13 @@ namespace RabbitMQ_SendClient
                         _channel.ExchangeDeclare(exchangeName, ExchangeType.Headers, exchangeDurability, autoDelete,
                             null);
                         break;
+
                     case "topic":
                     case "Topic":
                         _channel.ExchangeDeclare(exchangeName, ExchangeType.Topic, exchangeDurability, autoDelete,
                             null);
                         break;
+
                     default:
                         _channel.ExchangeDeclare(exchangeName, ExchangeType.Direct, exchangeDurability, autoDelete,
                             null);
@@ -291,7 +440,6 @@ namespace RabbitMQ_SendClient
 
         private static void QueueBind(string queueName, string exchangeName)
         {
-
             try
             {
                 _channel.QueueBind(queueName, exchangeName, "");
@@ -314,16 +462,13 @@ namespace RabbitMQ_SendClient
                 AutomaticRecoveryEnabled = ServerSetup.AutoRecovery,
                 RequestedHeartbeat = (ushort)ServerSetup.ServerHeartbeat,
                 NetworkRecoveryInterval = TimeSpan.FromSeconds(ServerSetup.NetworkRecoveryInterval),
-                TopologyRecoveryEnabled = ServerSetup.AutoRecovery
-
+                TopologyRecoveryEnabled = ServerSetup.AutoRecovery,
             };
             return factory;
         }
 
         public static void LogError(Exception ex, LogLevel level)
         {
-
-
             using (StreamWriter w = File.AppendText("log.txt"))
             {
                 w.Write("{0} {1}", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
@@ -335,67 +480,11 @@ namespace RabbitMQ_SendClient
 
         private void cbxMessageType_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-
-        }
-
-        private void txtUserName_TextChange(object sender, TextChangedEventArgs e)
-        {
-            //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
-
-            if (srvEnabled.IsChecked != null && srvEnabled.IsChecked.Value)
-            {
-                srvEnabled.IsChecked = false;
-                srvDisabled.IsChecked = true;
-                ServerSetup.UserName = this.txtUserName.Text;
-            }
-            else
-            {
-                ServerSetup.UserName = this.txtUserName.Text;
-            }
-
-        }
-
-        private void txtServerPort_TextChange(object sender, TextChangedEventArgs e)
-        {
-            //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
-
-            if (srvEnabled.IsChecked != null && srvEnabled.IsChecked.Value)
-            {
-                srvEnabled.IsChecked = false;
-                srvDisabled.IsChecked = true;
-                ServerSetup.ServerPort = Convert.ToInt32(txtServerPort.Text);
-            }
-            else
-            {
-                ServerSetup.ServerPort = Convert.ToInt32(txtServerPort.Text);
-            }
-
-        }
-
-        private void pwdPassword_TextChange(object sender, TextChangedEventArgs e)
-        {
-            //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
-
-            if (srvEnabled.IsChecked != null && srvEnabled.IsChecked.Value)
-            {
-                srvEnabled.IsChecked = false;
-                srvDisabled.IsChecked = true;
-                ServerSetup.Password = pwdPassword.Password;
-            }
-            else
-            {
-                ServerSetup.Password = pwdPassword.Password;
-            }
-
         }
 
         private void txtServerAddress_TextChanged(object sender, TextChangedEventArgs e)
         {
-
-
+            //do Nothing! checking happens on commit with either focus loss or enter
         }
 
         private void sldNetworokRecInt_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -434,9 +523,6 @@ namespace RabbitMQ_SendClient
                     LogError(exception, LogLevel.Critical);
                 }
             }
-
-
-
         }
 
         private void cboAutoRecovery_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -448,19 +534,6 @@ namespace RabbitMQ_SendClient
             {
                 srvEnabled.IsChecked = false;
                 srvDisabled.IsChecked = true;
-                switch (cboAutoRecovery.SelectedIndex)
-                {
-                    case 0:
-                        ServerSetup.AutoRecovery = true;
-                        sldNetworokRecInt.IsEnabled = true;
-                        break;
-                    case 1:
-                        ServerSetup.AutoRecovery = false;
-                        sldNetworokRecInt.IsEnabled = false;
-                        break;
-                    default:
-                        goto case 0;
-                }
             }
             else
             {
@@ -470,17 +543,16 @@ namespace RabbitMQ_SendClient
                         ServerSetup.AutoRecovery = true;
                         sldNetworokRecInt.IsEnabled = true;
                         break;
+
                     case 1:
                         ServerSetup.AutoRecovery = false;
                         sldNetworokRecInt.IsEnabled = false;
                         break;
+
                     default:
                         goto case 0;
                 }
             }
-
-
-
         }
 
         private void srvEnabled_Checked(object sender, RoutedEventArgs e)
@@ -504,12 +576,12 @@ namespace RabbitMQ_SendClient
                 CreateExchange(ServerSetup.ExchangeName, ExchangeType.Direct, true, false);
                 QueueBind(ServerSetup.ChannelName, ServerSetup.ExchangeName);
                 tabTesting.IsEnabled = true;
-
+                _systemTimer.Start();
             }
-            catch (RabbitMQ.Client.Exceptions.BrokerUnreachableException ex)
+            catch (BrokerUnreachableException ex)
             {
                 LogError(ex, LogLevel.Critical);
-                var message = errorType[1001];
+                var message = ErrorType[1003];
                 var caption = "Broker Unreachable Exception";
                 MessageBox.Show(message, caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 srvEnabled.IsChecked = false;
@@ -524,9 +596,6 @@ namespace RabbitMQ_SendClient
                 srvEnabled.IsChecked = false;
                 srvDisabled.IsChecked = true;
             }
-
-
-
         }
 
         private void srvDisabled_Checked(object sender, RoutedEventArgs e)
@@ -537,6 +606,7 @@ namespace RabbitMQ_SendClient
             txtServStatus.Text = "Server Status: Disabled";
             TabMessageSettings.IsEnabled = false;
             tabTesting.IsEnabled = false;
+            _systemTimer.Stop();
             if (_channel != null)
             {
                 while (_channel.IsOpen)
@@ -550,9 +620,7 @@ namespace RabbitMQ_SendClient
                 {
                     _connection.Close();
                 }
-
             }
-
         }
 
         private void sldHeartBeat_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -573,8 +641,6 @@ namespace RabbitMQ_SendClient
                 txtHeartbeat.Text = value.ToString();
                 ServerSetup.ServerHeartbeat = value;
             }
-
-
         }
 
         private void GenerateExchange_Checked(object sender, RoutedEventArgs e)
@@ -603,7 +669,6 @@ namespace RabbitMQ_SendClient
             {
                 LogError(ex, LogLevel.Error);
             }
-
         }
 
         private void GenerateChannel_Checked(object sender, RoutedEventArgs e)
@@ -628,7 +693,6 @@ namespace RabbitMQ_SendClient
                 {
                     throw new NullReferenceException();
                 }
-
             }
             catch (Exception ex)
             {
@@ -638,14 +702,9 @@ namespace RabbitMQ_SendClient
 
         private void cboPortNames_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            //prevents execution during initialization
-            if (!IsInitialized) return;
-
-            SerialSetup.ComPort = cboPortNames.Items[cboPortNames.SelectedIndex].ToString();
-            Serial_Port_Initialize(_serialPort, SerialSetup);
         }
 
-        protected void Serial_Port_Initialize(SerialPort port, SerialCommunication serialCommunication)
+        protected void Serial_Port_Initialize(SerialPort port, int index)
         {
             //Prevents actions from occuring during initialization
             if (!IsInitialized) return;
@@ -660,14 +719,14 @@ namespace RabbitMQ_SendClient
                     }
                 }
                 //Initializing the Serial Port
-                port.PortName = serialCommunication.ComPort;
-                port.BaudRate = (int)serialCommunication.BaudRate;
-                port.Parity = serialCommunication.SerialParity;
-                port.StopBits = serialCommunication.SerialStopBits;
-                port.DataBits = serialCommunication.SerialBits;
-                port.Handshake = serialCommunication.FlowControl;
-                port.RtsEnable = serialCommunication.RtsEnable;
-                port.ReadTimeout = serialCommunication.ReadTimeout;
+                port.PortName = _serialSetup[index].ComPort;
+                port.BaudRate = (int)_serialSetup[index].BaudRate;
+                port.Parity = _serialSetup[index].SerialParity;
+                port.StopBits = _serialSetup[index].SerialStopBits;
+                port.DataBits = _serialSetup[index].SerialBits;
+                port.Handshake = _serialSetup[index].FlowControl;
+                port.RtsEnable = _serialSetup[index].RtsEnable;
+                port.ReadTimeout = _serialSetup[index].ReadTimeout;
                 port.DataReceived += DataReceivedHandler;
 
                 port.Open();
@@ -676,7 +735,6 @@ namespace RabbitMQ_SendClient
             {
                 LogError(e, LogLevel.Error);
             }
-
         }
 
         private static void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
@@ -699,7 +757,6 @@ namespace RabbitMQ_SendClient
                 message.Message.TemperatureC = data.TemperatureC;
                 message.Message.TemperatureF = data.TemperatureF;
 
-
                 while (!PublishMessage(message, ServerSetup.ExchangeName))
                 {
                     //loop until message has been published
@@ -709,7 +766,6 @@ namespace RabbitMQ_SendClient
             {
                 LogError(ex, LogLevel.Critical);
             }
-
         }
 
         private void cboBaudRate_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -717,11 +773,15 @@ namespace RabbitMQ_SendClient
             //Prevents actions from occuring during initialization
             if (!IsInitialized) return;
 
-
             var rates = (BaudRates)Enum.Parse(typeof(BaudRates), cboBaudRate.Items[cboBaudRate.SelectedIndex].ToString());
 
-            SerialSetup.BaudRate = rates;
-            Serial_Port_Initialize(_serialPort, SerialSetup);
+            _serialSetup[cboPortNames.SelectedIndex].BaudRate = rates;
+            foreach (var serialPort in SerialPort)
+            {
+                var cb = (CheckBox)FindName("cbo" + serialPort);
+                var index = cboPortNames.Items.Cast<object>().TakeWhile(item => cb?.Content != item).Count() - 1;
+                Serial_Port_Initialize(SerialPort[index], index);
+            }
         }
 
         private void cboDataBits_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -730,8 +790,13 @@ namespace RabbitMQ_SendClient
             if (!IsInitialized) return;
 
             var bits = cboDataBits.Items[cboDataBits.SelectedIndex].ToString();
-            SerialSetup.SerialBits = int.Parse(bits);
-            Serial_Port_Initialize(_serialPort, SerialSetup);
+            _serialSetup[cboPortNames.SelectedIndex].SerialBits = int.Parse(bits);
+            foreach (var serialPort in SerialPort)
+            {
+                var cb = (CheckBox)FindName("cbo" + serialPort);
+                var index = cboPortNames.Items.Cast<object>().TakeWhile(item => cb?.Content != item).Count() - 1;
+                Serial_Port_Initialize(SerialPort[index], index);
+            }
         }
 
         private void cboFlowControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -739,41 +804,53 @@ namespace RabbitMQ_SendClient
             //Prevents actions from occuring during initialization
             if (!IsInitialized) return;
 
-
             var flowControl = (Handshake)Enum.Parse(typeof(Handshake), cboFlowControl.Items[cboFlowControl.SelectedIndex].ToString());
 
-            SerialSetup.FlowControl = flowControl;
+            _serialSetup[cboPortNames.SelectedIndex].FlowControl = flowControl;
             switch (flowControl)
             {
                 case Handshake.None:
-                    SerialSetup.RtsEnable = false;
+                    _serialSetup[cboPortNames.SelectedIndex].RtsEnable = false;
                     break;
+
                 case Handshake.RequestToSend:
-                    SerialSetup.RtsEnable = true;
+                    _serialSetup[cboPortNames.SelectedIndex].RtsEnable = true;
                     break;
+
                 case Handshake.RequestToSendXOnXOff:
-                    SerialSetup.RtsEnable = true;
+                    _serialSetup[cboPortNames.SelectedIndex].RtsEnable = true;
                     break;
+
                 case Handshake.XOnXOff:
-                    SerialSetup.RtsEnable = true;
+                    _serialSetup[cboPortNames.SelectedIndex].RtsEnable = true;
                     break;
+
                 default:
                     goto case Handshake.None;
             }
-            Serial_Port_Initialize(_serialPort, SerialSetup);
+            foreach (var serialPort in SerialPort)
+            {
+                var cb = (CheckBox)FindName("cbo" + serialPort);
+                var index = cboPortNames.Items.Cast<object>().TakeWhile(item => cb?.Content != item).Count() - 1;
+                Serial_Port_Initialize(SerialPort[index], index);
+            }
         }
 
         private void sldReadTimeout_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-
             //Prevents actions from occuring during initialization
             if (!IsInitialized) return;
 
             var timeout = (int)sldReadTimeout.Value;
             txtReadTimeout.Text = timeout.ToString();
 
-            SerialSetup.ReadTimeout = timeout;
-            Serial_Port_Initialize(_serialPort, SerialSetup);
+            _serialSetup[cboPortNames.SelectedIndex].ReadTimeout = timeout;
+            foreach (var serialPort in SerialPort)
+            {
+                var cb = (CheckBox)FindName("cbo" + serialPort);
+                var index = cboPortNames.Items.Cast<object>().TakeWhile(item => cb?.Content != item).Count() - 1;
+                Serial_Port_Initialize(SerialPort[index], index);
+            }
         }
 
         private void cboMessageType_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -785,11 +862,19 @@ namespace RabbitMQ_SendClient
 
             if (cboMessageType.SelectedIndex == 0)
             {
-                Serial_Port_Initialize(_serialPort, SerialSetup);
+                foreach (var serialPort in SerialPort)
+                {
+                    var cb = (CheckBox)FindName("cbo" + serialPort);
+                    var index = cboPortNames.Items.Cast<object>().TakeWhile(item => cb?.Content != item).Count() - 1;
+                    Serial_Port_Initialize(SerialPort[index], index);
+                }
             }
             else
             {
-                _serialPort.Close();
+                foreach (var serialPort in SerialPort)
+                {
+                    serialPort.Close();
+                }
             }
         }
 
@@ -808,7 +893,6 @@ namespace RabbitMQ_SendClient
             {
                 ServerSetup.ExchangeName = "default." + txtExchangeName.Text;
             }
-
         }
 
         private void txtChannelName_TextChanged(object sender, TextChangedEventArgs e)
@@ -826,7 +910,6 @@ namespace RabbitMQ_SendClient
             {
                 ServerSetup.ChannelName = "default." + txtChannelName.Text;
             }
-
         }
 
         private void btnSendMessage_Click(object sender, RoutedEventArgs e)
@@ -851,56 +934,32 @@ namespace RabbitMQ_SendClient
             //Prevents actions from occuring during initialization
             if (!IsInitialized) return;
 
-
             var ip = txtServerAddress.Text;
             if (srvEnabled.IsChecked != null && srvEnabled.IsChecked.Value)
             {
                 srvEnabled.IsChecked = false;
                 srvDisabled.IsChecked = true;
-                try
-                {
-                    var rxMatch = Regex.Match(ip, @"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"); //Check IP with Regex expression to match IPv4 requirements
-                    if (rxMatch.Success || ip.ToLower() == "localhost") //Allows localhost to be used
-                    {
-                        ServerSetup.ServerAddress = ip.ToLower() == "localhost" ? IPAddress.Loopback : IPAddress.Parse(ip);
-                    }
-                    else
-                    {
-                        txtServerAddress.Text = "localhost";
-                        const string message = "IP Address missmatch. Please provide a valid IPv4 address or \"localhost\" as an address";
-                        const string caption = "Error - Address Missmatch";
-
-                        MessageBox.Show(message, caption, MessageBoxButtons.OK);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogError(ex, LogLevel.Critical);
-                }
-
             }
-            else
-            {
-                try
-                {
-                    var rxMatch = Regex.Match(ip, @"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}");
-                    if (rxMatch.Success || ip.ToLower() == "localhost")
-                    {
-                        ServerSetup.ServerAddress = ip.ToLower() == "localhost" ? IPAddress.Loopback : IPAddress.Parse(ip);
-                    }
-                    else
-                    {
-                        txtServerAddress.Text = "localhost";
-                        const string message = "IP Address missmatch. Please provide a valid IPv4 address or \"localhost\" as an address";
-                        const string caption = "Error - Address Missmatch";
 
-                        MessageBox.Show(message, caption, MessageBoxButtons.OK);
-                    }
-                }
-                catch (Exception ex)
+            try
+            {
+                var rxMatch = Regex.Match(ip, @"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"); //Check IP with Regex expression to match IPv4 requirements
+                if (rxMatch.Success || ip.ToLower() == "localhost") //Allows localhost to be used
                 {
-                    LogError(ex, LogLevel.Critical);
+                    ServerSetup.ServerAddress = ip.ToLower() == "localhost" ? IPAddress.Loopback : IPAddress.Parse(ip);
                 }
+                else
+                {
+                    txtServerAddress.Text = "localhost";
+                    const string message = "IP Address missmatch. Please provide a valid IPv4 address or \"localhost\" as an address";
+                    const string caption = "Error - Address Missmatch";
+
+                    MessageBox.Show(message, caption, MessageBoxButtons.OK);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, LogLevel.Critical);
             }
         }
 
@@ -934,15 +993,86 @@ namespace RabbitMQ_SendClient
             srvEnabled.IsChecked = false;
             srvDisabled.IsChecked = true;
 
-            if (_serialPort.IsOpen)
+            foreach (var serialPort in SerialPort)
             {
-                _serialPort.Close();
+                if (serialPort.IsOpen)
+                {
+                    serialPort.Close();
+                }
             }
         }
 
         public void Dispose()
         {
-            _serialPort.Dispose();
+            if (_connection.IsOpen)
+            {
+                if (_channel.IsOpen)
+                {
+                    _channel.Close();
+                }
+                _connection.Close();
+            }
+
+            foreach (var serialPort in SerialPort)
+            {
+                serialPort.Dispose();
+            }
+
+            if (_systemTimer.IsEnabled)
+            {
+                _systemTimer.Stop();
+            }
+        }
+
+        private void txtUserName_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            //Prevents actions from occuring during initialization
+            if (!IsInitialized) return;
+
+            if (srvEnabled.IsChecked != null && srvEnabled.IsChecked.Value)
+            {
+                srvEnabled.IsChecked = false;
+                srvDisabled.IsChecked = true;
+                ServerSetup.UserName = txtUserName.Text;
+            }
+            else
+            {
+                ServerSetup.UserName = txtUserName.Text;
+            }
+        }
+
+        private void txtServerPort_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            //Prevents actions from occuring during initialization
+            if (!IsInitialized) return;
+
+            if (srvEnabled.IsChecked != null && srvEnabled.IsChecked.Value)
+            {
+                srvEnabled.IsChecked = false;
+                srvDisabled.IsChecked = true;
+                ServerSetup.ServerPort = Convert.ToInt32(txtServerPort.Text);
+            }
+            else
+            {
+                ServerSetup.ServerPort = Convert.ToInt32(txtServerPort.Text);
+            }
+        }
+
+        private void PwdPassword_OnPasswordChanged(object sender, RoutedEventArgs e)
+        {
+            //Prevents actions from occuring during initialization
+            if (!IsInitialized) return;
+
+            if (srvEnabled.IsChecked != null && srvEnabled.IsChecked.Value)
+            {
+                srvEnabled.IsChecked = false;
+                srvDisabled.IsChecked = true;
+                ServerSetup.Password = pwdPassword.Password;
+            }
+            else
+            {
+                ServerSetup.Password = pwdPassword.Password;
+            }
         }
     }
 }

@@ -27,19 +27,19 @@
                             <TextBlock x:Name="textBlock2" HorizontalAlignment="Left" TextWrapping="Wrap"
                                        Text="User Name:" VerticalAlignment="Top" RenderTransformOrigin="0.204,0.312" />
                             <TextBox x:Name="txtUserName" HorizontalAlignment="Left" Height="23" Margin="0,16,0,0"
-                                     TextWrapping="Wrap" Text="User" VerticalAlignment="Top" Width="120" />
+                                     TextWrapping="Wrap" Text="User" VerticalAlignment="Top" Width="120" TextChanged="txtUserName_TextChanged" />
                         </Grid>
                         <Grid Margin="10,88,361,145">
                             <TextBlock x:Name="textBlock3" HorizontalAlignment="Left" TextWrapping="Wrap"
                                        Text="Password:" VerticalAlignment="Top" RenderTransformOrigin="0.204,0.312" />
                             <PasswordBox x:Name="pwdPassword" HorizontalAlignment="Left" Margin="0,16,0,0"
-                                         VerticalAlignment="Top" Height="23" Width="120" Password="Factory1" />
+                                         VerticalAlignment="Top" Height="23" Width="120" Password="Factory1" PasswordChanged="PwdPassword_OnPasswordChanged" />
                         </Grid>
                         <Grid Margin="10,132,361,101">
                             <TextBlock x:Name="textBlock4" HorizontalAlignment="Left" TextWrapping="Wrap"
                                        Text="Server Port:" VerticalAlignment="Top" RenderTransformOrigin="0.204,0.312" />
                             <TextBox x:Name="txtServerPort" HorizontalAlignment="Left" Height="23" Margin="0,16,0,0"
-                                     TextWrapping="Wrap" Text="5672" VerticalAlignment="Top" Width="120" />
+                                     TextWrapping="Wrap" Text="5672" VerticalAlignment="Top" Width="120" TextChanged="txtServerPort_TextChanged" />
                         </Grid>
                         <TextBlock x:Name="textBlock5" HorizontalAlignment="Left" Margin="135,0,0,0"
                                    TextWrapping="Wrap" Text="Virtual Host:" VerticalAlignment="Top" />
@@ -106,7 +106,6 @@
                                           HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"
                                           Checked="GenerateChannel_Checked" Unchecked="GenerateChannel_Checked" />
                             </StackPanel>
-
                         </GroupBox>
                     </Grid>
                 </UniformGrid>
@@ -159,13 +158,11 @@
                                            VerticalAlignment="Center" HorizontalAlignment="Left" Width="73"
                                            TextAlignment="Center" IsHitTestVisible="False" IsEnabled="False" />
                             </Grid>
-
                         </TabItem>
                         <TabItem Header="Modbus">
                             <Grid Background="#FFE5E5E5" />
                         </TabItem>
                     </TabControl>
-
                 </Grid>
             </TabItem>
             <TabItem Header="Message Settings">
@@ -187,9 +184,7 @@
                                 Margin="367,228,0,0" VerticalAlignment="Top" Width="114"
                                 RenderTransformOrigin="0.667,-0.75" Click="btnSendMessage_Click" />
                     </Grid>
-
                 </UniformGrid>
-
             </TabItem>
         </TabControl>
         <StatusBar HorizontalAlignment="Center" Height="25" VerticalAlignment="Top" BorderThickness="0,1,0,0"
