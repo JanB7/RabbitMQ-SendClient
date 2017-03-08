@@ -1,0 +1,47 @@
+﻿<Window x:Name="SerialPortSetupWindow" x:Class="RabbitMQ_SendClient.SerialPortSetup"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RabbitMQ_SendClient"
+        mc:Ignorable="d"
+        Title="Serial Port Configuration" Height="262" Width="274">
+    <Grid>
+        <TextBlock x:Name="textBlock12" HorizontalAlignment="Left" Margin="10,53,0,0"
+            TextWrapping="Wrap" Text="Baud Rate:" VerticalAlignment="Top" />
+        <ComboBox x:Name="cboBaudRate" HorizontalAlignment="Left" Margin="10,69,0,0"
+            VerticalAlignment="Top" Width="120" IsEnabled="False"
+            SelectionChanged="cboBaudRate_SelectionChanged" />
+        <ComboBox x:Name="cboDataBits" HorizontalAlignment="Left" Margin="10,112,0,0"
+            VerticalAlignment="Top" Width="120" IsEnabled="False"
+            SelectionChanged="cboDataBits_SelectionChanged" />
+        <TextBlock x:Name="textBlock13" HorizontalAlignment="Left" Margin="10,96,0,0"
+            TextWrapping="Wrap" Text="Data Bits:" VerticalAlignment="Top" />
+        <TextBlock x:Name="textBlock14" HorizontalAlignment="Left" Margin="10,10,0,0"
+            TextWrapping="Wrap" Text="Parity" VerticalAlignment="Top"
+            RenderTransformOrigin="1.271,0.522" />
+        <ComboBox x:Name="cboParity" HorizontalAlignment="Left" Margin="10,26,0,0"
+            VerticalAlignment="Top" Width="120" IsEnabled="False" />
+        <TextBlock x:Name="textBlock15" HorizontalAlignment="Left" Margin="135,53,0,0"
+            TextWrapping="Wrap" Text="Stop Bits:" VerticalAlignment="Top" />
+        <ComboBox x:Name="cboStopBits" HorizontalAlignment="Left" Margin="135,69,0,0"
+            VerticalAlignment="Top" Width="120" IsEnabled="False" />
+        <TextBlock x:Name="textBlock16" HorizontalAlignment="Left" Margin="135,96,0,0"
+            TextWrapping="Wrap" Text="Flow Control:" VerticalAlignment="Top" />
+        <ComboBox x:Name="cboFlowControl" HorizontalAlignment="Left" Margin="135,112,0,0"
+            VerticalAlignment="Top" Width="120" IsEnabled="False"
+            SelectionChanged="cboFlowControl_SelectionChanged" />
+        <TextBlock x:Name="textBlock17" HorizontalAlignment="Left" Margin="10,139,0,-19"
+            TextWrapping="Wrap" Text="Read Timeout:" VerticalAlignment="Top"
+            RenderTransformOrigin="-0.395,0.146" />
+        <Slider x:Name="sldReadTimeout" Margin="11,175,0,0"
+            Width="244" HorizontalAlignment="Left" Maximum="1000" Minimum="50"
+            SmallChange="0.5" Value="250" IsEnabled="False"
+            ValueChanged="sldReadTimeout_ValueChanged" Height="18" VerticalAlignment="Top" />
+        <TextBlock x:Name="txtReadTimeout" Margin="96,176,0,0" TextWrapping="Wrap" Text="250" HorizontalAlignment="Left" Width="74"
+            TextAlignment="Center" IsHitTestVisible="False" IsEnabled="False" Height="16" VerticalAlignment="Top" />
+        <Button x:Name="Cancel" Content="Cencel" HorizontalAlignment="Left" Margin="180,201,0,0" VerticalAlignment="Top" Width="75"/>
+        <Button x:Name="OK" Content="OK" HorizontalAlignment="Left" Margin="100,201,0,0" VerticalAlignment="Top" Width="75" Click="OK_Click"/>
+
+    </Grid>
+</Window>
