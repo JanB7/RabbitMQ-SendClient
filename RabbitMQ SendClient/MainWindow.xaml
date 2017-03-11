@@ -12,7 +12,7 @@
     <Grid Margin="0,0,0,1">
         <TabControl x:Name="tabControl" HorizontalAlignment="Left" Height="300" Margin="10,10,0,0"
                     VerticalAlignment="Top" Width="507">
-            <TabItem Header="Server Settings">
+            <TabItem x:Name="tabServerSettings" Header="Server Settings">
                 <UniformGrid>
                     <Grid Background="#FFE5E5E5">
                         <Grid Margin="10,0,361,233">
@@ -20,7 +20,7 @@
                                        Text="Server Address:" VerticalAlignment="Top" />
                             <TextBox x:Name="txtServerAddress" HorizontalAlignment="Left" Height="23" Margin="0,16,0,0"
                                      TextWrapping="Wrap" Text="192.168.0.10" VerticalAlignment="Top" Width="120"
-                                     TextChanged="txtServerAddress_TextChanged"
+                                     TextChanged="TxtServerAddress_TextChanged"
                                      LostFocus="TxtServerAddress_OnLostFocus"
                                      KeyDown="TxtServerAddress_OnKeyDown" />
                         </Grid>
@@ -28,7 +28,7 @@
                             <TextBlock x:Name="textBlock2" HorizontalAlignment="Left" TextWrapping="Wrap"
                                        Text="User Name:" VerticalAlignment="Top" RenderTransformOrigin="0.204,0.312" />
                             <TextBox x:Name="txtUserName" HorizontalAlignment="Left" Height="23" Margin="0,16,0,0"
-                                     TextWrapping="Wrap" Text="User" VerticalAlignment="Top" Width="120" TextChanged="txtUserName_TextChanged" />
+                                     TextWrapping="Wrap" Text="User" VerticalAlignment="Top" Width="120" TextChanged="TxtUserName_TextChanged" />
                         </Grid>
                         <Grid Margin="10,88,361,145">
                             <TextBlock x:Name="textBlock3" HorizontalAlignment="Left" TextWrapping="Wrap"
@@ -40,21 +40,21 @@
                             <TextBlock x:Name="textBlock4" HorizontalAlignment="Left" TextWrapping="Wrap"
                                        Text="Server Port:" VerticalAlignment="Top" RenderTransformOrigin="0.204,0.312" />
                             <TextBox x:Name="txtServerPort" HorizontalAlignment="Left" Height="23" Margin="0,16,0,0"
-                                     TextWrapping="Wrap" Text="5672" VerticalAlignment="Top" Width="120" TextChanged="txtServerPort_TextChanged" />
+                                     TextWrapping="Wrap" Text="5672" VerticalAlignment="Top" Width="120" TextChanged="TxtServerPort_TextChanged" />
                         </Grid>
                         <TextBlock x:Name="textBlock5" HorizontalAlignment="Left" Margin="135,0,0,0"
                                    TextWrapping="Wrap" Text="Virtual Host:" VerticalAlignment="Top" />
                         <TextBox x:Name="txtVirtualHost" HorizontalAlignment="Left" Height="23" Margin="135,16,0,0"
                                  TextWrapping="Wrap" Text="Default" VerticalAlignment="Top" Width="120"
-                                 TextChanged="txtVirtualHost_TextChanged" ToolTip="DO NOT CHANGE UNLESS YOU ARE SURE!" />
+                                 TextChanged="TxtVirtualHost_TextChanged" ToolTip="DO NOT CHANGE UNLESS YOU ARE SURE!" />
                         <TextBlock x:Name="textBlock6" HorizontalAlignment="Left" Margin="135,44,0,0"
                                    TextWrapping="Wrap" Text="Exchange Name:" VerticalAlignment="Top" />
                         <TextBox x:Name="txtExchangeName" HorizontalAlignment="Left" Height="23" Margin="135,60,0,0"
                                  TextWrapping="Wrap" Text="Default" VerticalAlignment="Top" Width="120"
-                                 TextChanged="txtExchangeName_TextChanged" />
+                                 TextChanged="TxtExchangeName_TextChanged" />
                         <TextBox x:Name="txtChannelName" HorizontalAlignment="Left" Height="23" Margin="135,104,0,0"
                                  TextWrapping="Wrap" Text="Default" VerticalAlignment="Top" Width="120"
-                                 TextChanged="txtChannelName_TextChanged" />
+                                 TextChanged="TxtChannelName_TextChanged" />
                         <TextBlock x:Name="textBlock7" HorizontalAlignment="Left" Margin="135,88,0,0"
                                    TextWrapping="Wrap" Text="Channel Name:" VerticalAlignment="Top" />
                         <TextBlock x:Name="textBlock10" HorizontalAlignment="Left" Margin="10,189,0,0"
@@ -62,7 +62,7 @@
                         <Grid Margin="10,205,10,49" Width="471">
                             <Slider x:Name="sldHeartBeat" HorizontalAlignment="Center" VerticalAlignment="Center"
                                     Width="471" Maximum="120" Minimum="5" Value="30" SmallChange="1"
-                                    ValueChanged="sldHeartBeat_ValueChanged" />
+                                    ValueChanged="SldHeartBeat_ValueChanged" />
                             <TextBlock x:Name="txtHeartbeat" HorizontalAlignment="Left" Margin="199,1"
                                        TextWrapping="Wrap" Text="30" VerticalAlignment="Top" Width="73"
                                        TextAlignment="Center" IsHitTestVisible="False" IsEnabled="False"
@@ -74,7 +74,7 @@
                         <Grid Margin="10,244,10,10" Width="471">
                             <Slider x:Name="sldNetworokRecInt" HorizontalAlignment="Center" VerticalAlignment="Center"
                                     Width="471" Maximum="30" SmallChange="1" Minimum="1" Value="5"
-                                    ValueChanged="sldNetworokRecInt_ValueChanged" />
+                                    ValueChanged="SldNetworokRecInt_ValueChanged" />
                             <TextBlock x:Name="NetworkRecIntervalTxt" Margin="199,1" TextWrapping="Wrap" Text="5"
                                        Width="73" TextAlignment="Center" IsHitTestVisible="False" IsEnabled="False" />
                         </Grid>
@@ -82,7 +82,7 @@
                                    TextWrapping="Wrap" Text="Network Auto Recovery" VerticalAlignment="Top" />
                         <ComboBox x:Name="cboAutoRecovery" HorizontalAlignment="Left" Margin="135,148,0,0"
                                   VerticalAlignment="Top" Width="120"
-                                  SelectionChanged="cboAutoRecovery_SelectionChanged" SelectedIndex="0">
+                                  SelectionChanged="CboAutoRecovery_SelectionChanged" SelectedIndex="0">
                             <ComboBoxItem Content="True" />
                             <ComboBoxItem Content="False" />
                         </ComboBox>
@@ -91,10 +91,10 @@
                             <StackPanel>
                                 <RadioButton x:Name="srvEnabled" Content="Enable" HorizontalAlignment="Left"
                                              Height="18" Margin="10,10,0,0" VerticalAlignment="Top"
-                                             Checked="srvEnabled_Checked" />
+                                             Checked="SrvEnabled_Checked" />
                                 <RadioButton x:Name="srvDisabled" Content="Disable" HorizontalAlignment="Left"
                                              Height="18" Margin="10,10,0,0" VerticalAlignment="Top" IsChecked="True"
-                                             Checked="srvDisabled_Checked" />
+                                             Checked="SrvDisabled_Checked" />
                             </StackPanel>
                         </GroupBox>
                         <GroupBox x:Name="groupBox1" Header="Generate Requirements" HorizontalAlignment="Left"
@@ -116,23 +116,22 @@
                     <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="145" Margin="10,10,0,0" VerticalAlignment="Top" Width="131">
                         <StackPanel>
                             <TextBlock Text="Serial Communicaiton" TextAlignment="Center" />
-                            <ListBox x:Name="lstSerial" Height="100" ItemsSource="{Binding Path=AvailableSerialPorts}">
+                            <ListBox x:Name="LstSerial" Height="100">
                                 <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsChecked}" Checked="SerialModbusEnabled_CheckboxChecked"/>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsChecked}" Content="{Binding Content}" Uid="{Binding Uid}" Checked="SerialEnabled_CheckboxChecked" Unchecked="SerialEnabled_CheckboxUnchecked" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
                             </ListBox>
-
                         </StackPanel>
                     </Border>
                     <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="145" Margin="146,10,0,0" VerticalAlignment="Top" Width="131">
                         <StackPanel Orientation="Vertical">
-                            <TextBlock x:Name="textBlock12" Text="Modbus Serial" TextAlignment="Center"/>
-                            <ListBox x:Name="lstModbusSerial" Height="100" ItemsSource="{Binding Path=AvailableSerialPorts}">
+                            <TextBlock x:Name="textBlock12" Text="Modbus Serial" TextAlignment="Center" />
+                            <ListBox x:Name="LstModbusSerial" Height="100">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <CheckBox Content="{Binding Name}" IsChecked="{Binding IsChecked}" Checked="SerialPortEnabled_CheckboxChecked"/>
+                                        <CheckBox IsChecked="{Binding IsChecked}" Content="{Binding Content}" Uid="{Binding Uid}" Checked="SerialModbusEnabled_CheckboxChecked" />
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
@@ -140,10 +139,9 @@
                     </Border>
                     <Border BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Left" Height="145" Margin="282,10,0,0" VerticalAlignment="Top" Width="131">
                         <StackPanel Orientation="Vertical">
-                            <TextBlock x:Name="textBlock13" Text="Modbus TCP" TextAlignment="Center"/>
-                            <ListBox x:Name="lstModbusTCP" Height="100"/>
-                            <Button x:Name="AddModbusTCP" Content="Add" HorizontalAlignment="Right" Width="70" Margin="0,3,5,0" VerticalAlignment="Bottom"/>
-
+                            <TextBlock x:Name="textBlock13" Text="Modbus TCP" TextAlignment="Center" />
+                            <ListBox x:Name="lstModbusTCP" Height="100" />
+                            <Button x:Name="AddModbusTCP" Content="Add" HorizontalAlignment="Right" Width="70" Margin="0,3,5,0" VerticalAlignment="Bottom" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -151,7 +149,7 @@
             <TabItem Header="Message Settings">
                 <Grid Background="#FFE5E5E5">
                     <ComboBox x:Name="cbxMessageType" HorizontalAlignment="Left" Margin="10,21,0,0"
-                              VerticalAlignment="Top" Width="120" Text="Message Type:"/>
+                              VerticalAlignment="Top" Width="120" Text="Message Type:" />
                     <TextBlock x:Name="textBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap"
                                Text="Message Type:" VerticalAlignment="Top" />
                 </Grid>
@@ -164,7 +162,7 @@
                                  VerticalAlignment="Center" Margin="10,10,10,50" GotFocus="MessageToSend_OnGotFocus" Text="Enter Message Here:" />
                         <Button x:Name="btnSendMessage" Content="Send Test Message" HorizontalAlignment="Left"
                                 Margin="367,228,0,0" VerticalAlignment="Top" Width="114"
-                                RenderTransformOrigin="0.667,-0.75" Click="btnSendMessage_Click" />
+                                RenderTransformOrigin="0.667,-0.75" Click="BtnSendMessage_Click" />
                     </Grid>
                 </UniformGrid>
             </TabItem>

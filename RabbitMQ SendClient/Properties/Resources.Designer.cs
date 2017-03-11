@@ -59,5 +59,24 @@ namespace RabbitMQ_SendClient.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to JSON Standard not followed.\n Please ensure message is in the required JSON Format.\n Device Causing error on:
+        ///.
+        /// </summary>
+        internal static string MainWindow_DataReceivedHandler_ {
+            get {
+                return ResourceManager.GetString("MainWindow_DataReceivedHandler_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to JSON Message Error.
+        /// </summary>
+        internal static string MainWindow_DataReceivedHandler_JSON_Message_Error {
+            get {
+                return ResourceManager.GetString("MainWindow_DataReceivedHandler_JSON_Message_Error", resourceCulture);
+            }
+        }
     }
 }

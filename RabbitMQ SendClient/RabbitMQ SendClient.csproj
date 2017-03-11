@@ -61,6 +61,9 @@
     <Reference Include="PostSharp.Patterns.Diagnostics, Version=5.0.19.0, Culture=neutral, PublicKeyToken=e7f631e6ce13f078, processorArchitecture=MSIL">
       <HintPath>..\packages\PostSharp.Patterns.Diagnostics.Redist.5.0.19-preview\lib\net45\PostSharp.Patterns.Diagnostics.dll</HintPath>
     </Reference>
+    <Reference Include="PostSharp.Patterns.Model, Version=5.0.19.0, Culture=neutral, PublicKeyToken=e7f631e6ce13f078, processorArchitecture=MSIL">
+      <HintPath>..\packages\PostSharp.Patterns.Model.Redist.5.0.19-preview\lib\net40\PostSharp.Patterns.Model.dll</HintPath>
+    </Reference>
     <Reference Include="RabbitMQ.Client, Version=4.0.0.0, Culture=neutral, PublicKeyToken=89e7d7c5feba84ce, processorArchitecture=MSIL">
       <HintPath>..\packages\RabbitMQ.Client.4.1.1\lib\net451\RabbitMQ.Client.dll</HintPath>
       <Private>True</Private>
@@ -111,7 +114,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="SerialPortControl.cs" />
     <Compile Include="SerialPortSetup.xaml.cs">
       <DependentUpon>SerialPortSetup.xaml</DependentUpon>
     </Compile>

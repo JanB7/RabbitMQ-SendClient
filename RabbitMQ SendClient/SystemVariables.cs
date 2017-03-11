@@ -4,12 +4,12 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Ports;
 using System.Net;
+using System.Runtime.InteropServices;
 
 namespace RabbitMQ_SendClient
 {
     public static class SystemVariables
     {
-
         /// <summary>
         /// Array for Serial Port Configurations
         /// </summary>
@@ -57,6 +57,7 @@ namespace RabbitMQ_SendClient
             Critical = 6,
             None = 0
         }
+
         /// <summary>
         /// Dictionary of Errors that can be thrown
         /// </summary>
@@ -106,7 +107,7 @@ namespace RabbitMQ_SendClient
             foreach (var port in ports)
             {
                 Array.Resize(ref SerialPorts, SerialPorts.Length + 1);
-                SerialPorts[SerialPorts.Length-1] = new SerialPort(port);
+                SerialPorts[SerialPorts.Length - 1] = new SerialPort(port);
                 Array.Resize(ref SerialCommunications, SerialCommunications.Length + 1);
                 SerialCommunications[SerialCommunications.Length - 1].BaudRate = BaudRates.BaudRate9600;
                 SerialCommunications[SerialCommunications.Length - 1].ComPort = port;
@@ -114,7 +115,7 @@ namespace RabbitMQ_SendClient
                 SerialCommunications[SerialCommunications.Length - 1].ReadTimeout = 1000;
                 SerialCommunications[SerialCommunications.Length - 1].RtsEnable = false;
                 SerialCommunications[SerialCommunications.Length - 1].SerialBits = 8;
-                SerialCommunications[SerialCommunications.Length - 1].SerialParity = Parity.Odd;
+                SerialCommunications[SerialCommunications.Length - 1].SerialParity = Parity.None;
                 SerialCommunications[SerialCommunications.Length - 1].SerialStopBits = StopBits.One;
             }
         }
@@ -172,6 +173,33 @@ namespace RabbitMQ_SendClient
             public int SerialBits { get; set; }
             public Parity SerialParity { get; set; }
             public StopBits SerialStopBits { get; set; }
+            public int TimeoutCounts { get; set; }
+            public int MaximumErrors { get; set; }
+            public double JsonErrors { get; set; }
+            public double JsonMeasurements { get; set; }
+
+            public double UCL { get; set; }
+
+            private double[] _x;
+
+            public void X()
+            {
+                _x = new double[50];
+                for (var i = 0; i < _x.Length; i++)
+                {
+                    _x[i] = MaximumErrors;
+                }
+            }
+
+            public void SetX(int index, double value)
+            {
+                _x[index] = value;
+            }
+
+            public double GetX(int index)
+            {
+                return _x[index];
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO.Ports;
 using System.Windows;
@@ -7,6 +8,7 @@ using System.Windows.Forms;
 using PostSharp.Patterns.Diagnostics;
 using MessageBox = System.Windows.Forms.MessageBox;
 using static RabbitMQ_SendClient.SystemVariables;
+using System.Windows.Media;
 
 namespace RabbitMQ_SendClient
 {
@@ -17,7 +19,7 @@ namespace RabbitMQ_SendClient
     {
         private static readonly StackTrace StackTrace = new StackTrace();
 
-        public static int SerialPortNum
+        public int SerialPortNum
         {
             get;
             set;
@@ -41,7 +43,7 @@ namespace RabbitMQ_SendClient
             {
                 foreach (var rate in Enum.GetValues(typeof(BaudRates)))
                 {
-                    cboBaudRate.Items.Add(rate);
+                    cboBaudRate.Items.Add(rate.ToString());
                 }
 
                 cboBaudRate.SelectedIndex = 4;
@@ -61,12 +63,12 @@ namespace RabbitMQ_SendClient
         {
             try
             {
-                for (var i = 4; i != 9; i++)
+                for (int i = 8; i >= 4; i--)
                 {
                     cboDataBits.Items.Add(i);
                 }
-                cboDataBits.SelectedIndex = cboDataBits.Items.Count - 1;
                 cboDataBits.IsEnabled = true;
+                cboDataBits.SelectedIndex = 0;
             }
             catch (Exception ex)
             {
@@ -142,39 +144,50 @@ namespace RabbitMQ_SendClient
             }
         }
 
-        private void cboBaudRate_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        /// <summary>
+        /// Updates text for slider
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SldReadTimeout_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             //Prevents actions from occuring during initialization
             if (!IsInitialized) return;
 
-            var rates = (BaudRates)Enum.Parse(typeof(BaudRates), cboBaudRate.Items[cboBaudRate.SelectedIndex].ToString());
-
-            SerialPorts[SerialPortNum].BaudRate = (int)rates;
+            txtReadTimeout.Text = ((int)sldReadTimeout.Value).ToString();
         }
 
         private void OK_Click(object sender, RoutedEventArgs e)
         {
+            SetFlowControl();
+            SetDataBits();
+            SetReadTimeout();
+            SetBaudRate();
+            SetParity();
+            MaximumErrors();
             DialogResult = true;
             Close();
         }
 
-
-
-        private void cboDataBits_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
-
-            var cb = (System.Windows.Controls.ComboBox)sender;
-            var bits = cb.Text;
-            SerialPorts[SerialPortNum].DataBits = int.Parse(bits);
+            DialogResult = false;
+            Close();
         }
 
-        private void cboFlowControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        /// <summary>
+        /// Sets the Data bits for the port being configured.
+        /// </summary>
+        private void SetDataBits()
         {
-            //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
+            SerialCommunications[SerialPortNum].SerialBits = int.Parse(cboDataBits.Items[cboDataBits.SelectedIndex].ToString());
+        }
 
+        /// <summary>
+        /// Sets FlowControl and Handshake of the port being configured.
+        /// </summary>
+        private void SetFlowControl()
+        {
             var flowControl = (Handshake)Enum.Parse(typeof(Handshake), cboFlowControl.Items[cboFlowControl.SelectedIndex].ToString());
 
             SerialCommunications[SerialPortNum].FlowControl = flowControl;
@@ -202,15 +215,55 @@ namespace RabbitMQ_SendClient
             }
         }
 
-        private void sldReadTimeout_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void SetBaudRate()
         {
-            //Prevents actions from occuring during initialization
+            SerialCommunications[SerialPortNum].BaudRate = (BaudRates)Enum.Parse(typeof(BaudRates), cboBaudRate.Items[cboBaudRate.SelectedIndex].ToString());
+        }
+
+        private void SetReadTimeout()
+        {
+            SerialCommunications[SerialPortNum].ReadTimeout = (int)sldReadTimeout.Value; ;
+        }
+
+        private void SetParity()
+        {
+            var parity = cboParity.Items[cboParity.SelectedIndex].ToString();
+
+            switch (parity)
+            {
+                case "Odd":
+                    SerialCommunications[SerialPortNum].SerialParity = Parity.Odd;
+                    break;
+
+                case "Even":
+                    SerialCommunications[SerialPortNum].SerialParity = Parity.Even;
+                    break;
+
+                case "Space":
+                    SerialCommunications[SerialPortNum].SerialParity = Parity.Space;
+                    break;
+
+                case "Mark":
+                    SerialCommunications[SerialPortNum].SerialParity = Parity.Mark;
+                    break;
+
+                case "None":
+                case null:
+                default:
+                    SerialCommunications[SerialPortNum].SerialParity = Parity.None;
+                    break;
+            }
+        }
+
+        private void MaximumErrors()
+        {
+            SerialCommunications[SerialPortNum].MaximumErrors = (int)sldMaxmumErrors.Value;
+        }
+
+        private void SldMaximumErrors_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
             if (!IsInitialized) return;
-
-            var timeout = (int)sldReadTimeout.Value;
-            txtReadTimeout.Text = timeout.ToString();
-
-            SerialCommunications[SerialPortNum].ReadTimeout = timeout;
+            txtMaximumErrors.Text = ((int)sldMaxmumErrors.Value).ToString();
         }
     }
 }
