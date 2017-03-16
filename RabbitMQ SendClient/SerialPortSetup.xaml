@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:RabbitMQ_SendClient"
         mc:Ignorable="d"
         Title="Serial Port Configuration" Height="289.741" Width="274">
     <Grid>
@@ -39,5 +38,7 @@
         <TextBlock HorizontalAlignment="Left" Margin="10,182,0,0" TextWrapping="Wrap" Text="Maximum Errors" VerticalAlignment="Top" />
         <Slider x:Name="sldMaxmumErrors" HorizontalAlignment="Left" Margin="10,198,0,0" VerticalAlignment="Top" Width="245" SmallChange="1" Maximum="1000" Value="10" TickFrequency="25" LargeChange="10" Cursor="Hand" TickPlacement="BottomRight" ValueChanged="SldMaximumErrors_ValueChanged" />
         <TextBlock x:Name="txtMaximumErrors" HorizontalAlignment="Left" Margin="96,202,0,0" TextWrapping="Wrap" Text="10" VerticalAlignment="Top" IsEnabled="False" TextAlignment="Center" Width="72" />
+        <TextBlock HorizontalAlignment="Left" Margin="135,10,0,0" TextWrapping="Wrap" Text="MessageType" VerticalAlignment="Top" />
+        <ComboBox x:Name="cboMessageType" HorizontalAlignment="Left" Margin="135,26,0,0" VerticalAlignment="Top" Width="120" />
     </Grid>
 </Window>

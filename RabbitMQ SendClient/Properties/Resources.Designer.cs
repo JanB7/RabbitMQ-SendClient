@@ -61,6 +61,17 @@ namespace RabbitMQ_SendClient.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Not a valid address.
+        ///Please enter a valid IP Address or Fully Qualified Domain Name FQDN
+        ///See Help for more information..
+        /// </summary>
+        internal static string Invalid_Server_URL {
+            get {
+                return ResourceManager.GetString("Invalid_Server_URL", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to JSON Standard not followed.\n Please ensure message is in the required JSON Format.\n Device Causing error on:
         ///.
         /// </summary>

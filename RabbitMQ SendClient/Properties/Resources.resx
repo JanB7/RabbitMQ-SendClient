@@ -121,4 +121,9 @@
   <data name="MainWindow_DataReceivedHandler_JSON_Message_Error" xml:space="preserve">
     <value>JSON Message Error</value>
   </data>
+  <data name="Invalid_Server_URL" xml:space="preserve">
+    <value>Not a valid address.
+Please enter a valid IP Address or Fully Qualified Domain Name FQDN
+See Help for more information.</value>
+  </data>
 </root>
