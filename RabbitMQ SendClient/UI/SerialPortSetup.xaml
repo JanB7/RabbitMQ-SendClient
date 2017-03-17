@@ -1,10 +1,12 @@
-﻿<Window x:Name="SerialPortSetupWindow" x:Class="RabbitMQ_SendClient.SerialPortSetup"
+﻿<Window x:Class="RabbitMQ_SendClient.UI.SerialPortSetup"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RabbitMQ_SendClient.UI"
         mc:Ignorable="d"
-        Title="Serial Port Configuration" Height="289.741" Width="274">
+        Title="Serial Port Configuration" Height="289.741" Width="274"
+        KeyDown="SerialPortSetup_OnKeyDown">
     <Grid>
         <Slider x:Name="sldReadTimeout" HorizontalAlignment="Left" Margin="10,153,0,0" VerticalAlignment="Top" Width="245" LargeChange="2" Maximum="5000" Minimum="5" SmallChange="1" TickPlacement="BottomRight" Value="1000" TickFrequency="100" Cursor="Hand" />
         <TextBlock x:Name="textBlock12" HorizontalAlignment="Left" Margin="10,53,0,0"

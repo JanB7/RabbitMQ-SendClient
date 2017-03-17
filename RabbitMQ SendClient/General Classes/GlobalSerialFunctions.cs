@@ -30,7 +30,7 @@ namespace RabbitMQ_SendClient
                 xBar += SerialCommunications[index].GetX(i);
 
             xBar = xBar / 50;
-
+            
             SerialCommunications[index].UCL = xBar + 3 *
                                               Math.Sqrt(Math.Abs(xBar * (1 - xBar)) /
                                                         SerialCommunications[index].MaximumErrors);

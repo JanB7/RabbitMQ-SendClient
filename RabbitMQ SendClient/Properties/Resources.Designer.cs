@@ -61,6 +61,22 @@ namespace RabbitMQ_SendClient.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;!--
+        ///TYPELIST - DO NOT USE ANYTHING ELSE
+        ///╔═════════╦═════════════════════════════════════════════════════════╦══════════════════════════╗
+        ///║ bool    ║ (TRUE/FALSE)                                            ║                          ║
+        ///╠═════════╬═════════════════════════════════════════════════════════╬══════════════════════════╣
+        ///║ byte    ║ 0 to 255                                                ║ Unsigned 8-bit integer   ║
+        ///╠═════════╬══════════════════════════ [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string defaultXML {
+            get {
+                return ResourceManager.GetString("defaultXML", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Not a valid address.
         ///Please enter a valid IP Address or Fully Qualified Domain Name FQDN
         ///See Help for more information..
@@ -87,6 +103,27 @@ namespace RabbitMQ_SendClient.Properties {
         internal static string MainWindow_DataReceivedHandler_JSON_Message_Error {
             get {
                 return ResourceManager.GetString("MainWindow_DataReceivedHandler_JSON_Message_Error", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Application unable to continue due to incorrect configuration file.
+        ///Please check settings file and restart the application..
+        /// </summary>
+        internal static string MainWindow_MainWindow_FatalError_ConfigurationFile {
+            get {
+                return ResourceManager.GetString("MainWindow_MainWindow_FatalError_ConfigurationFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 
+        ///
+        ///Do you wish to edit the settings?.
+        /// </summary>
+        internal static string SetupServer_btnOK_Click_YesToEdit {
+            get {
+                return ResourceManager.GetString("SetupServer_btnOK_Click_YesToEdit", resourceCulture);
             }
         }
     }

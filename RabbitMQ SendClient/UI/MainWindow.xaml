@@ -51,7 +51,7 @@
                             <TextBlock x:Name="textBlock13" Text="Modbus TCP" TextAlignment="Center" />
                             <ListBox x:Name="lstModbusTCP" Height="100" />
                             <Button x:Name="AddModbusTCP" Content="Add" HorizontalAlignment="Right" Width="70"
-                                    Margin="0,3,5,0" VerticalAlignment="Bottom" />
+                                    Margin="0,3,5,0" VerticalAlignment="Bottom" Click="AddModbusTCP_Click" />
                         </StackPanel>
                     </Border>
                 </Grid>
