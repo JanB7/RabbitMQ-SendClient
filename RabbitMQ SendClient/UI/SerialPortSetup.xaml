@@ -8,7 +8,7 @@
         Title="Serial Port Configuration" Height="289.741" Width="274"
         KeyDown="SerialPortSetup_OnKeyDown">
     <Grid>
-        <Slider x:Name="sldReadTimeout" HorizontalAlignment="Left" Margin="10,153,0,0" VerticalAlignment="Top" Width="245" LargeChange="2" Maximum="5000" Minimum="5" SmallChange="1" TickPlacement="BottomRight" Value="1000" TickFrequency="100" Cursor="Hand" />
+        <Slider x:Name="sldReadTimeout" HorizontalAlignment="Left" Margin="10,153,0,0" VerticalAlignment="Top" Width="245" LargeChange="2" Maximum="5000" Minimum="5" SmallChange="1" TickPlacement="BottomRight" Value="1000" TickFrequency="100" Cursor="Hand" ValueChanged="SldReadTimeout_ValueChanged" />
         <TextBlock x:Name="textBlock12" HorizontalAlignment="Left" Margin="10,53,0,0"
             TextWrapping="Wrap" Text="Baud Rate:" VerticalAlignment="Top" />
         <ComboBox x:Name="cboBaudRate" HorizontalAlignment="Left" Margin="10,69,0,0"
@@ -35,8 +35,8 @@
             RenderTransformOrigin="-0.395,0.146" />
         <TextBlock x:Name="txtReadTimeout" Margin="96,157,0,0" TextWrapping="Wrap" Text="1000" HorizontalAlignment="Left" Width="74"
             TextAlignment="Center" IsHitTestVisible="False" IsEnabled="False" Height="16" VerticalAlignment="Top" />
-        <Button x:Name="Cancel" Content="Cancel" HorizontalAlignment="Right" Margin="0,227,11,0" Width="75" Click="Cancel_Click" Height="20" VerticalAlignment="Top" />
-        <Button x:Name="OK" Content="OK" HorizontalAlignment="Right" Margin="0,227,98,0" Width="75" Click="OK_Click" Height="20" VerticalAlignment="Top" />
+        <Button x:Name="Cancel" Content="Cancel" HorizontalAlignment="Right" Margin="0,227,11,0" Width="75" Click="Cancel_Click" Height="20" VerticalAlignment="Top" IsCancel="True" />
+        <Button x:Name="OK" Content="OK" HorizontalAlignment="Right" Margin="0,227,98,0" Width="75" Click="OK_Click" Height="20" VerticalAlignment="Top" IsDefault="True" />
         <TextBlock HorizontalAlignment="Left" Margin="10,182,0,0" TextWrapping="Wrap" Text="Maximum Errors" VerticalAlignment="Top" />
         <Slider x:Name="sldMaxmumErrors" HorizontalAlignment="Left" Margin="10,198,0,0" VerticalAlignment="Top" Width="245" SmallChange="1" Maximum="1000" Value="10" TickFrequency="25" LargeChange="10" Cursor="Hand" TickPlacement="BottomRight" ValueChanged="SldMaximumErrors_ValueChanged" />
         <TextBlock x:Name="txtMaximumErrors" HorizontalAlignment="Left" Margin="96,202,0,0" TextWrapping="Wrap" Text="10" VerticalAlignment="Top" IsEnabled="False" TextAlignment="Center" Width="72" />

@@ -4,10 +4,12 @@ using System.IO.Ports;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
+using static RabbitMQ_SendClient.SystemVariables;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MessageBox = System.Windows.Forms.MessageBox;
 
 // ReSharper disable once CheckNamespace
+
 namespace RabbitMQ_SendClient.UI
 {
     /// <summary>
@@ -16,31 +18,33 @@ namespace RabbitMQ_SendClient.UI
     public partial class SerialPortSetup
     {
         private static readonly StackTrace StackTrace = new StackTrace();
-        public int SerialPortNum { get; set; } //number of port that is being configured
-
 
         /// <summary>
-        /// Main Class for the Serial Port form. Used to initialize the system.
+        ///     Main Class for the Serial Port form. Used to initialize the system.
         /// </summary>
-        public SerialPortSetup()
+        /// <param name="uidGuid"></param>
+        public SerialPortSetup(Guid uidGuid)
         {
-
             InitializeComponent();
-
+            UidGuid = uidGuid;
+            SerialPortNum = SerialCommunications.Length - 1;
             InitializeBaudRates();
             InitializeDataBits();
             InitializeStopBits();
             InitializeParity();
             InitializeHandshake();
             InitializeMessageType();
-
         }
+
+        public static Guid UidGuid { get; set; }
+
+        public int SerialPortNum { get; set; } //number of port that is being configured
 
         private void InitializeBaudRates()
         {
             try
             {
-                foreach (var rate in Enum.GetValues(typeof(SystemVariables.BaudRates)))
+                foreach (var rate in Enum.GetValues(typeof(BaudRates)))
                     cboBaudRate.Items.Add(rate.ToString());
 
                 cboBaudRate.SelectedIndex = 4;
@@ -49,7 +53,7 @@ namespace RabbitMQ_SendClient.UI
             catch (Exception ex)
             {
                 var sf = StackTrace.GetFrame(0);
-                SystemVariables.LogError(ex, SystemVariables.LogLevel.Critical, sf);
+                LogError(ex, LogLevel.Critical, sf);
                 var message = ex.Message + "\nError in BaudRate Enumeration";
                 MessageBox.Show(message, ex.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -67,7 +71,7 @@ namespace RabbitMQ_SendClient.UI
             catch (Exception ex)
             {
                 var sf = StackTrace.GetFrame(0);
-                SystemVariables.LogError(ex, SystemVariables.LogLevel.Critical, sf);
+                LogError(ex, LogLevel.Critical, sf);
                 var message = ex.Message + "\nError in DataBits Enumeration";
                 MessageBox.Show(message, ex.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -85,7 +89,7 @@ namespace RabbitMQ_SendClient.UI
             catch (Exception ex)
             {
                 var sf = StackTrace.GetFrame(0);
-                SystemVariables.LogError(ex, SystemVariables.LogLevel.Critical, sf);
+                LogError(ex, LogLevel.Critical, sf);
                 var message = ex.Message + "\nError in StopBits Enumeration";
                 MessageBox.Show(message, ex.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -103,7 +107,7 @@ namespace RabbitMQ_SendClient.UI
             catch (Exception ex)
             {
                 var sf = StackTrace.GetFrame(0);
-                SystemVariables.LogError(ex, SystemVariables.LogLevel.Critical, sf);
+                LogError(ex, LogLevel.Critical, sf);
                 var message = ex.Message + "\nError in Parity Enumeration";
                 MessageBox.Show(message, ex.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -123,7 +127,7 @@ namespace RabbitMQ_SendClient.UI
             catch (Exception ex)
             {
                 var sf = StackTrace.GetFrame(0);
-                SystemVariables.LogError(ex, SystemVariables.LogLevel.Critical, sf);
+                LogError(ex, LogLevel.Critical, sf);
                 var message = ex.Message + "\nError in Handshake Enumeration";
                 MessageBox.Show(message, ex.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -135,13 +139,13 @@ namespace RabbitMQ_SendClient.UI
             {
                 cboMessageType.Items.Add("JSON");
                 cboMessageType.Items.Add("Plain-Text");
-                //cboMessageType.Items.Add("MODBUS");
             }
             catch (Exception ex)
             {
                 var sf = StackTrace.GetFrame(0);
-                SystemVariables.LogError(ex, SystemVariables.LogLevel.Critical, sf);
+                LogError(ex, LogLevel.Critical, sf);
             }
+            cboMessageType.SelectedIndex = 0;
         }
 
         /// <summary>
@@ -154,17 +158,20 @@ namespace RabbitMQ_SendClient.UI
             //Prevents actions from occuring during initialization
             if (!IsInitialized) return;
 
-            txtReadTimeout.Text = ((int)sldReadTimeout.Value).ToString();
+            txtReadTimeout.Text = ((int) sldReadTimeout.Value).ToString();
         }
 
         private void OK_Click(object sender, RoutedEventArgs e)
         {
+            SerialCommunications[SerialPortNum].UidGuid = UidGuid;
             SetFlowControl();
             SetDataBits();
             SetReadTimeout();
             SetBaudRate();
             SetParity();
             MaximumErrors();
+            SetMessageType();
+
             DialogResult = true;
             Close();
         }
@@ -180,7 +187,7 @@ namespace RabbitMQ_SendClient.UI
         /// </summary>
         private void SetDataBits()
         {
-            SystemVariables.SerialCommunications[SerialPortNum].SerialBits =
+            SerialCommunications[SerialPortNum].SerialBits =
                 int.Parse(cboDataBits.Items[cboDataBits.SelectedIndex].ToString());
         }
 
@@ -190,25 +197,25 @@ namespace RabbitMQ_SendClient.UI
         private void SetFlowControl()
         {
             var flowControl =
-                (Handshake)Enum.Parse(typeof(Handshake), cboFlowControl.Items[cboFlowControl.SelectedIndex].ToString());
+                (Handshake) Enum.Parse(typeof(Handshake), cboFlowControl.Items[cboFlowControl.SelectedIndex].ToString());
 
-            SystemVariables.SerialCommunications[SerialPortNum].FlowControl = flowControl;
+            SerialCommunications[SerialPortNum].FlowControl = flowControl;
             switch (flowControl)
             {
                 case Handshake.None:
-                    SystemVariables.SerialCommunications[SerialPortNum].RtsEnable = false;
+                    SerialCommunications[SerialPortNum].RtsEnable = false;
                     break;
 
                 case Handshake.RequestToSend:
-                    SystemVariables.SerialCommunications[SerialPortNum].RtsEnable = true;
+                    SerialCommunications[SerialPortNum].RtsEnable = true;
                     break;
 
                 case Handshake.RequestToSendXOnXOff:
-                    SystemVariables.SerialCommunications[SerialPortNum].RtsEnable = true;
+                    SerialCommunications[SerialPortNum].RtsEnable = true;
                     break;
 
                 case Handshake.XOnXOff:
-                    SystemVariables.SerialCommunications[SerialPortNum].RtsEnable = true;
+                    SerialCommunications[SerialPortNum].RtsEnable = true;
                     break;
 
                 default:
@@ -219,19 +226,20 @@ namespace RabbitMQ_SendClient.UI
 
         private void SetBaudRate()
         {
-            SystemVariables.SerialCommunications[SerialPortNum].BaudRate =
-                (SystemVariables.BaudRates)Enum.Parse(typeof(SystemVariables.BaudRates), cboBaudRate.Items[cboBaudRate.SelectedIndex].ToString());
+            SerialCommunications[SerialPortNum].BaudRate =
+                (BaudRates)
+                Enum.Parse(typeof(BaudRates), cboBaudRate.Items[cboBaudRate.SelectedIndex].ToString());
         }
 
         private void SetMessageType()
         {
-            SystemVariables.SerialCommunications[SerialPortNum].MessageType = cboMessageType.Items[cboMessageType.SelectedIndex].ToString();
+            SerialCommunications[SerialPortNum].MessageType =
+                cboMessageType.Items[cboMessageType.SelectedIndex].ToString();
         }
 
         private void SetReadTimeout()
         {
-            SystemVariables.SerialCommunications[SerialPortNum].ReadTimeout = (int)sldReadTimeout.Value;
-            ;
+            SerialCommunications[SerialPortNum].ReadTimeout = (int) sldReadTimeout.Value;
         }
 
         private void SetParity()
@@ -241,38 +249,40 @@ namespace RabbitMQ_SendClient.UI
             switch (parity)
             {
                 case "Odd":
-                    SystemVariables.SerialCommunications[SerialPortNum].SerialParity = Parity.Odd;
+                    SerialCommunications[SerialPortNum].SerialParity = Parity.Odd;
                     break;
 
                 case "Even":
-                    SystemVariables.SerialCommunications[SerialPortNum].SerialParity = Parity.Even;
+                    SerialCommunications[SerialPortNum].SerialParity = Parity.Even;
                     break;
 
                 case "Space":
-                    SystemVariables.SerialCommunications[SerialPortNum].SerialParity = Parity.Space;
+                    SerialCommunications[SerialPortNum].SerialParity = Parity.Space;
                     break;
 
                 case "Mark":
-                    SystemVariables.SerialCommunications[SerialPortNum].SerialParity = Parity.Mark;
+                    SerialCommunications[SerialPortNum].SerialParity = Parity.Mark;
                     break;
 
+                // ReSharper disable once RedundantCaseLabel
                 case "None":
+                // ReSharper disable once RedundantCaseLabel
                 case null:
                 default:
-                    SystemVariables.SerialCommunications[SerialPortNum].SerialParity = Parity.None;
+                    SerialCommunications[SerialPortNum].SerialParity = Parity.None;
                     break;
             }
         }
 
         private void MaximumErrors()
         {
-            SystemVariables.SerialCommunications[SerialPortNum].MaximumErrors = (int)sldMaxmumErrors.Value;
+            SerialCommunications[SerialPortNum].MaximumErrors = (int) sldMaxmumErrors.Value;
         }
 
         private void SldMaximumErrors_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (!IsInitialized) return;
-            txtMaximumErrors.Text = ((int)sldMaxmumErrors.Value).ToString();
+            txtMaximumErrors.Text = ((int) sldMaxmumErrors.Value).ToString();
         }
 
         private void SerialPortSetup_OnKeyDown(object sender, KeyEventArgs e)

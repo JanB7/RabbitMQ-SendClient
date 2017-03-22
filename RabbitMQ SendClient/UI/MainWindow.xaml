@@ -65,14 +65,6 @@
                                     <Setter Property="VerticalAlignment" Value="Stretch" />
                                 </Style>
                             </dv:Chart.PlotAreaStyle>
-                            <dv:LineSeries Title="Title" Name="LineSeries1"
-                                                   ItemsSource="{Binding Points}"
-                                                   IndependentValueBinding="{Binding Key}"
-                                                   DependentValueBinding="{Binding Value}">
-                                <dv:LineSeries.DependentRangeAxis>
-                                    <dv:DateTimeAxis Orientation="X" Title="Time" ShowGridLines="True" />
-                                </dv:LineSeries.DependentRangeAxis>
-                            </dv:LineSeries>
                         </dv:Chart>
                     </Grid>
                 </UniformGrid>

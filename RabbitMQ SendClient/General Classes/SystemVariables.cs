@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Ports;
+using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Windows;
@@ -47,8 +48,8 @@ namespace RabbitMQ_SendClient
             None = 0
         }
 
-        private static Process withEventsField_Process;
-        private static bool checkProcessIsRunning;
+        private static Process _withEventsFieldProcess;
+        private static bool _checkProcessIsRunning;
 
         /// <summary>
         ///     Array for Serial Port Configurations
@@ -65,16 +66,18 @@ namespace RabbitMQ_SendClient
         /// </summary>
         public static RabbitServerInformation[] ServerInformation = new RabbitServerInformation[0];
 
-        private static Process checkProcess
+        public static string[] FriendlyName = new string[0];
+
+        private static Process CheckProcess
         {
-            get { return withEventsField_Process; }
+            get { return _withEventsFieldProcess; }
             set
             {
-                if (withEventsField_Process != null)
-                    withEventsField_Process.Exited -= checkProcess_Exited;
-                withEventsField_Process = value;
-                if (withEventsField_Process != null)
-                    withEventsField_Process.Exited += checkProcess_Exited;
+                if (_withEventsFieldProcess != null)
+                    _withEventsFieldProcess.Exited -= checkProcess_Exited;
+                _withEventsFieldProcess = value;
+                if (_withEventsFieldProcess != null)
+                    _withEventsFieldProcess.Exited += checkProcess_Exited;
             }
         }
 
@@ -104,9 +107,78 @@ namespace RabbitMQ_SendClient
             {1013, "RabbitMQ Exception - Wire Formatting"}
         };
 
+        public static int GetIndex<T>(Guid uidGuid)
+        {
+            var index = 0;
+            var type = new Dictionary<Type, Action>
+            {
+                {
+                    typeof(SerialCommunication), () =>
+                    {
+                        foreach (var serialCommunication in SerialCommunications)
+                        {
+                            if (serialCommunication.UidGuid == uidGuid)
+                                break;
+                            index++;
+                        }
+                        if (index > SerialCommunications.Length) index = -1;
+                    }
+                },
+                {
+                    typeof(RabbitServerInformation), () =>
+                    {
+                        foreach (var servInfo in ServerInformation)
+                        {
+                            if (servInfo.UidGuid == uidGuid)
+                                break;
+                            index++;
+                        }
+                        if (index > ServerInformation.Length - 1) index = -1;
+                    }
+                },
+                {
+                    typeof(JsonObject), () =>
+                    {
+                        foreach (var jsonObject in JsonObjects)
+                        {
+                            if (jsonObject.UidGuid == uidGuid)
+                                break;
+                            index++;
+                        }
+                        if (index > JsonObjects.Length - 1) index = -1;
+                    }
+                },
+                {
+                    typeof(MainWindow.CheckListItem), () =>
+                    {
+                        foreach (var checkListItem in MainWindow.AvailableModbusSerialPorts)
+                        {
+                            if (checkListItem.Uid == uidGuid.ToString())
+                                break;
+                            index++;
+                        }
+                        if (index > MainWindow.AvailableModbusSerialPorts.Count - 1)
+                            index = 0;
+                        foreach (var checkListItem in MainWindow.AvailableSerialPorts)
+                        {
+                            if (checkListItem.Uid == uidGuid.ToString())
+                                break;
+                            index++;
+                        }
+                        if (index > MainWindow.AvailableModbusSerialPorts.Count - 1)
+                            index = -1;
+                    }
+                }
+            };
+
+            type[typeof(T)]();
+
+            return index;
+        }
+
         private static void checkProcess_Exited(object sender, EventArgs e)
         {
-            checkProcessIsRunning = false;
+            _checkProcessIsRunning = false;
         }
 
         /// <summary>
@@ -129,49 +201,68 @@ namespace RabbitMQ_SendClient
         }
 
         // ReSharper disable once InconsistentNaming
-        public static bool GetXML(int index)
+        public static void GetXML(string friendly, Guid uidGuid)
         {
             var docLocation = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             docLocation += @"\RabbitMQ Client\Settings.xml";
 
+            var doc = XDocument.Load(docLocation);
+
+            if (doc.Root != null)
+                foreach (var element in doc.Root.Elements("FriendlyName"))
+                {
+                    if ((string) element.Attribute("FriendlyName") == friendly) continue;
+                    var o = doc.Root.Element("variables");
+                    var index = 0;
+                    JsonObjects[JsonObjects.Length - 1].DeviceName = friendly;
+                    JsonObjects[JsonObjects.Length - 1].Message = new Messages[o.Elements("Variable").Count()];
+                    JsonObjects[JsonObjects.Length - 1].UidGuid = uidGuid;
+                    JsonObjects[JsonObjects.Length - 1].MessageType =
+                        SerialCommunications[GetIndex<SerialCommunication>(uidGuid)].MessageType;
+                    foreach (var xElement in o.Elements("Variable"))
+                    {
+                        var type = (string) xElement.Element("type");
+                        var jsonObject = JsonObjects[JsonObjects.Length - 1].Message[index];
+
+                        jsonObject = new Messages();
+
+                        var xAttribute = (string) xElement.Element("name");
+                        jsonObject.Name = xAttribute;
+
+                        jsonObject.Value = GenerateNull(type);
+
+                        JsonObjects[JsonObjects.Length - 1].Message[index] = jsonObject;
+                        index++;
+                    }
+                }
+        }
+
+        public static bool GenerateFriendlies()
+        {
+            var docLocation = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            docLocation += @"\RabbitMQ Client\Settings.xml";
+
+            var doc = XDocument.Load(docLocation);
+
             if (File.Exists(docLocation))
                 try
                 {
-                    var doc = XDocument.Load(docLocation);
-
-                    if (doc.Root != null)
+                    if (doc.Root == null) return CreateFileAndMonitor();
+                    foreach (var xElement in doc.Root.Elements("FriendlyName"))
                     {
-                        var ns = doc.Root.GetDefaultNamespace();
-                        foreach (var element in doc.Root.Elements(ns + "FriendlyName"))
-                        {
-                            JsonObjects[index].DeviceName = (string) element.Attribute("FriendlyName");
-
-                            var o = doc.Root.Element(ns + "variables");
-                            if (o == null) continue;
-                            foreach (var xElement in o.Elements(ns + "Variable"))
-                            {
-                                var type = (string) xElement.Attribute("Variable");
-                                if (JsonObjects[index].Message == null)
-                                    JsonObjects[index].Message = new Messages[0];
-                                var jsonObject = JsonObjects[index].Message;
-                                Array.Resize(ref jsonObject, jsonObject.Length + 1);
-                                jsonObject[jsonObject.Length - 1] = new Messages();
-                                jsonObject[jsonObject.Length - 1].Name = (string) xElement.Attribute("name");
-                                jsonObject[jsonObject.Length - 1].Value = GenerateNull(type);
-                                JsonObjects[jsonObject.Length - 1].Message = jsonObject;
-                            }
-                        }
+                        Array.Resize(ref FriendlyName, FriendlyName.Length + 1);
+                        FriendlyName[FriendlyName.Length - 1] = xElement.Value;
                     }
                     return true;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    return CreateFileAndMonitor(index);
+                    return CreateFileAndMonitor();
                 }
-            return CreateFileAndMonitor(index);
+            return CreateFileAndMonitor();
         }
 
-        private static bool CreateFileAndMonitor(int index)
+        private static bool CreateFileAndMonitor()
         {
             var docLocation = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             docLocation += @"\RabbitMQ Client\Settings.xml";
@@ -204,12 +295,12 @@ namespace RabbitMQ_SendClient
             for (var i = 0; i < docInformation.Length; i++)
                 docContent[i] = (byte) docInformation[i];
             var prehash = hashMe.ComputeHash(docContent);
-            checkProcess = Process.Start(docLocation);
-            if (checkProcess != null)
+            CheckProcess = Process.Start(docLocation);
+            if (CheckProcess != null)
             {
-                checkProcess.EnableRaisingEvents = true;
-                checkProcessIsRunning = true;
-                while (checkProcessIsRunning)
+                CheckProcess.EnableRaisingEvents = true;
+                _checkProcessIsRunning = true;
+                while (_checkProcessIsRunning)
                 {
                     //wait
                 }
@@ -219,7 +310,7 @@ namespace RabbitMQ_SendClient
                 return false;
             }
 
-            var updated = GetXML(index);
+            var updated = GenerateFriendlies();
             if (!updated) return false;
 
             docInformation = File.ReadAllText(docLocation);
@@ -234,16 +325,13 @@ namespace RabbitMQ_SendClient
         private static dynamic GenerateNull(string type)
         {
             if (type == null)
-            {
                 return string.Empty;
-            }
             const string nullString = "0.0";
             switch (type.ToLower())
             {
                 case "bool":
                     return false;
 
-                
                 case "byte":
                     return byte.Parse(nullString);
 
@@ -280,84 +368,8 @@ namespace RabbitMQ_SendClient
                 case "ushort":
                     return ushort.Parse(nullString);
 
-                case "string":
-                default:
+                default: //Inlude Case String
                     return string.Empty;
-            }
-        }
-
-        /// <summary>
-        ///     Setup Serial Port for communication
-        /// </summary>
-        /// <param name="ports">COM Port Number</param>
-        public static void SetupSerial(string[] ports)
-        {
-            foreach (var port in ports)
-            {
-                Array.Resize(ref SerialPorts, SerialPorts.Length + 1);
-                SerialPorts[SerialPorts.Length - 1] = new SerialPort(port);
-
-                Array.Resize(ref SerialCommunications, SerialCommunications.Length + 1);
-                SerialCommunications[SerialCommunications.Length - 1] = new SerialCommunication
-                {
-                    BaudRate = BaudRates.BaudRate9600,
-                    ComPort = port,
-                    FlowControl = Handshake.None,
-                    ReadTimeout = 1000,
-                    RtsEnable = false,
-                    SerialBits = 8,
-                    SerialParity = Parity.None,
-                    SerialStopBits = StopBits.One
-                };
-
-                Array.Resize(ref ServerInformation, ServerInformation.Length + 1);
-                ServerInformation[ServerInformation.Length - 1] = new RabbitServerInformation
-                {
-                    AutoRecovery = true,
-                    ServerAddress = IPAddress.Parse("130.113.130.194"),
-                    ExchangeName = "Default",
-                    ChannelName = "Default",
-                    UserName = "User",
-                    Password = "Factory1",
-                    VirtualHost = "default",
-                    ServerPort = 5672,
-                    ServerHeartbeat = 30,
-                    Encoding = "UTF8",
-                    MessageType = "Serial",
-                    MessageFormat = "jsonObject",
-                    NetworkRecoveryInterval = 5
-                };
-
-                var factoryChannel = FactoryChannel;
-                if (factoryChannel != null)
-                {
-                    Array.Resize(ref factoryChannel, factoryChannel.Length + 1);
-                    factoryChannel = new IModel[factoryChannel.Length - 1];
-                    FactoryChannel = factoryChannel;
-                }
-
-                var factoryConnection = FactoryConnection;
-                if (factoryConnection != null)
-                {
-                    Array.Resize(ref factoryConnection, factoryConnection.Length + 1);
-                    factoryConnection = new IConnection[factoryConnection.Length - 1];
-                    FactoryConnection = factoryConnection;
-                }
-
-                var factory = Factory;
-                if (factory != null)
-                {
-                    Array.Resize(ref factory, factory.Length + 1);
-                    factory = new IConnectionFactory[factory.Length - 1];
-                    Factory = factory;
-                }
-
-                var jsonObject = JsonObjects;
-                if (jsonObject != null)
-                {
-                    Array.Resize(ref jsonObject, JsonObjects.Length + 1);
-                    JsonObjects = jsonObject;
-                }
             }
         }
 
@@ -379,8 +391,7 @@ namespace RabbitMQ_SendClient
             }
             finally
             {
-                if (stream != null)
-                    stream.Close();
+                stream?.Close();
             }
 
             //file is not locked
@@ -392,6 +403,7 @@ namespace RabbitMQ_SendClient
         /// </summary>
         public struct JsonObject
         {
+            public Guid UidGuid { get; set; }
             public string DeviceName { get; set; }
             public DateTime MessageDateTime { get; set; }
             public string MessageType { get; set; }
@@ -403,6 +415,7 @@ namespace RabbitMQ_SendClient
         /// </summary>
         public struct RabbitServerInformation
         {
+            public Guid UidGuid { get; set; }
             public bool AutoRecovery { get; set; }
             public string ChannelName { get; set; }
             public string Encoding { get; set; }
@@ -420,6 +433,7 @@ namespace RabbitMQ_SendClient
 
         public struct SerialCommunication
         {
+            public Guid UidGuid { get; set; }
             public BaudRates BaudRate { get; set; }
             public string ComPort { get; set; }
             public Handshake FlowControl { get; set; }
@@ -435,7 +449,7 @@ namespace RabbitMQ_SendClient
 
             public string MessageType { get; set; }
 
-            public double UCL { get; set; }
+            public double Ucl { get; set; }
 
             private double[] _x;
 

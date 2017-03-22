@@ -10,7 +10,7 @@
               <xs:element maxOccurs="unbounded" name="Variable" minOccurs="1">
                 <xs:complexType>
                   <xs:sequence>
-                    <xs:element name="name" type="xs:string" minOccurs="1"/>
+                    <xs:element name="name" type="xs:string" minOccurs="1" />
                     <xs:element name="type" type="xs:string" minOccurs="1" />
                   </xs:sequence>
                 </xs:complexType>

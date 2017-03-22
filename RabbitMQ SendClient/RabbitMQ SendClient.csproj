@@ -100,6 +100,9 @@
       <DependentUpon>SetupServer.xaml</DependentUpon>
     </Compile>
     <Compile Include="General Classes\SystemVariables.cs" />
+    <Compile Include="UI\VariableConfigure.xaml.cs">
+      <DependentUpon>VariableConfigure.xaml</DependentUpon>
+    </Compile>
     <Page Include="UI\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -117,6 +120,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UI\SetupServer.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\VariableConfigure.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -166,8 +173,6 @@
       <DependentUpon>DataReceived.mdf</DependentUpon>
     </Content>
     <None Include="Resources\defaultXML.txt" />
-    <Resource Include="Resources\defaultXML.xml" />
-    <Resource Include="Resources\Settings.xml" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">

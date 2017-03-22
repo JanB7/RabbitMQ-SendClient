@@ -19,8 +19,9 @@ namespace RabbitMQ_SendClient
     {
         private static readonly StackTrace StackTracing = new StackTrace();
 
-        public SetupServer()
+        public SetupServer(Guid uidGuid)
         {
+            Index = GetIndex<RabbitServerInformation>(uidGuid);
             InitializeComponent();
             InitialzeServerSettings();
         }
@@ -53,23 +54,21 @@ namespace RabbitMQ_SendClient
             }
 
             //Sets Information for Server Configuration
-            ServerInformation[Index].ServerAddress = IPAddress.Parse(txtServerAddress.Text);
-            ServerInformation[Index].UserName = txtUserName.Text;
-            ServerInformation[Index].Password = pwdPassword.Password;
-            ServerInformation[Index].ServerPort = int.Parse(txtServerPort.Text);
-            ServerInformation[Index].VirtualHost = txtVirtualHost.Text;
-            ServerInformation[Index].ExchangeName = txtExchangeName.Text;
-            ServerInformation[Index].ChannelName = txtChannelName.Text;
-            ServerInformation[Index].ServerHeartbeat = (int) sldHeartBeat.Value;
-            ServerInformation[Index].NetworkRecoveryInterval = (int) sldNetworokRecInt.Value;
+            ServerInformation[ServerInformation.Length - 1].ServerAddress = IPAddress.Parse(txtServerAddress.Text);
+            ServerInformation[ServerInformation.Length - 1].UserName = txtUserName.Text;
+            ServerInformation[ServerInformation.Length - 1].Password = pwdPassword.Password;
+            ServerInformation[ServerInformation.Length - 1].ServerPort = int.Parse(txtServerPort.Text);
+            ServerInformation[ServerInformation.Length - 1].VirtualHost = txtVirtualHost.Text;
+            ServerInformation[ServerInformation.Length - 1].ExchangeName = txtExchangeName.Text;
+            ServerInformation[ServerInformation.Length - 1].ChannelName = txtChannelName.Text;
+            ServerInformation[ServerInformation.Length - 1].ServerHeartbeat = (int) sldHeartBeat.Value;
+            ServerInformation[ServerInformation.Length - 1].NetworkRecoveryInterval = (int) sldNetworokRecInt.Value;
 
             //Creates Connection
             try
             {
-                Factory[Index] = SetupFactory(Index);
-                FactoryConnection[Index] = Factory[Index].CreateConnection();
-                FactoryChannel[Index] = FactoryConnection[Index].CreateModel();
-                FactoryChannel[Index].ConfirmSelect();
+                StartServer();
+                FactoryChannel[FactoryChannel.Length - 1].ConfirmSelect();
             }
             catch (Exception ex)
             {
@@ -88,7 +87,8 @@ namespace RabbitMQ_SendClient
 
         private void btnReset_Click(object sender, RoutedEventArgs e)
         {
-            Dispatcher.Invoke((MethodInvoker) InitialzeServerSettings);
+            //Dispatcher.Invoke((MethodInvoker) InitialzeServerSettings);
+            InitialzeServerSettings();
         }
 
         /// <summary>
@@ -150,7 +150,7 @@ namespace RabbitMQ_SendClient
             catch (Exception ex)
             {
                 var sf = StackTracing.GetFrame(0);
-                LogError(ex, SystemVariables.LogLevel.Critical, sf);
+                LogError(ex, LogLevel.Critical, sf);
             }
         }
 
@@ -184,7 +184,7 @@ namespace RabbitMQ_SendClient
             catch (Exception ex)
             {
                 var sf = StackTracing.GetFrame(0);
-                LogError(ex, SystemVariables.LogLevel.Critical, sf);
+                LogError(ex, LogLevel.Critical, sf);
             }
         }
 
@@ -255,7 +255,7 @@ namespace RabbitMQ_SendClient
             catch (Exception ex)
             {
                 var sf = StackTracing.GetFrame(0);
-                LogError(ex, SystemVariables.LogLevel.Critical, sf);
+                LogError(ex, LogLevel.Critical, sf);
             }
         }
 

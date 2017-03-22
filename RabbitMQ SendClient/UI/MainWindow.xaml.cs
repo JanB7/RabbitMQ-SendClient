@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Data;
+using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO.Ports;
 using System.Text;
-using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.DataVisualization.Charting;
@@ -16,19 +17,14 @@ using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 using RabbitMQ_SendClient.UI;
+using static RabbitMQ_SendClient.SystemVariables;
+using static RabbitMQ_SendClient.GlobalSerialFunctions;
+using static RabbitMQ_SendClient.GlobalRabbitMqServerFunctions;
 using CheckBox = System.Windows.Controls.CheckBox;
 using MessageBox = System.Windows.Forms.MessageBox;
 
 namespace RabbitMQ_SendClient
 {
-    public class CheckListItem
-    {
-        public string Content { get; set; }
-        public bool IsChecked { get; set; }
-        public string Name { get; set; }
-        public string Uid { get; set; }
-    }
-
     /// <summary>
     ///     Main UI for RabbitMQ Client
     /// </summary>
@@ -37,63 +33,48 @@ namespace RabbitMQ_SendClient
         /// <summary>
         ///     RabbitMQ Server Information for setup
         /// </summary>
-        private static readonly ObservableCollection<CheckListItem> AvailableModbusSerialPorts =
+        protected internal static readonly ObservableCollection<CheckListItem> AvailableModbusSerialPorts =
             new ObservableCollection<CheckListItem>();
 
-        private static readonly ObservableCollection<CheckListItem> AvailableSerialPorts =
+        protected internal static readonly ObservableCollection<CheckListItem> AvailableSerialPorts =
             new ObservableCollection<CheckListItem>();
 
-        private static readonly string DeviceName = Environment.MachineName;
         private static readonly StackTrace StackTracing = new StackTrace();
         private readonly DispatcherTimer _systemTimer = new DispatcherTimer();
-        private int[] _messagesPerSecond = new int[0];
 
-        private ObservableCollection<KeyValuePair<string, int>>[] _messagesSentDataPair =
-            new ObservableCollection<KeyValuePair<string, int>>[SerialPort.GetPortNames().Length];
+        private DateTime _previousTime;
 
-        private double _timeElapsed;
+        protected internal ObservableCollection<KeyValuePair<string, double>>[] MessagesSentDataPair =
+            new ObservableCollection<KeyValuePair<string, double>>[0];
 
         /// <summary>
         ///     Mainline Executable to the RabbitMQ Client
         /// </summary>
-        
         public MainWindow()
         {
             InitializeSerialPortCheckBoxes();
             InitializeComponent();
 
-            SystemVariables.SetupSerial(SerialPort.GetPortNames());
+            GetFriendlyDeviceNames();
 
             InitializeSerialPorts();
             InitializeHeartBeatTimer();
 
-            for (var index = 0; index < AvailableSerialPorts.Count; index++)
-            {
-                var loaded = SystemVariables.GetXML(index);
-                if (!loaded)
-                {
-                    MessageBox.Show(
-                        Properties.Resources.MainWindow_MainWindow_FatalError_ConfigurationFile,
-                        @"Fatal Error - Configuration Failure", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    CloseSafely();
-                    Close();
-                    break;
-                }
-                Array.Resize(ref _messagesPerSecond, _messagesPerSecond.Length + 1);
-                _messagesPerSecond[_messagesPerSecond.Length - 1] = 0;
-            }
-            
             _systemTimer.Start();
         }
+
+        public static string DeviceName { get; } = Environment.MachineName;
 
         /// <summary>
         ///     Close all open channels and serial ports before system closing
         /// </summary>
         public void Dispose()
         {
-            foreach (var serialPort in SystemVariables.SerialPorts)
+            foreach
+                (var serialPort in SerialPorts)
             {
-                if (serialPort.IsOpen)
+                if
+                    (serialPort.IsOpen)
                     while (!serialPort.IsOpen)
                         serialPort.Close();
 
@@ -105,108 +86,73 @@ namespace RabbitMQ_SendClient
                 _systemTimer.Stop();
         }
 
-        public void ConvertMessage(string message, int index)
+        private void GetFriendlyDeviceNames()
         {
+            var loaded = GenerateFriendlies();
 
-            var jsonMessage = SystemVariables.JsonObjects[index];
-            jsonMessage.MessageDateTime = DateTime.Now;
-            jsonMessage.MessageType = SystemVariables.ServerInformation[index].MessageFormat;
-            if (jsonMessage.DeviceName == null) jsonMessage.DeviceName = DeviceName;
-
-            try
+            if (!loaded)
             {
-                var indata = JsonConvert.DeserializeObject<SystemVariables.JsonObject>(message);
-
-
-                var delay = 0;
-                while (!PublishMessage(message, index))
-                {
-                    Thread.Sleep(10);
-                    delay += 10;
-
-                    if (delay == 1000)
-                        break;
-                }
-            }
-            catch (JsonException ex)
-            {
-                SystemVariables.SerialCommunications[index].InformationErrors++;
-                SystemVariables.SerialPorts[index].Close();
-
-                Thread.Sleep(10); //attempt resyncronization of data delivery.
-
-                SystemVariables.SerialPorts[index].Open();
-
-                if (GlobalSerialFunctions.OutOfControl(index)) //Satistically determined to be out of bounds. Close serial ports
-                {
-                    //Log Message
-                    CloseSerialPortUnexpectedly(index);
-                    var sf = StackTracing.GetFrame(0);
-                    SystemVariables.LogError(ex, SystemVariables.LogLevel.Critical, sf);
-                    MessageBox.Show(
-                        Properties.Resources.MainWindow_DataReceivedHandler_ + AvailableSerialPorts[index].Content,
-                        Properties.Resources.MainWindow_DataReceivedHandler_JSON_Message_Error, MessageBoxButtons.OK,
-                        MessageBoxIcon.Exclamation);
-                }
+                MessageBox.Show(
+                    Properties.Resources.MainWindow_MainWindow_FatalError_ConfigurationFile,
+                    @"Fatal Error - Configuration Failure", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CloseSafely();
+                Close();
             }
         }
 
         /// <summary>
-        ///     Publishes Message to RabbitMQ server using JSON format
+        ///     Publishes Message to RabbitMQ
         /// </summary>
-        /// <param name="message">JSON type Message. HAS TO BE PREFORMATTED</param>
+        /// <param name="message">JSON/Plain-Text Message. HAS TO BE PREFORMATTED for Json Serialization</param>
         /// <param name="index">Index for Dynamic Server Allocation</param>
+        /// <param name="uidGuid"></param>
         /// <returns>Message success state</returns>
-        protected bool PublishMessage(SystemVariables.JsonObject message, int index)
+        protected bool PublishMessage(dynamic message, int index, Guid uidGuid)
         {
             try
             {
-                var output = JsonConvert.SerializeObject(message);
-                var deliveryTag = new ulong();
-                deliveryTag = 0;
-                var properties = SystemVariables.FactoryChannel[index].CreateBasicProperties();
-                properties.Persistent = true;
-                properties.ContentType = "jsonObject";
-                var address = new PublicationAddress(ExchangeType.Direct, SystemVariables.ServerInformation[index].ExchangeName, "");
-                SystemVariables.FactoryChannel[index].BasicPublish(address, properties, Encoding.UTF8.GetBytes(output));
-                SystemVariables.FactoryChannel[index].BasicAcks += (sender, args) =>
+                var properties = FactoryChannel[index].CreateBasicProperties();
+                string output = null;
+
+                //Create
+                var type = new Dictionary<Type, Action>
                 {
-                    deliveryTag = args.DeliveryTag;
-                } ;
-                return deliveryTag != 0;
-            }
-            catch (AlreadyClosedException ex)
-            {
-                var indexOf = ex.Message.IndexOf("\"", StringComparison.Ordinal);
-                var indexOff = ex.Message.IndexOf("\"", indexOf + 1, StringComparison.Ordinal);
-                var errmessage = ex.Message.Substring(indexOf + 1, indexOff - indexOf - 1);
-                MessageBox.Show(errmessage, @"Connection Already Closed", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                    {
+                        typeof(JsonObject), () =>
+                        {
+                            output = JsonConvert.SerializeObject(message);
+                            properties.ContentType = "jsonObject";
+                        }
+                    },
+                    {
+                        typeof(string), () =>
+                        {
+                            output = message;
+                            properties.ContentType = "plain-text";
+                        }
+                    }
+                };
 
-                return false;
-            }
-            catch (Exception ex)
-            {
-                //Log Message
-                var sf = StackTracing.GetFrame(0);
-                SystemVariables.LogError(ex, SystemVariables.LogLevel.Critical, sf);
-                return false;
-            }
-        }
-
-        
-
-        protected bool PublishMessage(string message, int index)
-        {
-
-            try
-            {
-                var properties = SystemVariables.FactoryChannel[index].CreateBasicProperties();
+                type[message](); //Assigns value to string
                 properties.Persistent = true;
-                properties.ContentType = "Plain-Text";
-                var address = new PublicationAddress(ExchangeType.Direct, SystemVariables.ServerInformation[index].ExchangeName, "");
 
-                SystemVariables.FactoryChannel[index].BasicPublish(address, properties, Encoding.UTF8.GetBytes(message));
+                var address = new PublicationAddress(ExchangeType.Direct,
+                    ServerInformation[index].ExchangeName, "");
+                FactoryChannel[index].BasicPublish(address, properties, Encoding.UTF8.GetBytes(output));
+                FactoryChannel[index].BasicAcks += (sender, args) =>
+                {
+                    const string connstring = @"Data Source=(LocalDB)\MSSQLLocalDB;Integrated Security=True";
 
+                    var sqlString = $"DELETE FROM dbo.DataControl WHERE DeliveryTag = {uidGuid}";
+
+                    using (var conn = new SqlConnection(connstring))
+                    {
+                        conn.Open();
+                        var command = new SqlCommand(sqlString, conn);
+                        command.ExecuteNonQuery();
+                        conn.Close();
+                    }
+                };
                 return true;
             }
             catch (AlreadyClosedException ex)
@@ -222,65 +168,60 @@ namespace RabbitMQ_SendClient
             {
                 //Log Message
                 var sf = StackTracing.GetFrame(0);
-                SystemVariables.LogError(ex, SystemVariables.LogLevel.Critical, sf);
+                LogError(ex, LogLevel.Critical, sf);
                 return false;
             }
         }
 
         /// <summary>
-        ///     Publishes Message to RabbitMQ server using Plain-Text format
-        /// </summary>
-        /// <param name="message">Plain-Text type Message. ANY FORMATTING ALLOWED</param>
-        /// <param name="index">Index for Dynamic Server Allocation</param>
-        /// <returns>Message success state</returns>
-        /// <summary>
         ///     Initializes serial port with settings from global settings file.
         ///     TODO write settings to file
         /// </summary>
         /// <param name="index">Index of Global Variable related to CheckboxList</param>
-        /// <returns></returns>
+        /// <returns>Success of the initiliation</returns>
         protected bool SerialPortInitialize(int index)
         {
             //Prevents actions from occuring during initialization
             if (!IsInitialized) return true;
             try
             {
-                if (SystemVariables.SerialPorts[index].IsOpen)
-                    while (SystemVariables.SerialPorts[index].IsOpen)
-                        SystemVariables.SerialPorts[index].Close();
+                if (SerialPorts[index].IsOpen)
+                    while (SerialPorts[index].IsOpen)
+                        SerialPorts[index].Close();
 
                 //Initializing the Serial Port
-                SystemVariables.SerialPorts[index].PortName = SystemVariables.SerialCommunications[index].ComPort;
-                SystemVariables.SerialPorts[index].BaudRate = (int) SystemVariables.SerialCommunications[index].BaudRate;
-                SystemVariables.SerialPorts[index].Parity = SystemVariables.SerialCommunications[index].SerialParity;
-                SystemVariables.SerialPorts[index].StopBits = SystemVariables.SerialCommunications[index].SerialStopBits;
-                SystemVariables.SerialPorts[index].DataBits = SystemVariables.SerialCommunications[index].SerialBits;
-                SystemVariables.SerialPorts[index].Handshake = SystemVariables.SerialCommunications[index].FlowControl;
-                SystemVariables.SerialPorts[index].RtsEnable = SystemVariables.SerialCommunications[index].RtsEnable;
-                SystemVariables.SerialPorts[index].ReadTimeout = SystemVariables.SerialCommunications[index].ReadTimeout;
-                SystemVariables.SerialPorts[index].DataReceived += DataReceivedHandler;
-                SystemVariables.SerialCommunications[index].X();
+                SerialPorts[index].PortName = SerialCommunications[index].ComPort;
+                SerialPorts[index].BaudRate = (int) SerialCommunications[index].BaudRate;
+                SerialPorts[index].Parity = SerialCommunications[index].SerialParity;
+                SerialPorts[index].StopBits = SerialCommunications[index].SerialStopBits;
+                SerialPorts[index].DataBits = SerialCommunications[index].SerialBits;
+                SerialPorts[index].Handshake = SerialCommunications[index].FlowControl;
+                SerialPorts[index].RtsEnable = SerialCommunications[index].RtsEnable;
+                SerialPorts[index].ReadTimeout = SerialCommunications[index].ReadTimeout;
+                SerialPorts[index].DataReceived += DataReceivedHandler;
+                SerialCommunications[index].X();
 
-                SystemVariables.SerialPorts[index].Open();
+                SerialPorts[index].Open();
 
                 return true;
             }
             catch (UnauthorizedAccessException ex)
             {
-                while (SystemVariables.SerialPorts[index].IsOpen) SystemVariables.SerialPorts[index].Close(); //Close port if opened
+                while (SerialPorts[index].IsOpen)
+                    SerialPorts[index].Close(); //Close port if opened
 
-                MessageBox.Show(@"Access to the port '" + SystemVariables.SerialPorts[index].PortName + @"' is denied.",
+                MessageBox.Show(@"Access to the port '" + SerialPorts[index].PortName + @"' is denied.",
                     @"Error opening Port",
                     MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 var sf = StackTracing.GetFrame(0);
-                SystemVariables.LogError(ex, SystemVariables.LogLevel.Critical, sf);
+                LogError(ex, LogLevel.Critical, sf);
 
                 return false;
             }
             catch (Exception ex)
             {
                 var sf = StackTracing.GetFrame(0);
-                SystemVariables.LogError(ex, SystemVariables.LogLevel.Critical, sf);
+                LogError(ex, LogLevel.Critical, sf);
 
                 return false;
             }
@@ -291,32 +232,13 @@ namespace RabbitMQ_SendClient
             TabMessageSettings.IsEnabled = false;
             _systemTimer.Stop();
 
-            foreach (var port in SystemVariables.SerialPorts)
+            foreach (var port in SerialPorts)
                 while (port.IsOpen)
                     port.Close();
 
-            foreach (var model in SystemVariables.FactoryChannel)
+            foreach (var model in FactoryChannel)
                 while (model.IsOpen)
                     model.Close();
-        }
-
-        /// <summary>
-        ///     Proivdes a threadsafe way to close the serial ports
-        /// </summary>
-        /// <param name="index">Index for Dynamic Server Allocation</param>
-        private void CloseSerialPortUnexpectedly(int index)
-        {
-            if (!SystemVariables.SerialPorts[index].IsOpen) return;
-            while (SystemVariables.SerialPorts[index].IsOpen)
-                SystemVariables.SerialPorts[index].Close();
-
-            Dispatcher.Invoke((MethodInvoker) delegate
-            {
-                var checkList = AvailableSerialPorts[index];
-                checkList.IsChecked = false;
-                AvailableSerialPorts.RemoveAt(index);
-                AvailableSerialPorts.Insert(index, checkList);
-            });
         }
 
         /// <summary>
@@ -338,21 +260,66 @@ namespace RabbitMQ_SendClient
                     if (serialPort.Content == sp.PortName)
                     {
                         index = i;
-
                         break;
                     }
                     i++;
                 }
 
-                SystemVariables.SerialCommunications[index].TotalInformationReceived++;
-                GlobalSerialFunctions.CalculateNpChart(index);
-                UpdateGraph(index, AvailableSerialPorts);
+                SerialCommunications[index].TotalInformationReceived++;
+                CalculateNpChart(index);
+                UpdateGraph(index, nameof(AvailableSerialPorts));
+
+                var datInfo = new DataBaseInfo
+                {
+                    Message = spdata,
+                    TimeStamp = DateTime.Now,
+                    FriendlyName = FriendlyName[index],
+                    Channel = ServerInformation[index].ChannelName,
+                    Exchange = ServerInformation[index].ExchangeName,
+                    ServerAddress = ServerInformation[index].ServerAddress.ToString(),
+                    DeliveryTag = Guid.NewGuid(),
+                    DeviceType = sp.PortName
+                };
+
+                var sqlString =
+                    "INSERT dbo.DataControl (Message,TimeStamp,FriendlyName,Channel,Exchange,ServerAddress,DeliveryTag,DeviceType) " +
+                    $"VALUES ('{datInfo.Message}','{datInfo.TimeStamp}','{datInfo.FriendlyName}','{datInfo.Channel}','{datInfo.Exchange}'" +
+                    $",'{datInfo.ServerAddress}','{datInfo.DeliveryTag}','{datInfo.DeviceType}')";
+
+                const string connstring = @"Data Source=(LocalDB)\MSSQLLocalDB;Integrated Security=True";
+
+                using (var conn = new SqlConnection(connstring))
+                {
+                    conn.Open();
+                    var command = new SqlCommand(sqlString, conn)
+                    {
+                        CommandType = CommandType.Text
+                    };
+                    command.ExecuteNonQuery();
+                    conn.Close();
+                }
+
+                try
+                {
+                    var indata = JsonConvert.DeserializeObject<JsonObject>(datInfo.Message);
+                    var workingThread = new BackgroundWorker();
+                    workingThread.DoWork += delegate
+                    {
+                        while (PublishMessage(indata, index, Guid.Parse(AvailableSerialPorts[index].Uid)))
+                        {
+                            //do nothing
+                        }
+                    };
+                }
+                catch (JsonException)
+                {
+                }
             }
             catch (Exception ex)
             {
                 //Log Message
                 var sf = StackTracing.GetFrame(0);
-                SystemVariables.LogError(ex, SystemVariables.LogLevel.Critical, sf);
+                LogError(ex, LogLevel.Critical, sf);
             }
         }
 
@@ -376,7 +343,7 @@ namespace RabbitMQ_SendClient
         /// <summary>
         ///     Initializes SerialPort checkboxes for both Serial and ModBus communication
         /// </summary>
-        private void InitializeSerialPortCheckBoxes()
+        private static void InitializeSerialPortCheckBoxes()
         {
             AvailableSerialPorts.Clear();
             AvailableModbusSerialPorts.Clear();
@@ -389,7 +356,7 @@ namespace RabbitMQ_SendClient
                     Content = ports[i],
                     IsChecked = false,
                     Name = ports[i] + "Serial",
-                    Uid = i + ":" + Guid.NewGuid()
+                    Uid = Guid.NewGuid().ToString()
                 };
                 AvailableSerialPorts.Add(serialPortCheck);
 
@@ -398,7 +365,7 @@ namespace RabbitMQ_SendClient
                     Content = ports[i],
                     IsChecked = false,
                     Name = ports[i] + "Modbus",
-                    Uid = i + ":" + Guid.NewGuid()
+                    Uid = Guid.NewGuid().ToString()
                 };
                 AvailableModbusSerialPorts.Add(serialModbusCheck);
             }
@@ -437,11 +404,11 @@ namespace RabbitMQ_SendClient
         /// <param name="e"></param>
         private void MainWindow_OnClosing(object sender, CancelEventArgs e)
         {
-            foreach (var serialPort in SystemVariables.SerialPorts)
+            foreach (var serialPort in SerialPorts)
                 if (serialPort.IsOpen)
                     serialPort.Close();
 
-            foreach (var model in SystemVariables.FactoryChannel)
+            foreach (var model in FactoryChannel)
                 while (model.IsOpen)
                     model.Close();
         }
@@ -458,48 +425,19 @@ namespace RabbitMQ_SendClient
             tbmarquee.BeginAnimation(Canvas.LeftProperty, doubleAnimation);
         }
 
-        private void ResizeArrays()
+        /// <summary>
+        ///     TODO allow for dynamic updates of serial ports in serial port selection while keeping current states
+        /// </summary>
+        private static void ResizeSerialSelection()
         {
-            var ports = SerialPort.GetPortNames();
-            var newLenght = ports.Length;
-            for (var i = 0; i < SerialPort.GetPortNames().Length; i++)
-                if (AvailableSerialPorts[i].Content != ports[i])
+            var index = 0;
+            foreach (var portName in SerialPort.GetPortNames())
+            {
+                if (portName == AvailableSerialPorts[index].Content)
                 {
-                    var serialPortCheck = new CheckListItem
-                    {
-                        Content = ports[i],
-                        IsChecked = false,
-                        Name = ports[i] + "Serial",
-                        Uid = i + ":" + Guid.NewGuid()
-                    };
-                    AvailableSerialPorts.Insert(i, serialPortCheck);
-
-                    var serialModbusCheck = new CheckListItem
-                    {
-                        Content = ports[i],
-                        IsChecked = false,
-                        Name = ports[i] + "Modbus",
-                        Uid = i + ":" + Guid.NewGuid()
-                    };
-                    AvailableSerialPorts.Insert(i, serialModbusCheck);
-
-                    Array.Resize(ref _messagesSentDataPair, newLenght);
-                    Array.Resize(ref _messagesPerSecond, newLenght);
-                    Array.Resize(ref SystemVariables.SerialPorts, newLenght);
-                    Array.Resize(ref SystemVariables.SerialCommunications, newLenght);
-                    Array.Resize(ref SystemVariables.ServerInformation, newLenght);
-                    var factory = SystemVariables.Factory;
-                    Array.Resize(ref factory, newLenght);
-                    SystemVariables.Factory = factory;
-
-                    var connection = SystemVariables.FactoryConnection;
-                    Array.Resize(ref connection, newLenght);
-                    SystemVariables.FactoryConnection = connection;
-
-                    var channel = SystemVariables.FactoryChannel;
-                    Array.Resize(ref channel, newLenght);
-                    SystemVariables.FactoryChannel = channel;
                 }
+                index++;
+            }
         }
 
         /// <summary>
@@ -512,7 +450,10 @@ namespace RabbitMQ_SendClient
             if (!IsInitialized) return;
 
             var cb = (CheckBox) sender;
-            var index = int.Parse(cb.Uid.Substring(0, 1));
+            var uidGuid = Guid.Parse(cb.Uid);
+
+            var index = GetIndex<CheckListItem>(uidGuid);
+
             var cbo = (CheckListItem) LstModbusSerial.Items[index];
             if (cb.IsChecked != null) cbo.IsChecked = false;
 
@@ -521,38 +462,67 @@ namespace RabbitMQ_SendClient
             AvailableModbusSerialPorts.Insert(index, cbo);
 
             //Enable Port for serial communications
-            var setupSerialForm = new SerialPortSetup {SerialPortNum = index};
+            SetupSerial(uidGuid);
+            var setupSerialForm = new SerialPortSetup(uidGuid);
             var activate = setupSerialForm.ShowDialog(); //Confirm Settings
 
-            if (activate != null && activate.Value)
+            switch (activate)
             {
-                var init = SerialPortInitialize(index);
-                if (init) return;
+                case true:
 
-                //Initialzation of port failed. Closing port and unchecking it
-                cb.IsChecked = false;
-                AvailableSerialPorts.RemoveAt(index);
-                var cli = new CheckListItem
-                {
-                    Name = cb.Name,
-                    Uid = cb.Uid,
-                    Content = cbo.Content,
-                    IsChecked = false
-                };
-                AvailableSerialPorts.Insert(index, cli);
-            }
-            else
-            {
-                cb.IsChecked = false;
-                AvailableSerialPorts.RemoveAt(index);
-                var cli = new CheckListItem
-                {
-                    Name = cb.Name,
-                    Uid = cb.Uid,
-                    Content = cbo.Content,
-                    IsChecked = false
-                };
-                AvailableSerialPorts.Insert(index, cli);
+                    var friendlyNameForm = new VariableConfigure(uidGuid);
+                    var nameSet = friendlyNameForm.ShowDialog();
+                    if (nameSet != null && !nameSet.Value)
+                        goto case null;
+
+                    SetupFactory(uidGuid);
+                    ServerInformation[ServerInformation.Length - 1] = setDefaultSettings(uidGuid);
+
+                    var configureServer = new SetupServer(uidGuid);
+                    var serverConfigured = configureServer.ShowDialog();
+
+                    if (serverConfigured != null && !serverConfigured.Value)
+                    {
+                        //Canceled
+                        Array.Resize(ref ServerInformation, ServerInformation.Length - 1);
+                        goto case null;
+                    }
+                    Array.Resize(ref MessagesSentDataPair, MessagesSentDataPair.Length + 1);
+                    MessagesSentDataPair[MessagesSentDataPair.Length - 1] =
+                        new ObservableCollection<KeyValuePair<string, double>>();
+
+                    var init = SerialPortInitialize(index);
+                    if (init) return;
+
+                    //Initialzation of port failed. Closing port and unchecking it
+                    cb.IsChecked = false;
+                    AvailableSerialPorts.RemoveAt(index);
+                    var cliT = new CheckListItem
+                    {
+                        Name = cb.Name,
+                        Uid = cb.Uid,
+                        Content = cbo.Content,
+                        IsChecked = false
+                    };
+                    AvailableSerialPorts.Insert(index, cliT);
+                    tbmarquee.Text += $"Serial Port {cb.Name} Active";
+                    break;
+
+                case null:
+                default: //incl case false
+                    cb.IsChecked = false;
+                    AvailableSerialPorts.RemoveAt(index);
+                    var cliF = new CheckListItem
+                    {
+                        Name = cb.Name,
+                        Uid = cb.Uid,
+                        Content = cbo.Content,
+                        IsChecked = false
+                    };
+                    AvailableSerialPorts.Insert(index, cliF);
+                    Array.Resize(ref SerialPorts, SerialPorts.Length - 1); //Removes last initialization of Serial Port
+                    Array.Resize(ref SerialPorts, SerialPorts.Length - 1);
+                    break;
             }
         }
 
@@ -561,9 +531,9 @@ namespace RabbitMQ_SendClient
             if (!IsInitialized) return;
 
             var cb = (CheckBox) sender;
-            var index = int.Parse(cb.Uid.Substring(0, 1));
-            if (SystemVariables.SerialPorts[index].IsOpen)
-                SystemVariables.SerialPorts[index].Close();
+            var index = GetIndex<CheckListItem>(Guid.Parse(cb.Uid));
+            if (SerialPorts[index].IsOpen)
+                SerialPorts[index].Close();
         }
 
         /// <summary>
@@ -587,52 +557,6 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        ///     Disables server. UI Access ONLY. Call by setting UI values.
-        /// </summary>
-        /// <param name="sender">RadioButton Object</param>
-        /// <param name="e">Radio Button Values</param>
-        private void SrvDisabled_Checked(object sender, RoutedEventArgs e)
-        {
-            //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
-
-            CloseSafely();
-        }
-
-        private void StartServer(int index)
-        {
-            try
-            {
-                SystemVariables.Factory[index] = GlobalRabbitMqServerFunctions.SetupFactory(index);
-                SystemVariables.FactoryConnection[index] = SystemVariables.Factory[index].CreateConnection();
-
-                SystemVariables.FactoryChannel[index] = SystemVariables.FactoryConnection[index].CreateModel();
-
-                SystemVariables.FactoryConnection[index].AutoClose = false;
-
-                GlobalRabbitMqServerFunctions.CreateQueue(true, false, index);
-                GlobalRabbitMqServerFunctions.CreateExchange(ExchangeType.Direct, true, false, index);
-                GlobalRabbitMqServerFunctions.QueueBind(index);
-            }
-            catch (BrokerUnreachableException ex)
-            {
-                var sf = StackTracing.GetFrame(0);
-                SystemVariables.LogError(ex, SystemVariables.LogLevel.Critical, sf);
-                var message = SystemVariables.ErrorType[1003];
-                const string caption = "Broker Unreachable Exception";
-                MessageBox.Show(message, caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            catch (Exception ex)
-            {
-                var sf = StackTracing.GetFrame(0);
-                SystemVariables.LogError(ex, SystemVariables.LogLevel.Critical, sf);
-                var message = ex.Message;
-                var caption = "Error in: " + ex.Source;
-                MessageBox.Show(message, caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        /// <summary>
         ///     Updates infomration on Statusbar on what system is exeperiencing.
         /// </summary>
         /// <param name="sender">System Timer Thread Object</param>
@@ -642,24 +566,19 @@ namespace RabbitMQ_SendClient
             //Prevents code from running before intialization
             if (!IsInitialized) return;
 
-            if (_messagesSentDataPair.Length != SerialPort.GetPortNames().Length)
-                Dispatcher.Invoke((MethodInvoker) ResizeArrays);
-
-            _timeElapsed = (double) _systemTimer.Interval.Milliseconds / 1000;
-            if (_timeElapsed > 1)
-                for (var index = 0; index < SerialPort.GetPortNames().Length; index++)
-                    _messagesPerSecond[index] = 0;
+            ResizeSerialSelection();
         }
 
-        private void UpdateGraph<T>(int index, T info)
+        private void UpdateGraph(int index, string getName)
         {
             Dispatcher.Invoke((MethodInvoker) delegate
             {
-                if (_messagesSentDataPair[index].Count > 118)
-                    _messagesSentDataPair[index].RemoveAt(0);
+                if (MessagesSentDataPair[index].Count > 118)
+                    MessagesSentDataPair[index].RemoveAt(0);
                 var timeNow = DateTime.Now.Minute + ":" + DateTime.Now.Second;
+                const double messagesPerSecond = 1.00;
+                var timeElapsed = DateTime.Now - _previousTime;
                 var ls = new LineSeries();
-                var getName = nameof(info);
                 switch (getName)
                 {
                     case "AvailableSerialPorts":
@@ -677,16 +596,37 @@ namespace RabbitMQ_SendClient
 
                 ls.DependentValuePath = "Value";
                 ls.IndependentValuePath = "Key";
-                _messagesPerSecond[index]++;
-                _messagesSentDataPair[index].Add(new KeyValuePair<string, int>(timeNow, _messagesPerSecond[index]));
-                ls.ItemsSource = _messagesSentDataPair[index];
+
+                MessagesSentDataPair[index].Add(new KeyValuePair<string, double>(timeNow,
+                    messagesPerSecond / timeElapsed.TotalSeconds));
+                ls.ItemsSource = MessagesSentDataPair[index];
                 LineChart.Series.Add(ls);
             });
         }
 
+        ///TODO add IP address Management
         private void AddModbusTCP_Click(object sender, RoutedEventArgs e)
         {
-            ///TODO add IP address Management
+        }
+
+        protected internal struct CheckListItem
+        {
+            public string Content { get; set; }
+            public bool IsChecked { get; set; }
+            public string Name { get; set; }
+            public string Uid { get; set; }
+        }
+
+        private struct DataBaseInfo
+        {
+            internal string Message { get; set; }
+            internal DateTime TimeStamp { get; set; }
+            internal string FriendlyName { get; set; }
+            internal string Channel { get; set; }
+            internal string Exchange { get; set; }
+            internal string ServerAddress { get; set; }
+            internal Guid DeliveryTag { get; set; }
+            internal string DeviceType { get; set; }
         }
     }
 }

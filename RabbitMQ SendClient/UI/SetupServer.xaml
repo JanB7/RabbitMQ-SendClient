@@ -3,9 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:RabbitMQ_SendClient"
         mc:Ignorable="d"
-        Title="SetupServer" Height="232" Width="499">
+        Title="SetupServer" Height="250" Width="499">
     <Grid>
         <UniformGrid>
             <Grid Background="#FFE5E5E5">
@@ -60,7 +59,7 @@
                     <Slider x:Name="sldHeartBeat" VerticalAlignment="Center"
                                     Maximum="120" Minimum="5" Value="30" SmallChange="1"
                                     ValueChanged="SldHeartBeat_ValueChanged" Margin="0,7" />
-                    <TextBlock x:Name="txtHeartbeat" HorizontalAlignment="Center" 
+                    <TextBlock x:Name="txtHeartbeat" HorizontalAlignment="Center"
                                        TextWrapping="Wrap" Text="30" VerticalAlignment="Center" Width="73"
                                        TextAlignment="Center" IsHitTestVisible="False" IsEnabled="False"
                                        ScrollViewer.VerticalScrollBarVisibility="Disabled" />
@@ -68,7 +67,7 @@
                 <TextBlock x:Name="textBlock8" HorizontalAlignment="Left" Margin="265,125,0,0"
                                    TextWrapping="Wrap" Text="Network Recovery Interval" VerticalAlignment="Top" />
 
-                <Grid Margin="265,141,10,0" Height="32" VerticalAlignment="Top" >
+                <Grid Margin="265,141,10,0" Height="32" VerticalAlignment="Top">
                     <Slider x:Name="sldNetworokRecInt" VerticalAlignment="Center"
                                     Maximum="30" SmallChange="1" Minimum="1" Value="5"
                                     ValueChanged="SldNetworokRecInt_ValueChanged" TickPlacement="BottomRight" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
@@ -94,9 +93,9 @@
                                           Checked="GenerateChannel_Checked" Unchecked="GenerateChannel_Checked" />
                     </StackPanel>
                 </GroupBox>
-                <Button x:Name="btnReset" Content="Reset" HorizontalAlignment="Left" Margin="414,10,0,0" VerticalAlignment="Top" Width="67" Height="67" Background="#FFFF0400" Foreground="White" FontWeight="Bold" FontSize="14" Click="btnReset_Click"/>
-                <Button x:Name="btnCancel" Content="Cancel" HorizontalAlignment="Left" Margin="406,178,0,0" VerticalAlignment="Top" Width="75"/>
-                <Button x:Name="btnOK" Content="OK" HorizontalAlignment="Left" Margin="326,178,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.6,0" IsDefault="True" Click="btnOK_Click"/>
+                <Button x:Name="btnReset" Content="Reset" HorizontalAlignment="Left" Margin="414,10,0,0" VerticalAlignment="Top" Width="67" Height="67" Background="#FFFF0400" Foreground="White" FontWeight="Bold" FontSize="14" Click="btnReset_Click" />
+                <Button x:Name="btnCancel" Content="Cancel" HorizontalAlignment="Left" Margin="406,178,0,0" VerticalAlignment="Top" Width="75" />
+                <Button x:Name="btnOK" Content="OK" HorizontalAlignment="Left" Margin="326,178,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.6,0" IsDefault="True" Click="btnOK_Click" />
             </Grid>
         </UniformGrid>
     </Grid>
