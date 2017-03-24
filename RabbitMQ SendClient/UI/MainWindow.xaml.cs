@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO.Ports;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,8 +19,8 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 using RabbitMQ_SendClient.UI;
 using static RabbitMQ_SendClient.SystemVariables;
-using static RabbitMQ_SendClient.GlobalSerialFunctions;
 using static RabbitMQ_SendClient.GlobalRabbitMqServerFunctions;
+using static RabbitMQ_SendClient.GlobalSerialFunctions;
 using CheckBox = System.Windows.Controls.CheckBox;
 using MessageBox = System.Windows.Forms.MessageBox;
 
@@ -40,12 +41,18 @@ namespace RabbitMQ_SendClient
             new ObservableCollection<CheckListItem>();
 
         private static readonly StackTrace StackTracing = new StackTrace();
-        private readonly DispatcherTimer _systemTimer = new DispatcherTimer();
 
-        private DateTime _previousTime;
+        private readonly DateTime _previousTime = new DateTime();
+        private readonly DispatcherTimer _systemTimer = new DispatcherTimer();
 
         protected internal ObservableCollection<KeyValuePair<string, double>>[] MessagesSentDataPair =
             new ObservableCollection<KeyValuePair<string, double>>[0];
+
+        private static readonly string DatabaseLoc = AppDomain.CurrentDomain.BaseDirectory + "Database\\MessageData.mdf";
+        private readonly string _connString =
+            $"Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=\"{DatabaseLoc}\";Integrated Security=True";
+
+        private double[] _messagesPerSecond = new double[0];
 
         /// <summary>
         ///     Mainline Executable to the RabbitMQ Client
@@ -63,6 +70,8 @@ namespace RabbitMQ_SendClient
             _systemTimer.Start();
         }
 
+        public static LineSeries[] Lineseries { get; set; } = new LineSeries[0];
+
         public static string DeviceName { get; } = Environment.MachineName;
 
         /// <summary>
@@ -70,15 +79,12 @@ namespace RabbitMQ_SendClient
         /// </summary>
         public void Dispose()
         {
-            foreach
-                (var serialPort in SerialPorts)
+            for (var i = 0; i < SerialPort.GetPortNames().Length; i++)
             {
-                if
-                    (serialPort.IsOpen)
-                    while (!serialPort.IsOpen)
-                        serialPort.Close();
-
-                serialPort.Dispose();
+                while(SerialPorts[i].IsOpen)
+                    SerialPorts[i].Close();
+                SerialPorts[i].Dispose();
+                CloseSerialPortUnexpectedly(i);
             }
 
             //Disposes of timer in a threadsafe manner
@@ -107,50 +113,65 @@ namespace RabbitMQ_SendClient
         /// <param name="index">Index for Dynamic Server Allocation</param>
         /// <param name="uidGuid"></param>
         /// <returns>Message success state</returns>
-        protected bool PublishMessage(dynamic message, int index, Guid uidGuid)
+        protected bool PublishMessage(string message, int index, Guid uidGuid)
         {
             try
             {
                 var properties = FactoryChannel[index].CreateBasicProperties();
-                string output = null;
-
-                //Create
-                var type = new Dictionary<Type, Action>
+                if (SerialCommunications[index].MessageType == "JSON")
                 {
+                    try
                     {
-                        typeof(JsonObject), () =>
-                        {
-                            output = JsonConvert.SerializeObject(message);
-                            properties.ContentType = "jsonObject";
-                        }
-                    },
+                        CalculateNpChart(index);
+                        JsonConvert.DeserializeObject<Messages[]>(message);
+                        properties.ContentType = "jsonObject";
+
+                    }
+                    catch (JsonException ex)
                     {
-                        typeof(string), () =>
+                        if (OutOfControl(index))
                         {
-                            output = message;
-                            properties.ContentType = "plain-text";
+                            var sf = StackTracing.GetFrame(0);
+                            LogError(ex, LogLevel.Critical, sf);
+                            CloseSerialPortUnexpectedly(index);
                         }
                     }
-                };
+                }
+                else
+                {
+                    properties.ContentType = "plain-text";
+                }
 
-                type[message](); //Assigns value to string
+
+
                 properties.Persistent = true;
 
                 var address = new PublicationAddress(ExchangeType.Direct,
                     ServerInformation[index].ExchangeName, "");
-                FactoryChannel[index].BasicPublish(address, properties, Encoding.UTF8.GetBytes(output));
+                FactoryChannel[index].BasicPublish(address, properties, Encoding.UTF8.GetBytes(message));
                 FactoryChannel[index].BasicAcks += (sender, args) =>
                 {
-                    const string connstring = @"Data Source=(LocalDB)\MSSQLLocalDB;Integrated Security=True";
+                    const string sqlString = "DELETE FROM[dbo].[MessageData] WHERE [DeliveryTag] = @uuid";
 
-                    var sqlString = $"DELETE FROM dbo.DataControl WHERE DeliveryTag = {uidGuid}";
-
-                    using (var conn = new SqlConnection(connstring))
+                    using (var conn = new SqlConnection(_connString))
                     {
-                        conn.Open();
-                        var command = new SqlCommand(sqlString, conn);
-                        command.ExecuteNonQuery();
-                        conn.Close();
+                        try
+                        {
+                            
+                            var command = new SqlCommand(sqlString, conn) {CommandType = CommandType.Text,};
+                            command.Parameters.AddWithValue("@uuid", uidGuid);
+                            conn.Open();
+                            command.ExecuteNonQuery();
+                            conn.Close();
+                        }
+                        catch (Exception ex)
+                        {
+                            if(conn.State == ConnectionState.Open)
+                                conn.Close();
+                            var sf = StackTracing.GetFrame(0);
+                            LogError(ex, LogLevel.Critical, sf);
+                        }
+
                     }
                 };
                 return true;
@@ -173,59 +194,7 @@ namespace RabbitMQ_SendClient
             }
         }
 
-        /// <summary>
-        ///     Initializes serial port with settings from global settings file.
-        ///     TODO write settings to file
-        /// </summary>
-        /// <param name="index">Index of Global Variable related to CheckboxList</param>
-        /// <returns>Success of the initiliation</returns>
-        protected bool SerialPortInitialize(int index)
-        {
-            //Prevents actions from occuring during initialization
-            if (!IsInitialized) return true;
-            try
-            {
-                if (SerialPorts[index].IsOpen)
-                    while (SerialPorts[index].IsOpen)
-                        SerialPorts[index].Close();
 
-                //Initializing the Serial Port
-                SerialPorts[index].PortName = SerialCommunications[index].ComPort;
-                SerialPorts[index].BaudRate = (int) SerialCommunications[index].BaudRate;
-                SerialPorts[index].Parity = SerialCommunications[index].SerialParity;
-                SerialPorts[index].StopBits = SerialCommunications[index].SerialStopBits;
-                SerialPorts[index].DataBits = SerialCommunications[index].SerialBits;
-                SerialPorts[index].Handshake = SerialCommunications[index].FlowControl;
-                SerialPorts[index].RtsEnable = SerialCommunications[index].RtsEnable;
-                SerialPorts[index].ReadTimeout = SerialCommunications[index].ReadTimeout;
-                SerialPorts[index].DataReceived += DataReceivedHandler;
-                SerialCommunications[index].X();
-
-                SerialPorts[index].Open();
-
-                return true;
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                while (SerialPorts[index].IsOpen)
-                    SerialPorts[index].Close(); //Close port if opened
-
-                MessageBox.Show(@"Access to the port '" + SerialPorts[index].PortName + @"' is denied.",
-                    @"Error opening Port",
-                    MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                var sf = StackTracing.GetFrame(0);
-                LogError(ex, LogLevel.Critical, sf);
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                var sf = StackTracing.GetFrame(0);
-                LogError(ex, LogLevel.Critical, sf);
-
-                return false;
-            }
-        }
 
         private void CloseSafely()
         {
@@ -246,7 +215,7 @@ namespace RabbitMQ_SendClient
         /// </summary>
         /// <param name="sender">COM Port Data Receveived Object</param>
         /// <param name="e">Data Received</param>
-        private void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
+        public void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
         {
             try
             {
@@ -267,7 +236,7 @@ namespace RabbitMQ_SendClient
 
                 SerialCommunications[index].TotalInformationReceived++;
                 CalculateNpChart(index);
-                UpdateGraph(index, nameof(AvailableSerialPorts));
+                
 
                 var datInfo = new DataBaseInfo
                 {
@@ -281,38 +250,34 @@ namespace RabbitMQ_SendClient
                     DeviceType = sp.PortName
                 };
 
-                var sqlString =
-                    "INSERT dbo.DataControl (Message,TimeStamp,FriendlyName,Channel,Exchange,ServerAddress,DeliveryTag,DeviceType) " +
-                    $"VALUES ('{datInfo.Message}','{datInfo.TimeStamp}','{datInfo.FriendlyName}','{datInfo.Channel}','{datInfo.Exchange}'" +
-                    $",'{datInfo.ServerAddress}','{datInfo.DeliveryTag}','{datInfo.DeviceType}')";
+                const string sqlString =
+                    "INSERT [dbo].[MessageData] (Message,TimeStamp,FriendlyName,Channel,Exchange,ServerAddress,DeliveryTag,DeviceType)VALUES"
+                    +
+                    "(@message,@timestamp,@friendlyname,@channel,@exchange,@serveraddress,@deliverytag,@devicetype)";
 
-                const string connstring = @"Data Source=(LocalDB)\MSSQLLocalDB;Integrated Security=True";
 
-                using (var conn = new SqlConnection(connstring))
+                using (var conn = new SqlConnection(_connString))
                 {
-                    conn.Open();
                     var command = new SqlCommand(sqlString, conn)
                     {
                         CommandType = CommandType.Text
                     };
+                    command.Parameters.AddWithValue("@message", datInfo.Message);
+                    command.Parameters.AddWithValue("@timestamp", datInfo.TimeStamp);
+                    command.Parameters.AddWithValue("@friendlyname", datInfo.FriendlyName);
+                    command.Parameters.AddWithValue("@channel", datInfo.Channel);
+                    command.Parameters.AddWithValue("@exchange", datInfo.Exchange);
+                    command.Parameters.AddWithValue("@serveraddress", datInfo.ServerAddress);
+                    command.Parameters.AddWithValue("@deliverytag", datInfo.DeliveryTag);
+                    command.Parameters.AddWithValue("@devicetype", datInfo.DeviceType);
+                    conn.Open();
                     command.ExecuteNonQuery();
                     conn.Close();
                 }
 
-                try
+                while (PublishMessage(datInfo.Message, index, Guid.Parse(AvailableSerialPorts[index].Uid)))
                 {
-                    var indata = JsonConvert.DeserializeObject<JsonObject>(datInfo.Message);
-                    var workingThread = new BackgroundWorker();
-                    workingThread.DoWork += delegate
-                    {
-                        while (PublishMessage(indata, index, Guid.Parse(AvailableSerialPorts[index].Uid)))
-                        {
-                            //do nothing
-                        }
-                    };
-                }
-                catch (JsonException)
-                {
+                    //Retry
                 }
             }
             catch (Exception ex)
@@ -463,6 +428,11 @@ namespace RabbitMQ_SendClient
 
             //Enable Port for serial communications
             SetupSerial(uidGuid);
+
+            var lineSeries = Lineseries;
+            Array.Resize(ref lineSeries, Lineseries.Length + 1);
+            Lineseries = lineSeries;
+
             var setupSerialForm = new SerialPortSetup(uidGuid);
             var activate = setupSerialForm.ShowDialog(); //Confirm Settings
 
@@ -476,7 +446,7 @@ namespace RabbitMQ_SendClient
                         goto case null;
 
                     SetupFactory(uidGuid);
-                    ServerInformation[ServerInformation.Length - 1] = setDefaultSettings(uidGuid);
+                    ServerInformation[ServerInformation.Length - 1] = SetDefaultSettings(uidGuid);
 
                     var configureServer = new SetupServer(uidGuid);
                     var serverConfigured = configureServer.ShowDialog();
@@ -491,8 +461,11 @@ namespace RabbitMQ_SendClient
                     MessagesSentDataPair[MessagesSentDataPair.Length - 1] =
                         new ObservableCollection<KeyValuePair<string, double>>();
 
-                    var init = SerialPortInitialize(index);
+                    SerialPorts[index].DataReceived += DataReceivedHandler;
+                    var init = SerialPortInitialize(index, IsInitialized);
+
                     if (init) return;
+
 
                     //Initialzation of port failed. Closing port and unchecking it
                     cb.IsChecked = false;
@@ -567,46 +540,78 @@ namespace RabbitMQ_SendClient
             if (!IsInitialized) return;
 
             ResizeSerialSelection();
+            for (var i = 0; i < AvailableSerialPorts.Count; i++)
+            {
+                if(AvailableSerialPorts[i].IsChecked)
+                    UpdateGraph(i, nameof(AvailableSerialPorts));
+                if(AvailableModbusSerialPorts[i].IsChecked)
+                    UpdateGraph(i,nameof(AvailableModbusSerialPorts));
+
+            }
+
+            for (var i = 0; i < _messagesPerSecond.Length; i++)
+            {
+                _messagesPerSecond[i] = 0.0;
+            }
+            
         }
 
         private void UpdateGraph(int index, string getName)
         {
+            var timeElapsed = DateTime.Now - _previousTime;
+
+            if (timeElapsed < TimeSpan.FromSeconds(1))
+                return; //Only update 1ce per second
+            
+            string title;
+            switch (getName)
+            {
+                case "AvailableSerialPorts":
+                    title = AvailableSerialPorts[index].Content;
+                    break;
+
+                case "AvailableModbusSerialPorts":
+                    title = AvailableModbusSerialPorts[index].Content;
+                    break;
+
+                default:
+                    title = "Total";
+                    break;
+            }
             Dispatcher.Invoke((MethodInvoker) delegate
             {
-                if (MessagesSentDataPair[index].Count > 118)
+                if (MessagesSentDataPair[index].Count > 60)
                     MessagesSentDataPair[index].RemoveAt(0);
                 var timeNow = DateTime.Now.Minute + ":" + DateTime.Now.Second;
-                const double messagesPerSecond = 1.00;
-                var timeElapsed = DateTime.Now - _previousTime;
-                var ls = new LineSeries();
-                switch (getName)
+                _messagesPerSecond[index]++;
+
+
+                if (Lineseries[index] != null && (string) Lineseries[index].Title == title)
+
                 {
-                    case "AvailableSerialPorts":
-                        ls.Title = AvailableSerialPorts[index].Content;
-                        break;
-
-                    case "AvailableModbusSerialPorts":
-                        ls.Title = AvailableModbusSerialPorts[index].Content;
-                        break;
-
-                    default:
-                        ls.Title = "Total";
-                        break;
+                    MessagesSentDataPair[index].Add(new KeyValuePair<string, double>(timeNow,
+                        _messagesPerSecond[index] / timeElapsed.TotalSeconds));
                 }
-
-                ls.DependentValuePath = "Value";
-                ls.IndependentValuePath = "Key";
-
-                MessagesSentDataPair[index].Add(new KeyValuePair<string, double>(timeNow,
-                    messagesPerSecond / timeElapsed.TotalSeconds));
-                ls.ItemsSource = MessagesSentDataPair[index];
-                LineChart.Series.Add(ls);
+                else
+                {
+                    Lineseries[index] = new LineSeries
+                    {
+                        ItemsSource = MessagesSentDataPair[index],
+                        DependentValuePath = "Value",
+                        IndependentValuePath = "Key",
+                        Title = title
+                    };
+                    LineChart.Series.Add(Lineseries[index]);
+                    MessagesSentDataPair[index].Add(new KeyValuePair<string, double>(timeNow,
+                        _messagesPerSecond[index] / timeElapsed.TotalSeconds));
+                }
             });
         }
 
         ///TODO add IP address Management
         private void AddModbusTCP_Click(object sender, RoutedEventArgs e)
         {
+            //
         }
 
         protected internal struct CheckListItem

@@ -1,13 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO.Ports;
+using System.Linq;
+using System.Windows.Controls.DataVisualization.Charting;
+using System.Windows.Documents;
 using System.Windows.Forms;
+using RabbitMQ.Client;
 using static RabbitMQ_SendClient.SystemVariables;
 using Application = System.Windows.Application;
 
 namespace RabbitMQ_SendClient
 {
-    public static class GlobalSerialFunctions
+    public class GlobalSerialFunctions
     {
         private static readonly StackTrace StackTracing = new StackTrace();
         private static int[] StatsGroupings { get; set; } = new int[0];
@@ -68,11 +73,12 @@ namespace RabbitMQ_SendClient
         /// <summary>
         ///     Setup Serial Port for communication
         /// </summary>
-        /// <param name="port">COM Port Number</param>
+        /// <param name="uidGuid">Guid that is used for identifying correct array index</param>
         public static void SetupSerial(Guid uidGuid)
         {
             var index = GetIndex<MainWindow.CheckListItem>(uidGuid);
             Array.Resize(ref SerialPorts, SerialPorts.Length + 1);
+
 
             SerialPorts[SerialPorts.Length - 1] = new SerialPort(MainWindow.AvailableSerialPorts[index].Content);
 
@@ -99,7 +105,7 @@ namespace RabbitMQ_SendClient
         ///     Proivdes a threadsafe way to close the serial ports
         /// </summary>
         /// <param name="index">Index for Dynamic Server Allocation</param>
-        private static void CloseSerialPortUnexpectedly(int index)
+        public static void CloseSerialPortUnexpectedly(int index)
         {
             if (!SerialPorts[index].IsOpen) return;
             while (SerialPorts[index].IsOpen)
@@ -112,6 +118,74 @@ namespace RabbitMQ_SendClient
                 MainWindow.AvailableSerialPorts.RemoveAt(index);
                 MainWindow.AvailableSerialPorts.Insert(index, checkList);
             });
+            SerialPorts = RemoveAtIndex<SerialPort>(index, SerialPorts);
+            SerialCommunications = RemoveAtIndex<SerialCommunication>(index, SerialCommunications);
+            StatsGroupings = RemoveAtIndex<int>(index, StatsGroupings);
+            ServerInformation = RemoveAtIndex<RabbitServerInformation>(index, ServerInformation);
+            MainWindow.Lineseries = RemoveAtIndex<LineSeries>(index, MainWindow.Lineseries);
+            
+            while(FactoryChannel[index].IsOpen) FactoryChannel[index].Close();
+            while(FactoryConnection[index].IsOpen) FactoryConnection[index].Close();
+
+            FactoryChannel = RemoveAtIndex<IModel>(index, FactoryChannel);
+            FactoryConnection = RemoveAtIndex<IConnection>(index, FactoryConnection);
+            Factory = RemoveAtIndex<IConnectionFactory>(index, Factory);
+        }
+
+
+
+        /// <summary>
+        ///     Initializes serial port with settings from global settings file.
+        ///     TODO write settings to file
+        /// </summary>
+        /// <param name="index">Index of Global Variable related to CheckboxList</param>
+        /// <param name="isInitialized">Form Initialization</param>
+        /// <returns>Success of the initiliation</returns>
+        public static bool SerialPortInitialize(int index, bool isInitialized)
+        {
+            //Prevents actions from occuring during initialization
+            if (!isInitialized) return true;
+            try
+            {
+                if (SerialPorts[index].IsOpen)
+                    while (SerialPorts[index].IsOpen)
+                        SerialPorts[index].Close();
+
+                //Initializing the Serial Port
+                SerialPorts[index].PortName = SerialCommunications[index].ComPort;
+                SerialPorts[index].BaudRate = (int)SerialCommunications[index].BaudRate;
+                SerialPorts[index].Parity = SerialCommunications[index].SerialParity;
+                SerialPorts[index].StopBits = SerialCommunications[index].SerialStopBits;
+                SerialPorts[index].DataBits = SerialCommunications[index].SerialBits;
+                SerialPorts[index].Handshake = SerialCommunications[index].FlowControl;
+                SerialPorts[index].RtsEnable = SerialCommunications[index].RtsEnable;
+                SerialPorts[index].ReadTimeout = SerialCommunications[index].ReadTimeout;
+                SerialCommunications[index].X();
+
+                SerialPorts[index].Open();
+
+                return true;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                while (SerialPorts[index].IsOpen)
+                    SerialPorts[index].Close(); //Close port if opened
+
+                MessageBox.Show(@"Access to the port '" + SerialPorts[index].PortName + @"' is denied.",
+                    @"Error opening Port",
+                    MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                var sf = StackTracing.GetFrame(0);
+                LogError(ex, LogLevel.Critical, sf);
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                var sf = StackTracing.GetFrame(0);
+                LogError(ex, LogLevel.Critical, sf);
+
+                return false;
+            }
         }
     }
 }

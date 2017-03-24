@@ -176,6 +176,16 @@ namespace RabbitMQ_SendClient
             return index;
         }
 
+        public static dynamic RemoveAtIndex<T>(int index, Array arrayToResize)
+        {
+
+            var resizedArray = arrayToResize.Cast<T>().Select(item => item).ToList();
+            resizedArray.RemoveAt(index);
+            arrayToResize = resizedArray.ToArray();
+            return arrayToResize;
+
+        }
+
         private static void checkProcess_Exited(object sender, EventArgs e)
         {
             _checkProcessIsRunning = false;
@@ -242,11 +252,10 @@ namespace RabbitMQ_SendClient
             var docLocation = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             docLocation += @"\RabbitMQ Client\Settings.xml";
 
-            var doc = XDocument.Load(docLocation);
-
             if (File.Exists(docLocation))
                 try
                 {
+                    var doc = XDocument.Load(docLocation);
                     if (doc.Root == null) return CreateFileAndMonitor();
                     foreach (var xElement in doc.Root.Elements("FriendlyName"))
                     {
@@ -408,6 +417,7 @@ namespace RabbitMQ_SendClient
             public DateTime MessageDateTime { get; set; }
             public string MessageType { get; set; }
             public Messages[] Message { get; set; }
+
         }
 
         /// <summary>
@@ -470,6 +480,18 @@ namespace RabbitMQ_SendClient
                 return _x[index];
             }
         }
+
+        /*
+         * var indata = JsonConvert.DeserializeObject<Messages[]>(datInfo.Message);
+                    var message = new JsonObject
+                    {
+                        UidGuid = Guid.Parse(AvailableSerialPorts[index].Uid),
+                        Message = indata,
+                        DeviceName = datInfo.DeviceType,
+                        MessageDateTime = datInfo.TimeStamp,
+                        MessageType = "JsonMessage"
+                    };
+                    */
     }
 
     public class Messages
@@ -478,3 +500,4 @@ namespace RabbitMQ_SendClient
         public dynamic Value { get; set; }
     }
 }
+ 

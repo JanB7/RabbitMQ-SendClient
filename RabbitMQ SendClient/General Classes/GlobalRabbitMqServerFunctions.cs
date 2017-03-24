@@ -143,7 +143,7 @@ namespace RabbitMQ_SendClient
             var index = GetIndex<MainWindow.CheckListItem>(uidGuid);
             if (index == -1) return;
             Array.Resize(ref ServerInformation, ServerInformation.Length + 1);
-            ServerInformation[ServerInformation.Length - 1] = setDefaultSettings(uidGuid);
+            ServerInformation[ServerInformation.Length - 1] = SetDefaultSettings(uidGuid);
 
             var factoryChannel = FactoryChannel;
             if (factoryChannel != null)
@@ -204,7 +204,7 @@ namespace RabbitMQ_SendClient
             }
         }
 
-        public static RabbitServerInformation setDefaultSettings(Guid uidGuid)
+        public static RabbitServerInformation SetDefaultSettings(Guid uidGuid)
         {
             var rabbitInfo = new RabbitServerInformation
             {
