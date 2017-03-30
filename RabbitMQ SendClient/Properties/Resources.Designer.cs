@@ -62,6 +62,18 @@ namespace RabbitMQ_SendClient.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///
+        ///&lt;ModbusAddresses&gt;
+        ///&lt;/ModbusAddresses&gt;.
+        /// </summary>
+        internal static string DefaultModbusSettingsFile {
+            get {
+                return ResourceManager.GetString("DefaultModbusSettingsFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///&lt;!--
         ///TYPELIST - DO NOT USE ANYTHING ELSE
         ///╔═════════╦═════════════════════════════════════════════════════════╦══════════════════════════╗
