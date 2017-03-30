@@ -47,5 +47,15 @@ namespace RabbitMQ_SendClient.UI
             SelectedIndex = -1;
             Close();
         }
+
+        private void ReconnectYes_Checked(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void ReconnectNo_Checked(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -6,7 +6,6 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO.Ports;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -21,6 +20,7 @@ using RabbitMQ_SendClient.UI;
 using static RabbitMQ_SendClient.SystemVariables;
 using static RabbitMQ_SendClient.GlobalRabbitMqServerFunctions;
 using static RabbitMQ_SendClient.GlobalSerialFunctions;
+using static RabbitMQ_SendClient.General_Classes.ModbusConfig;
 using CheckBox = System.Windows.Controls.CheckBox;
 using MessageBox = System.Windows.Forms.MessageBox;
 
@@ -52,7 +52,13 @@ namespace RabbitMQ_SendClient
         private readonly string _connString =
             $"Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=\"{DatabaseLoc}\";Integrated Security=True";
 
-        private double[] _messagesPerSecond = new double[0];
+        private DispatcherTimer[] _modbusTimers = new DispatcherTimer[0];
+
+        private readonly Dictionary<DispatcherTimer, Guid> _modbusTimerId = new Dictionary<DispatcherTimer, Guid>();
+
+        protected internal static List<int> ModbusAddressList = new List<int>();
+
+        private readonly double[] _messagesPerSecond = new double[0];
 
         /// <summary>
         ///     Mainline Executable to the RabbitMQ Client
@@ -463,7 +469,7 @@ namespace RabbitMQ_SendClient
 
                     SerialPorts[index].DataReceived += DataReceivedHandler;
                     var init = SerialPortInitialize(index, IsInitialized);
-
+                    tbmarquee.Text += $"Serial Port {cb.Name} Active";
                     if (init) return;
 
 
@@ -478,7 +484,7 @@ namespace RabbitMQ_SendClient
                         IsChecked = false
                     };
                     AvailableSerialPorts.Insert(index, cliT);
-                    tbmarquee.Text += $"Serial Port {cb.Name} Active";
+                    tbmarquee.Text.Replace($"Serial Port {cb.Name} Active", "");
                     break;
 
                 case null:
@@ -518,16 +524,94 @@ namespace RabbitMQ_SendClient
         {
             if (!IsInitialized) return;
 
-            var cb = (CheckBox) sender;
-            var index = int.Parse(cb.Uid.Substring(0, 1));
-            var cbo = (CheckListItem) LstSerial.Items[index];
+            var cb = (CheckBox)sender;
+            var uidGuid = Guid.Parse(cb.Uid);
+
+            var index = GetIndex<CheckListItem>(uidGuid);
+
+            var cbo = (CheckListItem)LstModbusSerial.Items[index];
             if (cb.IsChecked != null) cbo.IsChecked = false;
 
+            //disables Modbus COM Port
             AvailableSerialPorts.RemoveAt(index);
             AvailableSerialPorts.Insert(index, cbo);
 
             //Enable Port
+            SetupModbusSerial(uidGuid);
+
+            var setupSerialForm = new SerialPortSetup(uidGuid);
+            var activate = setupSerialForm.ShowDialog();
+
+            if (activate == null || !activate.Value)
+            {
+                CloseModbusSerial(uidGuid);
+                return;
+            }
+
+            index = SerialCommunications.Length - 1;
+            
+            var port = new SerialPort
+            {
+                PortName = SerialCommunications[index].ComPort,
+                BaudRate = (int)SerialCommunications[index].BaudRate,
+                Parity =SerialCommunications[index].SerialParity,
+                StopBits = SerialCommunications[index].SerialStopBits,
+                DataBits = SerialCommunications[index].SerialBits,
+                Handshake = SerialCommunications[index].FlowControl,
+                RtsEnable = SerialCommunications[index].RtsEnable,
+                ReadTimeout = SerialCommunications[index].ReadTimeout
+            };
+
+            InitializeModbusClient(port);
+
+            Array.Resize(ref _modbusTimers, _modbusTimers.Length + 1);
+            _modbusTimers[_modbusTimers.Length - 1] = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(1000),
+                IsEnabled = false
+            };
+            _modbusTimers[_modbusTimers.Length - 1].Tick += ModbusTimerOnTick;
+            _modbusTimerId.Add(_modbusTimers[_modbusTimers.Length - 1], uidGuid);
+
+            SetupFactory(uidGuid);
+            ServerInformation[ServerInformation.Length - 1] = SetDefaultSettings(uidGuid);
+
+            var configureServer = new SetupServer(uidGuid);
+            var serverConfigured = configureServer.ShowDialog();
+
+            if (serverConfigured != null && !serverConfigured.Value)
+            {
+                Array.Resize(ref ServerInformation, ServerInformation.Length -1);
+            }
+            InitializeModbusClient(port);
+            tbmarquee.Text += $"Serial Port {cb.Name} Active";
+
+            if (port.IsOpen)
+            {
+
+                _modbusTimers[_modbusTimers.Length - 1].IsEnabled = true;
+                return;
+            }
+
+            cb.IsChecked = false;
+            AvailableModbusSerialPorts.RemoveAt(index);
+            var cliT = new CheckListItem
+            {
+                Name = cb.Name,
+                Uid = cb.Uid,
+                Content = cbo.Content,
+                IsChecked = false
+            };
+            AvailableSerialPorts.Insert(index, cliT);
+            tbmarquee.Text.Replace($"Serial Port {cb.Name} Active", "");
         }
+
+        private void ModbusTimerOnTick(object sender, EventArgs eventArgs)
+        {
+            _modbusTimerId.TryGetValue((DispatcherTimer)sender, out Guid uidGuid);
+            var modbusInformation = modb
+        }
+
 
         /// <summary>
         ///     Updates infomration on Statusbar on what system is exeperiencing.

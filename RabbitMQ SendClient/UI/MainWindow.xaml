@@ -4,11 +4,9 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:dv="clr-namespace:System.Windows.Controls.DataVisualization.Charting;assembly=System.Windows.Controls.DataVisualization.Toolkit"
-    xmlns:chartingToolkit="clr-namespace:System.Windows.Controls.DataVisualization.Charting;assembly=System.Windows.Controls.DataVisualization.Toolkit"
-    xmlns:visualizationToolkit="clr-namespace:System.Windows.Controls.DataVisualization;assembly=System.Windows.Controls.DataVisualization.Toolkit"
     x:Class="RabbitMQ_SendClient.MainWindow"
     mc:Ignorable="d"
-    Title="RabbitMQ Message Sender" Height="376" Width="533" WindowStartupLocation="CenterScreen"
+    Title="Unisphere" Height="376" Width="533" WindowStartupLocation="CenterScreen"
     ResizeMode="CanMinimize" SizeToContent="WidthAndHeight" BorderBrush="#FF2D2D30" Background="#FF414147"
     Foreground="#FF1C1C1C" Closing="MainWindow_OnClosing" Loaded="MainWindow_OnLoaded">
     <Grid Margin="0,0,0,1">

@@ -8,6 +8,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Windows;
 using System.Xml.Linq;
+using EasyModbus;
 using RabbitMQ.Client;
 using RabbitMQ_SendClient.Properties;
 
@@ -65,6 +66,8 @@ namespace RabbitMQ_SendClient
         ///     RabbitMQ Server Information
         /// </summary>
         public static RabbitServerInformation[] ServerInformation = new RabbitServerInformation[0];
+
+        public static ModbusClient[] ModbusClients = new ModbusClient[0];
 
         public static string[] FriendlyName = new string[0];
 
@@ -328,7 +331,7 @@ namespace RabbitMQ_SendClient
             for (var i = 0; i < docInformation.Length; i++)
                 docContent[i] = (byte) docInformation[i];
             var posthash = hashMe.ComputeHash(docContent);
-            return prehash == posthash;
+            return prehash != posthash;
         }
 
         private static dynamic GenerateNull(string type)

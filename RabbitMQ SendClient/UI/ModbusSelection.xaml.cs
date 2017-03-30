@@ -121,8 +121,19 @@ namespace RabbitMQ_SendClient.UI
             var checkBox = (CheckBox) e.OriginalSource;
             var index = ModbusAddresses.SelectedIndex;
             if (index == -1) return;
-            ModbusAddressControl[ModbusAddresses.SelectedIndex].IsChecked = checkBox.IsChecked.Value;
+            if (checkBox.IsChecked != null)
+                ModbusAddressControl[ModbusAddresses.SelectedIndex].IsChecked = checkBox.IsChecked.Value;
             SaveToFile(ModbusAddresses.SelectedIndex);
+
+            if (checkBox.IsChecked != null && checkBox.IsChecked.Value)
+            {
+                MainWindow.ModbusAddressList.Add(int.Parse(ModbusAddressControl[index].ModBusAddress));
+            }
+            else if(checkBox.IsChecked != null)
+            {
+                MainWindow.ModbusAddressList.Remove(int.Parse(ModbusAddressControl[index].ModBusAddress));
+            }
+
         }
 
         private void SaveToFile(int index)
@@ -158,12 +169,14 @@ namespace RabbitMQ_SendClient.UI
                 if (
                     target.Elements("MemoryBlock")
                         .FirstOrDefault(
-                            e => e.Element("ModBusAddress").Value == ModbusAddressControl[index].ModBusAddress) !=
+                            e => e.Element("ModBusAddress")?.Value == ModbusAddressControl[index].ModBusAddress) !=
                     null)
                 {
                     target = target.Elements("MemoryBlock")
-                        .Single(e => e.Element("ModBusAddress").Value == ModbusAddressControl[index].ModBusAddress);
-                    target.Element("Active").Value = ModbusAddressControl[index].IsChecked.ToString();
+                        .Single(e => e.Element("ModBusAddress")?.Value == ModbusAddressControl[index].ModBusAddress);
+                    var xElement = target.Element("Active");
+                    if (xElement != null)
+                        xElement.Value = ModbusAddressControl[index].IsChecked.ToString();
                     target.Element("FunctionCode").Value = FunctionCode.ToString(); //update function code
                     target.Element("Nickname").Value = ModbusAddressControl[index].Nickname; //update nickname
                     target.Element("Comments").Value = ModbusAddressControl[index].Comments; //update comment
@@ -232,17 +245,17 @@ namespace RabbitMQ_SendClient.UI
 
             RbtnOffset.IsChecked = false;
             IsAbsolute = true;
-            updateAbsolute();
+            UpdateAbsolute();
         }
 
         private void RbtnOffset_OnChecked(object sender, RoutedEventArgs e)
         {
             RbtnAbsolute.IsChecked = false;
             IsAbsolute = false;
-            updateAbsolute();
+            UpdateAbsolute();
         }
 
-        private void updateAbsolute()
+        private void UpdateAbsolute()
         {
             var docLocation = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             docLocation += @"\RabbitMQ Client\ModbusSettings.xml";

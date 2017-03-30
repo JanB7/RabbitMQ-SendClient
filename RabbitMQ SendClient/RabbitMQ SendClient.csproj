@@ -178,6 +178,10 @@
     </ApplicationDefinition>
     <Compile Include="General Classes\GlobalRabbitMqServerFunctions.cs" />
     <Compile Include="General Classes\GlobalSerialFunctions.cs" />
+    <Compile Include="General Classes\ModbusConfig.cs" />
+    <Compile Include="UI\ModbusIPConfig.xaml.cs">
+      <DependentUpon>ModbusIPConfig.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\ModbusSelection.xaml.cs">
       <DependentUpon>ModbusSelection.xaml</DependentUpon>
     </Compile>
@@ -203,6 +207,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="UI\ModbusIPConfig.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="UI\ModbusSelection.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

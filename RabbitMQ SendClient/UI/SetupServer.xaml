@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="SetupServer" Height="250" Width="499">
+        Title="Unisphere" Height="250" Width="499">
     <Grid>
         <UniformGrid>
             <Grid Background="#FFE5E5E5">
