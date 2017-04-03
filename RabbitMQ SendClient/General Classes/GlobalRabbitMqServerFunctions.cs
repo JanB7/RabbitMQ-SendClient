@@ -1,9 +1,9 @@
-﻿using System;
+﻿using RabbitMQ.Client;
+using RabbitMQ.Client.Exceptions;
+using System;
 using System.Diagnostics;
 using System.Net;
 using System.Windows.Forms;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Exceptions;
 using static RabbitMQ_SendClient.SystemVariables;
 
 namespace RabbitMQ_SendClient

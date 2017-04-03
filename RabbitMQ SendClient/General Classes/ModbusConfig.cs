@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using EasyModbus;
+using System;
 using System.IO.Ports;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using EasyModbus;
 using static RabbitMQ_SendClient.SystemVariables;
 
+// ReSharper disable once CheckNamespace
 namespace RabbitMQ_SendClient.General_Classes
 {
-    static class ModbusConfig
+    internal static class ModbusConfig
     {
         public static void CloseModbusSerial(Guid uidGuid)
         {
@@ -23,7 +21,7 @@ namespace RabbitMQ_SendClient.General_Classes
         public static void SetupModbusSerial(Guid uidGuid)
         {
             var index = GetIndex<MainWindow.CheckListItem>(uidGuid);
-            Array.Resize(ref SerialCommunications, SerialCommunications.Length +1);
+            Array.Resize(ref SerialCommunications, SerialCommunications.Length + 1);
 
             SerialCommunications[SerialCommunications.Length - 1] = new SerialCommunication
             {
@@ -38,9 +36,10 @@ namespace RabbitMQ_SendClient.General_Classes
                 UidGuid = uidGuid
             };
         }
+
         public static void InitializeModbusClient(ModbusClient client)
         {
-            Array.Resize(ref ModbusClients, ModbusClients.Length +1);
+            Array.Resize(ref ModbusClients, ModbusClients.Length + 1);
             ModbusClients[ModbusClients.Length - 1] = new ModbusClient
             {
                 IPAddress = client.IPAddress,
@@ -67,17 +66,15 @@ namespace RabbitMQ_SendClient.General_Classes
                 IPAddress = port.PortName //for reference
             };
             ModbusClients[ModbusClients.Length - 1].Connect();
-
         }
 
         public static void InitializeModbusClient(string ipAddress, int port, bool udp)
         {
             Array.Resize(ref ModbusClients, ModbusClients.Length + 1);
-            ModbusClients[ModbusClients.Length - 1] = new ModbusClient(ipAddress,port)
+            ModbusClients[ModbusClients.Length - 1] = new ModbusClient(ipAddress, port)
             {
                 LogFileFilename = "log.txt",
-                UDPFlag = udp,
-
+                UDPFlag = udp
             };
             ModbusClients[ModbusClients.Length - 1].Connect();
         }

@@ -1,4 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Exceptions;
+using RabbitMQ_SendClient.UI;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -6,6 +10,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO.Ports;
+using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,14 +18,10 @@ using System.Windows.Controls.DataVisualization.Charting;
 using System.Windows.Forms;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using Newtonsoft.Json;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Exceptions;
-using RabbitMQ_SendClient.UI;
-using static RabbitMQ_SendClient.SystemVariables;
+using static RabbitMQ_SendClient.General_Classes.ModbusConfig;
 using static RabbitMQ_SendClient.GlobalRabbitMqServerFunctions;
 using static RabbitMQ_SendClient.GlobalSerialFunctions;
-using static RabbitMQ_SendClient.General_Classes.ModbusConfig;
+using static RabbitMQ_SendClient.SystemVariables;
 using CheckBox = System.Windows.Controls.CheckBox;
 using MessageBox = System.Windows.Forms.MessageBox;
 
@@ -40,25 +41,24 @@ namespace RabbitMQ_SendClient
         protected internal static readonly ObservableCollection<CheckListItem> AvailableSerialPorts =
             new ObservableCollection<CheckListItem>();
 
+        internal static ObservableCollection<MessageDataHistory>[] MessagesSentDataPair =
+            new ObservableCollection<MessageDataHistory>[0];
+
+        protected internal static ModbusControl[] ModbusControls = new ModbusControl[0];
+
         private static readonly StackTrace StackTracing = new StackTrace();
 
-        private readonly DateTime _previousTime = new DateTime();
-        private readonly DispatcherTimer _systemTimer = new DispatcherTimer();
-
-        protected internal ObservableCollection<KeyValuePair<string, double>>[] MessagesSentDataPair =
-            new ObservableCollection<KeyValuePair<string, double>>[0];
-
         private static readonly string DatabaseLoc = AppDomain.CurrentDomain.BaseDirectory + "Database\\MessageData.mdf";
+
         private readonly string _connString =
             $"Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=\"{DatabaseLoc}\";Integrated Security=True";
 
-        private DispatcherTimer[] _modbusTimers = new DispatcherTimer[0];
+        private double[] _messagesPerSecond = new double[0];
 
         private readonly Dictionary<DispatcherTimer, Guid> _modbusTimerId = new Dictionary<DispatcherTimer, Guid>();
 
-        protected internal static List<int> ModbusAddressList = new List<int>();
-
-        private readonly double[] _messagesPerSecond = new double[0];
+        private readonly DateTime _previousTime = new DateTime();
+        private readonly DispatcherTimer _systemTimer = new DispatcherTimer();
 
         /// <summary>
         ///     Mainline Executable to the RabbitMQ Client
@@ -87,7 +87,7 @@ namespace RabbitMQ_SendClient
         {
             for (var i = 0; i < SerialPort.GetPortNames().Length; i++)
             {
-                while(SerialPorts[i].IsOpen)
+                while (SerialPorts[i].IsOpen)
                     SerialPorts[i].Close();
                 SerialPorts[i].Dispose();
                 CloseSerialPortUnexpectedly(i);
@@ -125,13 +125,11 @@ namespace RabbitMQ_SendClient
             {
                 var properties = FactoryChannel[index].CreateBasicProperties();
                 if (SerialCommunications[index].MessageType == "JSON")
-                {
                     try
                     {
                         CalculateNpChart(index);
                         JsonConvert.DeserializeObject<Messages[]>(message);
                         properties.ContentType = "jsonObject";
-
                     }
                     catch (JsonException ex)
                     {
@@ -142,13 +140,8 @@ namespace RabbitMQ_SendClient
                             CloseSerialPortUnexpectedly(index);
                         }
                     }
-                }
                 else
-                {
                     properties.ContentType = "plain-text";
-                }
-
-
 
                 properties.Persistent = true;
 
@@ -163,8 +156,7 @@ namespace RabbitMQ_SendClient
                     {
                         try
                         {
-                            
-                            var command = new SqlCommand(sqlString, conn) {CommandType = CommandType.Text,};
+                            var command = new SqlCommand(sqlString, conn) {CommandType = CommandType.Text};
                             command.Parameters.AddWithValue("@uuid", uidGuid);
                             conn.Open();
                             command.ExecuteNonQuery();
@@ -172,12 +164,11 @@ namespace RabbitMQ_SendClient
                         }
                         catch (Exception ex)
                         {
-                            if(conn.State == ConnectionState.Open)
+                            if (conn.State == ConnectionState.Open)
                                 conn.Close();
                             var sf = StackTracing.GetFrame(0);
                             LogError(ex, LogLevel.Critical, sf);
                         }
-
                     }
                 };
                 return true;
@@ -199,8 +190,6 @@ namespace RabbitMQ_SendClient
                 return false;
             }
         }
-
-
 
         private void CloseSafely()
         {
@@ -240,9 +229,9 @@ namespace RabbitMQ_SendClient
                     i++;
                 }
 
+
                 SerialCommunications[index].TotalInformationReceived++;
                 CalculateNpChart(index);
-                
 
                 var datInfo = new DataBaseInfo
                 {
@@ -260,7 +249,6 @@ namespace RabbitMQ_SendClient
                     "INSERT [dbo].[MessageData] (Message,TimeStamp,FriendlyName,Channel,Exchange,ServerAddress,DeliveryTag,DeviceType)VALUES"
                     +
                     "(@message,@timestamp,@friendlyname,@channel,@exchange,@serveraddress,@deliverytag,@devicetype)";
-
 
                 using (var conn = new SqlConnection(_connString))
                 {
@@ -280,6 +268,8 @@ namespace RabbitMQ_SendClient
                     command.ExecuteNonQuery();
                     conn.Close();
                 }
+
+                //index = GetIndex<>()
 
                 while (PublishMessage(datInfo.Message, index, Guid.Parse(AvailableSerialPorts[index].Uid)))
                 {
@@ -320,22 +310,22 @@ namespace RabbitMQ_SendClient
             AvailableModbusSerialPorts.Clear();
 
             var ports = SerialPort.GetPortNames();
-            for (var i = 0; i < ports.Length; i++)
+            foreach (var t in ports)
             {
                 var serialPortCheck = new CheckListItem
                 {
-                    Content = ports[i],
+                    Content = t,
                     IsChecked = false,
-                    Name = ports[i] + "Serial",
+                    Name = t + "Serial",
                     Uid = Guid.NewGuid().ToString()
                 };
                 AvailableSerialPorts.Add(serialPortCheck);
 
                 var serialModbusCheck = new CheckListItem
                 {
-                    Content = ports[i],
+                    Content = t,
                     IsChecked = false,
-                    Name = ports[i] + "Modbus",
+                    Name = t + "Modbus",
                     Uid = Guid.NewGuid().ToString()
                 };
                 AvailableModbusSerialPorts.Add(serialModbusCheck);
@@ -434,10 +424,7 @@ namespace RabbitMQ_SendClient
 
             //Enable Port for serial communications
             SetupSerial(uidGuid);
-
-            var lineSeries = Lineseries;
-            Array.Resize(ref lineSeries, Lineseries.Length + 1);
-            Lineseries = lineSeries;
+            ResizeLineSeries(AvailableSerialPorts[index].Name);
 
             var setupSerialForm = new SerialPortSetup(uidGuid);
             var activate = setupSerialForm.ShowDialog(); //Confirm Settings
@@ -463,15 +450,10 @@ namespace RabbitMQ_SendClient
                         Array.Resize(ref ServerInformation, ServerInformation.Length - 1);
                         goto case null;
                     }
-                    Array.Resize(ref MessagesSentDataPair, MessagesSentDataPair.Length + 1);
-                    MessagesSentDataPair[MessagesSentDataPair.Length - 1] =
-                        new ObservableCollection<KeyValuePair<string, double>>();
-
-                    SerialPorts[index].DataReceived += DataReceivedHandler;
-                    var init = SerialPortInitialize(index, IsInitialized);
+                    SerialPorts[SerialPorts.Length - 1].DataReceived += DataReceivedHandler;
+                    var init = SerialPortInitialize(SerialPorts.Length - 1, IsInitialized);
                     tbmarquee.Text += $"Serial Port {cb.Name} Active";
                     if (init) return;
-
 
                     //Initialzation of port failed. Closing port and unchecking it
                     cb.IsChecked = false;
@@ -510,9 +492,10 @@ namespace RabbitMQ_SendClient
             if (!IsInitialized) return;
 
             var cb = (CheckBox) sender;
-            var index = GetIndex<CheckListItem>(Guid.Parse(cb.Uid));
-            if (SerialPorts[index].IsOpen)
-                SerialPorts[index].Close();
+            var port = SerialPorts.FirstOrDefault(sp => sp.PortName == cb.Content.ToString());
+
+            if (port != null && port.IsOpen)
+                port.Close();
         }
 
         /// <summary>
@@ -524,94 +507,191 @@ namespace RabbitMQ_SendClient
         {
             if (!IsInitialized) return;
 
-            var cb = (CheckBox)sender;
+            var cb = (CheckBox) sender;
             var uidGuid = Guid.Parse(cb.Uid);
 
             var index = GetIndex<CheckListItem>(uidGuid);
 
-            var cbo = (CheckListItem)LstModbusSerial.Items[index];
+            cb.Name = AvailableModbusSerialPorts[index].Name;
+
+            var cbo = (CheckListItem) LstSerial.Items[index];
             if (cb.IsChecked != null) cbo.IsChecked = false;
 
             //disables Modbus COM Port
             AvailableSerialPorts.RemoveAt(index);
             AvailableSerialPorts.Insert(index, cbo);
 
-            //Enable Port
-            SetupModbusSerial(uidGuid);
-
-            var setupSerialForm = new SerialPortSetup(uidGuid);
-            var activate = setupSerialForm.ShowDialog();
-
-            if (activate == null || !activate.Value)
+            switch (true)
             {
-                CloseModbusSerial(uidGuid);
-                return;
+                case true:
+                    //Enable Port
+                    SetupModbusSerial(uidGuid);
+
+                    var setupSerialForm = new SerialPortSetup(uidGuid);
+                    var activate = setupSerialForm.ShowDialog();
+
+                    if (activate == null || !activate.Value)
+                    {
+                        CloseModbusSerial(uidGuid);
+                        return;
+                    }
+
+                    index = SerialCommunications.Length - 1;
+
+                    var port = new SerialPort
+                    {
+                        PortName = SerialCommunications[index].ComPort,
+                        BaudRate = (int) SerialCommunications[index].BaudRate,
+                        Parity = SerialCommunications[index].SerialParity,
+                        StopBits = SerialCommunications[index].SerialStopBits,
+                        DataBits = SerialCommunications[index].SerialBits,
+                        Handshake = SerialCommunications[index].FlowControl,
+                        RtsEnable = SerialCommunications[index].RtsEnable,
+                        ReadTimeout = SerialCommunications[index].ReadTimeout
+                    };
+
+                    Array.Resize(ref ModbusControls, ModbusControls.Length + 1);
+                    ModbusControls[ModbusControls.Length - 1].UidGuid = uidGuid;
+
+                    ModbusControls[ModbusControls.Length - 1].ModbusTimers = new DispatcherTimer
+                    {
+                        Interval = TimeSpan.FromMilliseconds(1000),
+                        IsEnabled = false
+                    };
+                    ModbusControls[ModbusControls.Length - 1].ModbusTimers.Tick += ModbusTimerOnTick;
+                    _modbusTimerId.Add(ModbusControls[ModbusControls.Length - 1].ModbusTimers, uidGuid);
+
+                    ModbusControls[ModbusControls.Length - 1].ModbusAddressList =
+                        new List<Tuple<bool, bool, bool, bool, int>>();
+                    index = GetIndex<CheckListItem>(uidGuid);
+
+                    var modbusSelection = new ModbusSelection
+                    {
+                        DeviceAddress = port.PortName,
+                        DeviceName = AvailableModbusSerialPorts[index].Name,
+                        IsAbsolute = true
+                    };
+
+                    var addressesInitialized = modbusSelection.ShowDialog();
+
+                    if (addressesInitialized == null || !addressesInitialized.Value)
+                    {
+                        MessageBox.Show(@"Failed to create Modbus Configuration", @"ERROR", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        goto case false;
+                    }
+
+                    SetupFactory(uidGuid);
+
+                    var configureServer = new SetupServer(uidGuid);
+                    var serverConfigured = configureServer.ShowDialog();
+
+                    if (serverConfigured != null && !serverConfigured.Value)
+                    {
+                        Array.Resize(ref ServerInformation, ServerInformation.Length - 1);
+                        Array.Resize(ref ModbusControls, ModbusControls.Length - 1);
+                        MessageBox.Show(@"Failed to open RabbitMQ Connection", @"ERROR", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        break;
+                    }
+                    InitializeModbusClient(port);
+                    tbmarquee.Text += $"Serial Port {cb.Name} Active";
+
+                    if (ModbusClients[ModbusClients.Length - 1].Connected)
+                    {
+                        ResizeLineSeries(cb.Name);
+                        ModbusControls[ModbusControls.Length - 1].ModbusTimers.IsEnabled = true;
+                        break;
+                    }
+                    MessageBox.Show(@"Failed to open Serial Port", @"ERROR", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    goto case false; //unsuccessful
+
+                case false:
+                    cb.IsChecked = false;
+                    AvailableModbusSerialPorts.RemoveAt(index);
+                    if (ServerInformation.Length > 1)
+                        RemoveAtIndex<RabbitServerInformation>(ServerInformation.Length - 1, ServerInformation);
+
+                    var cliT = new CheckListItem
+                    {
+                        Name = cb.Name,
+                        Uid = cb.Uid,
+                        Content = cbo.Content,
+                        IsChecked = false
+                    };
+                    AvailableModbusSerialPorts.Insert(index, cliT);
+                    tbmarquee.Text.Replace($"Serial Port {cb.Name} Active", "");
+                    break;
             }
+        }
 
-            index = SerialCommunications.Length - 1;
-            
-            var port = new SerialPort
+        private void ResizeLineSeries(string itemName)
+        {
+            Array.Resize(ref MessagesSentDataPair, MessagesSentDataPair.Length + 1);
+            MessagesSentDataPair[MessagesSentDataPair.Length - 1] = new ObservableCollection<MessageDataHistory>();
+
+            var messagesPerSecond = _messagesPerSecond;
+            Array.Resize(ref messagesPerSecond, messagesPerSecond.Length + 1);
+            messagesPerSecond[messagesPerSecond.Length -1] = new double();
+            _messagesPerSecond = messagesPerSecond;
+
+
+            var lineSeries = Lineseries;
+            Array.Resize(ref lineSeries, Lineseries.Length + 1);
+            lineSeries[lineSeries.Length -1] = new LineSeries()
             {
-                PortName = SerialCommunications[index].ComPort,
-                BaudRate = (int)SerialCommunications[index].BaudRate,
-                Parity =SerialCommunications[index].SerialParity,
-                StopBits = SerialCommunications[index].SerialStopBits,
-                DataBits = SerialCommunications[index].SerialBits,
-                Handshake = SerialCommunications[index].FlowControl,
-                RtsEnable = SerialCommunications[index].RtsEnable,
-                ReadTimeout = SerialCommunications[index].ReadTimeout
+                ItemsSource = MessagesSentDataPair[MessagesSentDataPair.Length - 1],
+                DependentValuePath = "Value",
+                IndependentValuePath = "Key",
+                Title = itemName
             };
-
-            InitializeModbusClient(port);
-
-            Array.Resize(ref _modbusTimers, _modbusTimers.Length + 1);
-            _modbusTimers[_modbusTimers.Length - 1] = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(1000),
-                IsEnabled = false
-            };
-            _modbusTimers[_modbusTimers.Length - 1].Tick += ModbusTimerOnTick;
-            _modbusTimerId.Add(_modbusTimers[_modbusTimers.Length - 1], uidGuid);
-
-            SetupFactory(uidGuid);
-            ServerInformation[ServerInformation.Length - 1] = SetDefaultSettings(uidGuid);
-
-            var configureServer = new SetupServer(uidGuid);
-            var serverConfigured = configureServer.ShowDialog();
-
-            if (serverConfigured != null && !serverConfigured.Value)
-            {
-                Array.Resize(ref ServerInformation, ServerInformation.Length -1);
-            }
-            InitializeModbusClient(port);
-            tbmarquee.Text += $"Serial Port {cb.Name} Active";
-
-            if (port.IsOpen)
-            {
-
-                _modbusTimers[_modbusTimers.Length - 1].IsEnabled = true;
-                return;
-            }
-
-            cb.IsChecked = false;
-            AvailableModbusSerialPorts.RemoveAt(index);
-            var cliT = new CheckListItem
-            {
-                Name = cb.Name,
-                Uid = cb.Uid,
-                Content = cbo.Content,
-                IsChecked = false
-            };
-            AvailableSerialPorts.Insert(index, cliT);
-            tbmarquee.Text.Replace($"Serial Port {cb.Name} Active", "");
+            Lineseries = lineSeries;
         }
 
         private void ModbusTimerOnTick(object sender, EventArgs eventArgs)
         {
-            _modbusTimerId.TryGetValue((DispatcherTimer)sender, out Guid uidGuid);
-            var modbusInformation = modb
-        }
+            var uidGuid = Guid.Empty;
+            _modbusTimerId.TryGetValue((DispatcherTimer) sender, out uidGuid);
 
+            if (uidGuid == Guid.Empty) return;
+
+            var index = ModbusControls.Select((val, ind) =>
+                new { ind, val }).First(e => e.val.UidGuid == uidGuid).ind;
+            var modbusItem = ModbusControls.FirstOrDefault(e => e.UidGuid == uidGuid);
+            var message = "";
+
+            
+            foreach (var modbusAddress in modbusItem.ModbusAddressList)
+            {
+                var address = modbusAddress.Item5;
+
+                if (modbusAddress.Item1)
+                {
+                    var readCoil = ModbusClients[index].ReadCoils(address, 1);
+                    message = readCoil.Aggregate(message, (current, b) => current + b.ToString() + "\n");
+                }
+
+                if (modbusAddress.Item2)
+                {
+                    var readDiscrete = ModbusClients[index].ReadDiscreteInputs(address, 1);
+                    message = readDiscrete.Aggregate(message, (current, b) => current + b.ToString() + "\n");
+                }
+
+                if (modbusAddress.Item3)
+                {
+                    var readRegister = ModbusClients[index].ReadHoldingRegisters(address, 1);
+                    message = readRegister.Aggregate(message, (current, i) => current + i.ToString() + "\n");
+                }
+
+                if (modbusAddress.Item4)
+                {
+                    var readInputRegister = ModbusClients[index].ReadInputRegisters(address, 1);
+                    message = readInputRegister.Aggregate(message, (current, i) => current + i.ToString() + "\n");
+                }
+            }
+
+            PublishMessage(message, index, uidGuid);
+
+            UpdateGraph(uidGuid, AvailableModbusSerialPorts[AvailableModbusSerialPorts.Select((val, ind) => new {ind,val}).First(e => e.val.Uid == uidGuid.ToString()).ind].Name);
+        }
 
         /// <summary>
         ///     Updates infomration on Statusbar on what system is exeperiencing.
@@ -626,42 +706,26 @@ namespace RabbitMQ_SendClient
             ResizeSerialSelection();
             for (var i = 0; i < AvailableSerialPorts.Count; i++)
             {
-                if(AvailableSerialPorts[i].IsChecked)
-                    UpdateGraph(i, nameof(AvailableSerialPorts));
-                if(AvailableModbusSerialPorts[i].IsChecked)
-                    UpdateGraph(i,nameof(AvailableModbusSerialPorts));
-
+                if (AvailableSerialPorts[i].IsChecked)
+                    UpdateGraph(Guid.Parse(AvailableSerialPorts[i].Uid), AvailableSerialPorts[i].Name);
+                if (AvailableModbusSerialPorts[i].IsChecked)
+                    UpdateGraph(Guid.Parse(AvailableSerialPorts[i].Uid), AvailableModbusSerialPorts[i].Name);
             }
 
             for (var i = 0; i < _messagesPerSecond.Length; i++)
-            {
                 _messagesPerSecond[i] = 0.0;
-            }
-            
         }
 
-        private void UpdateGraph(int index, string getName)
+        private void UpdateGraph(Guid uidGuid, string itemName)
         {
             var timeElapsed = DateTime.Now - _previousTime;
 
             if (timeElapsed < TimeSpan.FromSeconds(1))
                 return; //Only update 1ce per second
-            
-            string title;
-            switch (getName)
-            {
-                case "AvailableSerialPorts":
-                    title = AvailableSerialPorts[index].Content;
-                    break;
 
-                case "AvailableModbusSerialPorts":
-                    title = AvailableModbusSerialPorts[index].Content;
-                    break;
+            var index = GetIndex<MessageDataHistory>(uidGuid);
+            if (index == -1) return;
 
-                default:
-                    title = "Total";
-                    break;
-            }
             Dispatcher.Invoke((MethodInvoker) delegate
             {
                 if (MessagesSentDataPair[index].Count > 60)
@@ -669,12 +733,15 @@ namespace RabbitMQ_SendClient
                 var timeNow = DateTime.Now.Minute + ":" + DateTime.Now.Second;
                 _messagesPerSecond[index]++;
 
-
-                if (Lineseries[index] != null && (string) Lineseries[index].Title == title)
-
+                if (Lineseries[index] != null && (string) Lineseries[index].Title == itemName)
                 {
-                    MessagesSentDataPair[index].Add(new KeyValuePair<string, double>(timeNow,
-                        _messagesPerSecond[index] / timeElapsed.TotalSeconds));
+                    var messageDataHistory = new MessageDataHistory
+                    {
+                        KeyPair = new KeyValuePair<string, double>(timeNow,
+                            _messagesPerSecond[index] / timeElapsed.TotalSeconds),
+                        UidGuid = uidGuid
+                    };
+                    MessagesSentDataPair[index].Add(messageDataHistory);
                 }
                 else
                 {
@@ -683,11 +750,16 @@ namespace RabbitMQ_SendClient
                         ItemsSource = MessagesSentDataPair[index],
                         DependentValuePath = "Value",
                         IndependentValuePath = "Key",
-                        Title = title
+                        Title = itemName
                     };
                     LineChart.Series.Add(Lineseries[index]);
-                    MessagesSentDataPair[index].Add(new KeyValuePair<string, double>(timeNow,
-                        _messagesPerSecond[index] / timeElapsed.TotalSeconds));
+                    var messageDataHistory = new MessageDataHistory
+                    {
+                        KeyPair = new KeyValuePair<string, double>(timeNow,
+                            _messagesPerSecond[index] / timeElapsed.TotalSeconds),
+                        UidGuid = uidGuid
+                    };
+                    MessagesSentDataPair[index].Add(messageDataHistory);
                 }
             });
         }
@@ -716,6 +788,27 @@ namespace RabbitMQ_SendClient
             internal string ServerAddress { get; set; }
             internal Guid DeliveryTag { get; set; }
             internal string DeviceType { get; set; }
+        }
+
+        protected internal struct MessageDataHistory
+        {
+            internal KeyValuePair<string, double> KeyPair { get; set; }
+            internal Guid UidGuid { get; set; }
+        }
+
+        protected internal struct ModbusControl
+        {
+            /// <summary>
+            ///     <para>FunctionCode</para>
+            ///     <para>Address</para>
+            /// </summary>
+            public List<Tuple<bool, bool, bool, bool, int>> ModbusAddressList { get; set; }
+
+            internal static ObservableCollection<MessageDataHistory> MessagesSentDataPair { get; set; }
+
+            internal DispatcherTimer ModbusTimers { get; set; }
+
+            internal Guid UidGuid { get; set; }
         }
     }
 }

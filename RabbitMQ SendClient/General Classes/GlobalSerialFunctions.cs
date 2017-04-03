@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using RabbitMQ.Client;
+using System;
 using System.Diagnostics;
 using System.IO.Ports;
-using System.Linq;
 using System.Windows.Controls.DataVisualization.Charting;
-using System.Windows.Documents;
 using System.Windows.Forms;
-using RabbitMQ.Client;
 using static RabbitMQ_SendClient.SystemVariables;
 using Application = System.Windows.Application;
 
@@ -79,7 +76,6 @@ namespace RabbitMQ_SendClient
             var index = GetIndex<MainWindow.CheckListItem>(uidGuid);
             Array.Resize(ref SerialPorts, SerialPorts.Length + 1);
 
-
             SerialPorts[SerialPorts.Length - 1] = new SerialPort(MainWindow.AvailableSerialPorts[index].Content);
 
             Array.Resize(ref SerialCommunications, SerialCommunications.Length + 1);
@@ -123,16 +119,14 @@ namespace RabbitMQ_SendClient
             StatsGroupings = RemoveAtIndex<int>(index, StatsGroupings);
             ServerInformation = RemoveAtIndex<RabbitServerInformation>(index, ServerInformation);
             MainWindow.Lineseries = RemoveAtIndex<LineSeries>(index, MainWindow.Lineseries);
-            
-            while(FactoryChannel[index].IsOpen) FactoryChannel[index].Close();
-            while(FactoryConnection[index].IsOpen) FactoryConnection[index].Close();
+
+            while (FactoryChannel[index].IsOpen) FactoryChannel[index].Close();
+            while (FactoryConnection[index].IsOpen) FactoryConnection[index].Close();
 
             FactoryChannel = RemoveAtIndex<IModel>(index, FactoryChannel);
             FactoryConnection = RemoveAtIndex<IConnection>(index, FactoryConnection);
             Factory = RemoveAtIndex<IConnectionFactory>(index, Factory);
         }
-
-
 
         /// <summary>
         ///     Initializes serial port with settings from global settings file.
@@ -153,7 +147,7 @@ namespace RabbitMQ_SendClient
 
                 //Initializing the Serial Port
                 SerialPorts[index].PortName = SerialCommunications[index].ComPort;
-                SerialPorts[index].BaudRate = (int)SerialCommunications[index].BaudRate;
+                SerialPorts[index].BaudRate = (int) SerialCommunications[index].BaudRate;
                 SerialPorts[index].Parity = SerialCommunications[index].SerialParity;
                 SerialPorts[index].StopBits = SerialCommunications[index].SerialStopBits;
                 SerialPorts[index].DataBits = SerialCommunications[index].SerialBits;

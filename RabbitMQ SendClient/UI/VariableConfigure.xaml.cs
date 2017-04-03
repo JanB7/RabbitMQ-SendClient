@@ -50,12 +50,12 @@ namespace RabbitMQ_SendClient.UI
 
         private void ReconnectYes_Checked(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            ReconnectOnStartup = true;
         }
 
         private void ReconnectNo_Checked(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            ReconnectOnStartup = false;
         }
     }
 }

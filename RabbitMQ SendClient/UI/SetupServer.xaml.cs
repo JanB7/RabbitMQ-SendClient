@@ -5,8 +5,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Input;
-using static RabbitMQ_SendClient.SystemVariables;
 using static RabbitMQ_SendClient.GlobalRabbitMqServerFunctions;
+using static RabbitMQ_SendClient.SystemVariables;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MessageBox = System.Windows.Forms.MessageBox;
 

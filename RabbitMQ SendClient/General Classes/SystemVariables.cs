@@ -1,4 +1,7 @@
-﻿using System;
+﻿using EasyModbus;
+using RabbitMQ.Client;
+using RabbitMQ_SendClient.Properties;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -8,9 +11,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Windows;
 using System.Xml.Linq;
-using EasyModbus;
-using RabbitMQ.Client;
-using RabbitMQ_SendClient.Properties;
+using static RabbitMQ_SendClient.MainWindow;
 
 namespace RabbitMQ_SendClient
 {
@@ -48,6 +49,8 @@ namespace RabbitMQ_SendClient
             Critical = 6,
             None = 0
         }
+
+        public static bool ReconnectOnStartup;
 
         private static Process _withEventsFieldProcess;
         private static bool _checkProcessIsRunning;
@@ -110,6 +113,13 @@ namespace RabbitMQ_SendClient
             {1013, "RabbitMQ Exception - Wire Formatting"}
         };
 
+        /// <summary>
+        ///     Gets array index based on type of array used.
+        ///     Can be of items: SerialCommunication| RabbitServerInformation | JsonObject | CheckListItem | MessageDataHistory
+        /// </summary>
+        /// <typeparam name="T">Struct type to check</typeparam>
+        /// <param name="uidGuid">Unique Identifier to match with the stuct</param>
+        /// <returns>Int value for index in the array</returns>
         public static int GetIndex<T>(Guid uidGuid)
         {
             var index = 0;
@@ -118,58 +128,52 @@ namespace RabbitMQ_SendClient
                 {
                     typeof(SerialCommunication), () =>
                     {
-                        foreach (var serialCommunication in SerialCommunications)
-                        {
-                            if (serialCommunication.UidGuid == uidGuid)
-                                break;
-                            index++;
-                        }
+                        index +=
+                            SerialCommunications.TakeWhile(serialCommunication => serialCommunication.UidGuid != uidGuid)
+                                .Count();
                         if (index > SerialCommunications.Length) index = -1;
                     }
                 },
                 {
                     typeof(RabbitServerInformation), () =>
                     {
-                        foreach (var servInfo in ServerInformation)
-                        {
-                            if (servInfo.UidGuid == uidGuid)
-                                break;
-                            index++;
-                        }
-                        if (index > ServerInformation.Length - 1) index = -1;
+                        index += ServerInformation.TakeWhile(servInfo => servInfo.UidGuid != uidGuid).Count();
+                        if (index > ServerInformation.Length) index = -1;
                     }
                 },
                 {
                     typeof(JsonObject), () =>
                     {
-                        foreach (var jsonObject in JsonObjects)
-                        {
-                            if (jsonObject.UidGuid == uidGuid)
-                                break;
-                            index++;
-                        }
+                        index += JsonObjects.TakeWhile(jsonObject => jsonObject.UidGuid != uidGuid).Count();
                         if (index > JsonObjects.Length - 1) index = -1;
                     }
                 },
                 {
-                    typeof(MainWindow.CheckListItem), () =>
+                    typeof(CheckListItem), () =>
                     {
-                        foreach (var checkListItem in MainWindow.AvailableModbusSerialPorts)
-                        {
-                            if (checkListItem.Uid == uidGuid.ToString())
-                                break;
-                            index++;
-                        }
-                        if (index > MainWindow.AvailableModbusSerialPorts.Count - 1)
+                        index +=
+                            AvailableModbusSerialPorts.TakeWhile(
+                                checkListItem => checkListItem.Uid != uidGuid.ToString()).Count();
+                        if (index > AvailableModbusSerialPorts.Count - 1)
                             index = 0;
-                        foreach (var checkListItem in MainWindow.AvailableSerialPorts)
-                        {
-                            if (checkListItem.Uid == uidGuid.ToString())
-                                break;
-                            index++;
-                        }
-                        if (index > MainWindow.AvailableModbusSerialPorts.Count - 1)
+                        else
+                            return;
+                        index +=
+                            AvailableSerialPorts.TakeWhile(checkListItem => checkListItem.Uid != uidGuid.ToString())
+                                .Count();
+                        if (index > AvailableModbusSerialPorts.Count - 1)
                             index = -1;
+                    }
+                },
+                {
+                    typeof(MessageDataHistory), () =>
+                    {
+                        index +=
+                            MessagesSentDataPair.Sum(
+                                observableCollection =>
+                                    observableCollection.TakeWhile(
+                                        messageDataHistory => messageDataHistory.UidGuid != uidGuid).Count());
+                        if (index > MessagesSentDataPair.Length - 1) index = -1;
                     }
                 }
             };
@@ -181,12 +185,10 @@ namespace RabbitMQ_SendClient
 
         public static dynamic RemoveAtIndex<T>(int index, Array arrayToResize)
         {
-
             var resizedArray = arrayToResize.Cast<T>().Select(item => item).ToList();
             resizedArray.RemoveAt(index);
             arrayToResize = resizedArray.ToArray();
             return arrayToResize;
-
         }
 
         private static void checkProcess_Exited(object sender, EventArgs e)
@@ -420,7 +422,6 @@ namespace RabbitMQ_SendClient
             public DateTime MessageDateTime { get; set; }
             public string MessageType { get; set; }
             public Messages[] Message { get; set; }
-
         }
 
         /// <summary>
@@ -503,4 +504,3 @@ namespace RabbitMQ_SendClient
         public dynamic Value { get; set; }
     }
 }
- 

@@ -5,15 +5,17 @@ using System.Windows.Forms;
 using System.Windows.Input;
 
 // ReSharper disable once CheckNamespace
+
 namespace RabbitMQ_SendClient.UI
 {
     /// <summary>
-    /// Interaction logic for ModbusIPConfig.xaml
+    ///     Interaction logic for ModbusIPConfig.xaml
     /// </summary>
     public partial class ModbusIpConfig : Window
     {
+        public bool ReadCoils;
         public bool ReadRegisters = true;
-        public bool ReadCoils = false;
+
         public ModbusIpConfig()
         {
             InitializeComponent();
@@ -40,17 +42,11 @@ namespace RabbitMQ_SendClient.UI
         private void ChkReadRegisters_OnUnchecked(object sender, RoutedEventArgs e)
         {
             ReadRegisters = false;
-            
+
             if (!ReadCoils && !ReadRegisters)
-                Dispatcher.Invoke((MethodInvoker) delegate
-                {
-                    OK.IsEnabled = false;
-                });
+                Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = false; });
             else if (!OK.IsEnabled)
-                Dispatcher.Invoke((MethodInvoker) delegate
-                {
-                    OK.IsEnabled = true;
-                });
+                Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = true; });
         }
 
         private void ChkReadCoils_OnUnchecked(object sender, RoutedEventArgs e)
@@ -58,15 +54,9 @@ namespace RabbitMQ_SendClient.UI
             ReadCoils = false;
 
             if (!ReadCoils && !ReadRegisters)
-                Dispatcher.Invoke((MethodInvoker)delegate
-                {
-                    OK.IsEnabled = false;
-                });
+                Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = false; });
             else if (!OK.IsEnabled)
-                Dispatcher.Invoke((MethodInvoker)delegate
-                {
-                    OK.IsEnabled = true;
-                });
+                Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = true; });
         }
 
         private void ModbusIpConfig_OnClosing(object sender, CancelEventArgs e)

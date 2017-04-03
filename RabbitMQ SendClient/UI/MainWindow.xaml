@@ -6,7 +6,7 @@
     xmlns:dv="clr-namespace:System.Windows.Controls.DataVisualization.Charting;assembly=System.Windows.Controls.DataVisualization.Toolkit"
     x:Class="RabbitMQ_SendClient.MainWindow"
     mc:Ignorable="d"
-    Title="Unisphere" Height="376" Width="533" WindowStartupLocation="CenterScreen"
+    Title="Unisphere" Height="406" Width="533" WindowStartupLocation="CenterScreen"
     ResizeMode="CanMinimize" SizeToContent="WidthAndHeight" BorderBrush="#FF2D2D30" Background="#FF414147"
     Foreground="#FF1C1C1C" Closing="MainWindow_OnClosing" Loaded="MainWindow_OnLoaded">
     <Grid Margin="0,0,0,1">
@@ -71,7 +71,7 @@
         <StatusBar Height="25" VerticalAlignment="Bottom" BorderThickness="0,1,0,0">
             <Canvas>
                 <Canvas Canvas.Left="150" Canvas.Top="100" ClipToBounds="True" Name="canMain">
-                    <TextBlock Margin="0,40" FontSize="25" Name="tbmarquee">Bangladesh</TextBlock>
+                    <TextBlock Margin="0,40" FontSize="25" Name="tbmarquee"></TextBlock>
                 </Canvas>
             </Canvas>
         </StatusBar>
