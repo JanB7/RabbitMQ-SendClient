@@ -1,40 +1,56 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
-using System.Xml.Linq;
-using static RabbitMQ_SendClient.MainWindow;
+﻿using static RabbitMQ_SendClient.MainWindow;
+using static RabbitMQ_SendClient.SystemVariables;
 
 // ReSharper disable once CheckNamespace
 
 namespace RabbitMQ_SendClient.UI
 {
+    using Newtonsoft.Json;
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.IO;
+    using System.Linq;
+    using System.Windows;
+    using System.Windows.Controls;
+    using System.Windows.Forms;
+    using System.Xml.Linq;
+    using Button = System.Windows.Controls.Button;
+    using CheckBox = System.Windows.Controls.CheckBox;
+    using DataGridCell = System.Windows.Controls.DataGridCell;
+    using MessageBox = System.Windows.MessageBox;
+    using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
+    using TextBox = System.Windows.Controls.TextBox;
+
     /// <summary>
     ///     Interaction logic for ModbusSelection.xaml
     /// </summary>
     public partial class ModbusSelection
     {
+        private List<string> _addresses = new List<string>();
+
         public ModbusSelection()
         {
             for (var i = 0; i < 10000; i++)
-                ModbusAddressControl.Add(new ModBus
+            {
+                this.ModbusAddressControl.Add(new ModBus
                 {
                     IsChecked = false,
                     ModBusAddress = (i - 1).ToString("X4"),
                     Nickname = "",
                     Comments = ""
                 });
+                _addresses.Add((i - 1).ToString("X4"));
+            }
 
             InitializeComponent();
             LoadSettings();
-            ModbusAddresses.ItemsSource = ModbusAddressControl;
+            ModbusAddresses.ItemsSource = this.ModbusAddressControl;
 
             ModbusAddresses.Items.Refresh();
 
-            RbtnAbsolute.IsChecked = IsAbsolute;
-            RbtnOffset.IsChecked = !IsAbsolute;
+            RbtnAbsolute.IsChecked = this.IsAbsolute;
+            RbtnOffset.IsChecked = !this.IsAbsolute;
         }
 
         public string DeviceAddress { get; set; } //IP Address or COM address
@@ -47,8 +63,9 @@ namespace RabbitMQ_SendClient.UI
 
         private void LoadSettings()
         {
-            if (
-                !Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\RabbitMQ Client"))
+            if (!Directory.Exists(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) +
+                @"\RabbitMQ Client"))
                 return;
 
             var docLocation = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -65,21 +82,24 @@ namespace RabbitMQ_SendClient.UI
 
             var doc = XDocument.Load(docLocation);
 
-            if (doc.Root?.Elements("Device").FirstOrDefault(
-                    e => e.Attribute("DeviceName")?.Value == DeviceName) == null) return;
+            if (doc.Root?.Elements("Device").FirstOrDefault(e => e.Attribute("DeviceName")?.Value == this.DeviceName) ==
+                null)
+                return;
             {
-                var target =
-                    doc.Root.Elements("Device")
-                        .FirstOrDefault(e => e.Attribute("DeviceName")?.Value == DeviceName)?
-                        .Element("MemorySettings")?.Elements("MemoryBlock");
-                if (target == null) return;
+                var target = doc.Root.Elements("Device")
+                    .FirstOrDefault(e => e.Attribute("DeviceName")?.Value == this.DeviceName)
+                    ?.Element("MemorySettings")
+                    ?.Elements("MemoryBlock");
+                if (target == null)
+                    return;
                 foreach (var xElement in target)
                 {
                     var activeElement = xElement.Element("Active");
                     if (activeElement != null)
                     {
-                        var firstOrDefault = ModbusAddressControl.FirstOrDefault(
-                            e => e.ModBusAddress == xElement.Element("ModBusAddress")?.Value);
+                        var firstOrDefault = this.ModbusAddressControl.FirstOrDefault(
+                            e => e.ModBusAddress ==
+                                 xElement.Element("ModBusAddress")?.Value);
                         if (firstOrDefault != null)
                             firstOrDefault.IsChecked = bool.Parse(activeElement.Value);
                     }
@@ -92,54 +112,79 @@ namespace RabbitMQ_SendClient.UI
                             switch (attribute)
                             {
                                 case "Read Coil":
-                                    var firstOrDefaultCoil = ModbusAddressControl.FirstOrDefault(e =>
-                                    {
-                                        var ex = xElement.Element("ModBusAddress");
-                                        return ex != null && e.ModBusAddress == ex.Value;
-                                    });
+                                    var firstOrDefaultCoil = this.ModbusAddressControl.FirstOrDefault(
+                                        e =>
+                                        {
+                                            var ex =
+                                                xElement.Element(
+                                                    "ModBusAddress");
+                                            return
+                                                (ex != null) &&
+                                                (e.ModBusAddress ==
+                                                 ex.Value);
+                                        });
                                     if (firstOrDefaultCoil != null)
                                         firstOrDefaultCoil.ReadCoil = bool.Parse(element.Value);
                                     break;
 
                                 case "Read Discrete":
-                                    var firstOrDefaultDiscrete = ModbusAddressControl.FirstOrDefault(e =>
-                                    {
-                                        var ex = xElement.Element("ModBusAddress");
-                                        return ex != null && e.ModBusAddress == ex.Value;
-                                    });
+                                    var firstOrDefaultDiscrete = this.ModbusAddressControl.FirstOrDefault(
+                                        e =>
+                                        {
+                                            var ex =
+                                                xElement.Element(
+                                                    "ModBusAddress");
+                                            return
+                                                (ex != null) &&
+                                                (e.ModBusAddress ==
+                                                 ex.Value);
+                                        });
                                     if (firstOrDefaultDiscrete != null)
                                         firstOrDefaultDiscrete.ReadDiscrete = bool.Parse(element.Value);
                                     break;
 
                                 case "Read Holding":
-                                    var firstOrDefaultHolding = ModbusAddressControl.FirstOrDefault(e =>
-                                    {
-                                        var ex = xElement.Element("ModBusAddress");
-                                        return ex != null && e.ModBusAddress == ex.Value;
-                                    });
+                                    var firstOrDefaultHolding = this.ModbusAddressControl.FirstOrDefault(
+                                        e =>
+                                        {
+                                            var ex =
+                                                xElement.Element(
+                                                    "ModBusAddress");
+                                            return
+                                                (ex != null) &&
+                                                (e.ModBusAddress ==
+                                                 ex.Value);
+                                        });
                                     if (firstOrDefaultHolding != null)
                                         firstOrDefaultHolding.ReadHoldingRegisters = bool.Parse(element.Value);
                                     break;
 
                                 case "Read Input":
-                                    var firstOrDefaultInput = ModbusAddressControl.FirstOrDefault(e =>
-                                    {
-                                        var ex = xElement.Element("ModBusAddress");
-                                        return ex != null && e.ModBusAddress == ex.Value;
-                                    });
+                                    var firstOrDefaultInput = this.ModbusAddressControl.FirstOrDefault(
+                                        e =>
+                                        {
+                                            var ex =
+                                                xElement.Element(
+                                                    "ModBusAddress");
+                                            return
+                                                (ex != null) &&
+                                                (e.ModBusAddress ==
+                                                 ex.Value);
+                                        });
                                     if (firstOrDefaultInput != null)
                                         firstOrDefaultInput.ReadInputRegisters = bool.Parse(element.Value);
                                     break;
                             }
                         }
 
-                    var commentElement =
-                        ModbusAddressControl.FirstOrDefault(
-                            e =>
-                            {
-                                var element = xElement.Element("ModBusAddress");
-                                return element != null && e.ModBusAddress == element.Value;
-                            });
+                    var commentElement = this.ModbusAddressControl.FirstOrDefault(
+                        e =>
+                        {
+                            var element =
+                                xElement.Element("ModBusAddress");
+                            return (element != null) &&
+                                   (e.ModBusAddress == element.Value);
+                        });
 
                     if (commentElement != null)
                     {
@@ -148,16 +193,21 @@ namespace RabbitMQ_SendClient.UI
                             commentElement.Comments = element.Value;
                     }
 
-                    var modbusAddressElement = ModbusAddressControl.FirstOrDefault(
+                    var modbusAddressElement = this.ModbusAddressControl.FirstOrDefault(
                         e =>
                         {
-                            var element = xElement.Element("ModBusAddress");
-                            return element != null && e.ModBusAddress == element.Value;
+                            var element =
+                                xElement.Element(
+                                    "ModBusAddress");
+                            return (element != null) &&
+                                   (e.ModBusAddress ==
+                                    element.Value);
                         });
                     if (modbusAddressElement != null)
                     {
                         var nickNameElement = xElement.Element("Nickname");
-                        if (nickNameElement != null) modbusAddressElement.Nickname = nickNameElement.Value;
+                        if (nickNameElement != null)
+                            modbusAddressElement.Nickname = nickNameElement.Value;
                     }
                 }
             }
@@ -165,96 +215,112 @@ namespace RabbitMQ_SendClient.UI
 
         private void ChangeSelectionIndex_ButtonClick(object sender, RoutedEventArgs e)
         {
-            var btn = (Button) sender;
-            ModbusAddresses.SelectedIndex =
-                int.Parse(btn.Content.ToString()
-                    .Substring(0, btn.Content.ToString().IndexOf("-", StringComparison.Ordinal)));
+            var btn = (Button)sender;
+            ModbusAddresses.SelectedIndex = int.Parse(
+                btn.Content.ToString()
+                    .Substring(
+                        0,
+                        btn.Content.ToString().IndexOf("-", StringComparison.Ordinal)));
+            ModbusAddresses.ScrollIntoView(ModbusAddresses.SelectedItem);
         }
 
         private void Checkbox_Checked(object sender, RoutedEventArgs e)
         {
-            var checkBox = (CheckBox) e.OriginalSource;
+            var checkBox = (CheckBox)e.OriginalSource;
             var index = ModbusAddresses.SelectedIndex;
-            if (index == -1) return;
+            if (index == -1)
+                return;
             if (checkBox.IsChecked != null)
-                ModbusAddressControl[index].IsChecked = checkBox.IsChecked.Value;
+                this.ModbusAddressControl[index].IsChecked = checkBox.IsChecked.Value;
             SaveToFile(index);
 
-            UpdateAddressList(checkBox.IsChecked != null && checkBox.IsChecked.Value, index);
+            UpdateAddressList((checkBox.IsChecked != null) && checkBox.IsChecked.Value, index);
         }
 
         private void UpdateAddressList(bool IsChecked, int index)
         {
             if (IsChecked) //true
             {
-                var keyPair = new Tuple<bool, bool, bool, bool, int>(ModbusAddressControl[index].ReadCoil,
-                    ModbusAddressControl[index].ReadDiscrete, ModbusAddressControl[index].ReadHoldingRegisters,
-                    ModbusAddressControl[index].ReadInputRegisters, int.Parse(ModbusAddressControl[index].ModBusAddress, System.Globalization.NumberStyles.HexNumber));
+                var keyPair = new Tuple<bool, bool, bool, bool, int>(this.ModbusAddressControl[index].ReadCoil,
+                    this.ModbusAddressControl[index].ReadDiscrete,
+                    this.ModbusAddressControl[index].ReadHoldingRegisters,
+                    this.ModbusAddressControl[index].ReadInputRegisters,
+                    int.Parse(this.ModbusAddressControl[index].ModBusAddress,
+                        NumberStyles.HexNumber));
                 ModbusControls[ModbusControls.Length - 1].ModbusAddressList.Add(keyPair);
             }
             else //false
             {
-                var keyPair = new Tuple<bool, bool, bool, bool, int>(ModbusAddressControl[index].ReadCoil,
-                    ModbusAddressControl[index].ReadDiscrete, ModbusAddressControl[index].ReadHoldingRegisters,
-                    ModbusAddressControl[index].ReadInputRegisters, int.Parse(ModbusAddressControl[index].ModBusAddress,System.Globalization.NumberStyles.HexNumber));
+                var keyPair = new Tuple<bool, bool, bool, bool, int>(this.ModbusAddressControl[index].ReadCoil,
+                    this.ModbusAddressControl[index].ReadDiscrete,
+                    this.ModbusAddressControl[index].ReadHoldingRegisters,
+                    this.ModbusAddressControl[index].ReadInputRegisters,
+                    int.Parse(this.ModbusAddressControl[index].ModBusAddress,
+                        NumberStyles.HexNumber));
                 ModbusControls[ModbusControls.Length - 1].ModbusAddressList.Remove(keyPair);
             }
         }
 
         private void Function1Checkbox_Checked(object sender, RoutedEventArgs eventArgs)
         {
-            var checkBox = (CheckBox) eventArgs.OriginalSource;
+            var checkBox = (CheckBox)eventArgs.OriginalSource;
             var index = ModbusAddresses.SelectedIndex;
 
-            if (index == -1 || checkBox.IsChecked == null) return;
+            if ((index == -1) || (checkBox.IsChecked == null))
+                return;
 
-            ModbusAddressControl[index].ReadCoil = checkBox.IsChecked.Value;
+            this.ModbusAddressControl[index].ReadCoil = checkBox.IsChecked.Value;
             SaveToFile(index);
-            UpdateAddressList(checkBox.IsChecked != null && checkBox.IsChecked.Value, index);
+            UpdateAddressList((checkBox.IsChecked != null) && checkBox.IsChecked.Value, index);
         }
 
         private void Function2Checkbox_Checked(object sender, RoutedEventArgs eventArgs)
         {
-            var checkBox = (CheckBox) eventArgs.OriginalSource;
+            var checkBox = (CheckBox)eventArgs.OriginalSource;
             var index = ModbusAddresses.SelectedIndex;
 
-            if (index == -1 || checkBox.IsChecked == null) return;
+            if ((index == -1) || (checkBox.IsChecked == null))
+                return;
 
-            ModbusAddressControl[index].ReadDiscrete = checkBox.IsChecked.Value;
+            this.ModbusAddressControl[index].ReadDiscrete = checkBox.IsChecked.Value;
             SaveToFile(index);
-            UpdateAddressList(checkBox.IsChecked != null && checkBox.IsChecked.Value, index);
+            UpdateAddressList((checkBox.IsChecked != null) && checkBox.IsChecked.Value, index);
         }
 
         private void Function3Checkbox_Checked(object sender, RoutedEventArgs eventArgs)
         {
-            var checkBox = (CheckBox) eventArgs.OriginalSource;
+            var checkBox = (CheckBox)eventArgs.OriginalSource;
             var index = ModbusAddresses.SelectedIndex;
 
-            if (index == -1 || checkBox.IsChecked == null) return;
+            if ((index == -1) || (checkBox.IsChecked == null))
+                return;
 
-            ModbusAddressControl[index].ReadHoldingRegisters = checkBox.IsChecked.Value;
+            this.ModbusAddressControl[index].ReadHoldingRegisters = checkBox.IsChecked.Value;
             SaveToFile(index);
-            UpdateAddressList(checkBox.IsChecked != null && checkBox.IsChecked.Value, index);
+            UpdateAddressList((checkBox.IsChecked != null) && checkBox.IsChecked.Value, index);
         }
 
         private void Function4Checkbox_Checked(object sender, RoutedEventArgs eventArgs)
         {
-            var checkBox = (CheckBox) eventArgs.OriginalSource;
+            var checkBox = (CheckBox)eventArgs.OriginalSource;
             var index = ModbusAddresses.SelectedIndex;
 
-            if (index == -1 || checkBox.IsChecked == null) return;
+            if ((index == -1) || (checkBox.IsChecked == null))
+                return;
 
-            ModbusAddressControl[index].ReadInputRegisters = checkBox.IsChecked.Value;
+            this.ModbusAddressControl[index].ReadInputRegisters = checkBox.IsChecked.Value;
             SaveToFile(index);
-            UpdateAddressList(checkBox.IsChecked != null && checkBox.IsChecked.Value, index);
+            UpdateAddressList((checkBox.IsChecked != null) && checkBox.IsChecked.Value, index);
         }
 
         private void SaveToFile(int index)
         {
-            if (
-                !Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\RabbitMQ Client"))
-                Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) +
-                                          @"\RabbitMQ Client");
+            if (!Directory.Exists(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) +
+                @"\RabbitMQ Client"))
+                Directory.CreateDirectory(
+                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) +
+                    @"\RabbitMQ Client");
 
             var docLocation = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             docLocation += @"\RabbitMQ Client\ModbusSettings.xml";
@@ -269,48 +335,48 @@ namespace RabbitMQ_SendClient.UI
             }
 
             var doc = XDocument.Load(docLocation);
-            if (doc.Root?.Elements("Device").FirstOrDefault(
-                    e => e.Attribute("DeviceName").Value == DeviceName) != null)
+            if (doc.Root?.Elements("Device").FirstOrDefault(e => e.Attribute("DeviceName").Value == this.DeviceName) !=
+                null)
             {
                 var target = doc.Root.Elements("Device")
-                    .Single(e => e.Attribute("DeviceName").Value == DeviceName);
+                    .Single(e => e.Attribute("DeviceName").Value == this.DeviceName);
 
-                target.Element("DeviceAddress").Value = DeviceAddress;
+                target.Element("DeviceAddress").Value = this.DeviceAddress;
 
                 target = target.Element("MemorySettings");
 
-                if (
-                    target.Elements("MemoryBlock")
+                if (target.Elements("MemoryBlock")
                         .FirstOrDefault(
-                            e => e.Element("ModBusAddress")?.Value == ModbusAddressControl[index].ModBusAddress) !=
+                            e => e.Element("ModBusAddress")?.Value == this.ModbusAddressControl[index].ModBusAddress) !=
                     null)
                 {
                     target = target.Elements("MemoryBlock")
-                        .Single(e => e.Element("ModBusAddress")?.Value == ModbusAddressControl[index].ModBusAddress);
+                        .Single(
+                            e => e.Element("ModBusAddress")?.Value == this.ModbusAddressControl[index].ModBusAddress);
                     var xElement = target.Element("Active");
                     if (xElement != null)
-                        xElement.Value = ModbusAddressControl[index].IsChecked.ToString();
+                        xElement.Value = this.ModbusAddressControl[index].IsChecked.ToString();
 
-                    target.Element("Nickname").Value = ModbusAddressControl[index].Nickname; //update nickname
-                    target.Element("Comments").Value = ModbusAddressControl[index].Comments; //update comment
+                    target.Element("Nickname").Value = this.ModbusAddressControl[index].Nickname; //update nickname
+                    target.Element("Comments").Value = this.ModbusAddressControl[index].Comments; //update comment
 
                     target = target.Element("FunctionCodes"); //update function codes
 
                     target.Elements("FunctionCode")
                         .FirstOrDefault(e => e.Attribute("FunctionType")?.Value == "Read Coil")
-                        .Value = ModbusAddressControl[index].ReadCoil.ToString();
+                        .Value = this.ModbusAddressControl[index].ReadCoil.ToString();
 
                     target.Elements("FunctionCode")
                         .FirstOrDefault(e => e.Attribute("FunctionType")?.Value == "Read Discrete")
-                        .Value = ModbusAddressControl[index].ReadDiscrete.ToString();
+                        .Value = this.ModbusAddressControl[index].ReadDiscrete.ToString();
 
                     target.Elements("FunctionCode")
                         .FirstOrDefault(e => e.Attribute("FunctionType")?.Value == "Read Holding")
-                        .Value = ModbusAddressControl[index].ReadHoldingRegisters.ToString();
+                        .Value = this.ModbusAddressControl[index].ReadHoldingRegisters.ToString();
 
                     target.Elements("FunctionCode")
                         .FirstOrDefault(e => e.Attribute("FunctionType")?.Value == "Read Input")
-                        .Value = ModbusAddressControl[index].ReadInputRegisters.ToString();
+                        .Value = this.ModbusAddressControl[index].ReadInputRegisters.ToString();
 
                     doc.Save(docLocation);
                 }
@@ -329,26 +395,31 @@ namespace RabbitMQ_SendClient.UI
         {
             var functionCodeElement = new XElement("FunctionCodes");
 
-            var readCoil = new XElement("FunctionCode", ModbusAddressControl[index].ReadCoil);
+            var readCoil = new XElement("FunctionCode", this.ModbusAddressControl[index].ReadCoil);
             readCoil.Add(new XAttribute("FunctionType", "Read Coil"));
             functionCodeElement.Add(readCoil);
 
-            var readDiscrete = new XElement("FunctionCode", ModbusAddressControl[index].ReadDiscrete);
+            var readDiscrete = new XElement("FunctionCode", this.ModbusAddressControl[index].ReadDiscrete);
             readDiscrete.Add(new XAttribute("FunctionType", "Read Discrete"));
             functionCodeElement.Add(readDiscrete);
 
-            var readHolding = new XElement("FunctionCode", ModbusAddressControl[index].ReadHoldingRegisters);
+            var readHolding = new XElement("FunctionCode", this.ModbusAddressControl[index].ReadHoldingRegisters);
             readHolding.Add(new XAttribute("FunctionType", "Read Holding"));
             functionCodeElement.Add(readHolding);
 
-            var readInput = new XElement("FunctionCode", ModbusAddressControl[index].ReadInputRegisters);
+            var readInput = new XElement("FunctionCode", this.ModbusAddressControl[index].ReadInputRegisters);
             readInput.Add(new XAttribute("FunctionType", "Read Input"));
             functionCodeElement.Add(readInput);
 
-            var modbusAddressElement = new XElement("ModBusAddress", ModbusAddressControl[index].ModBusAddress);
-            var nickNameElement = new XElement("Nickname", ModbusAddressControl[index].Nickname);
-            var commentElement = new XElement("Comments", ModbusAddressControl[index].Comments);
-            var useElement = new XElement("Active", ModbusAddressControl[index].IsChecked);
+            var modbusAddressElement = new XElement("ModBusAddress");
+            if (cboAddressFormat.SelectedIndex == 0)
+                modbusAddressElement.Value = this.ModbusAddressControl[index].ModBusAddress;
+            else
+                modbusAddressElement.Value = int.Parse(this.ModbusAddressControl[index].ModBusAddress).ToString("X4");
+
+            var nickNameElement = new XElement("Nickname", this.ModbusAddressControl[index].Nickname);
+            var commentElement = new XElement("Comments", this.ModbusAddressControl[index].Comments);
+            var useElement = new XElement("Active", this.ModbusAddressControl[index].IsChecked);
             var element = new XElement("MemoryBlock");
             element.Add(functionCodeElement);
             element.Add(modbusAddressElement);
@@ -365,24 +436,25 @@ namespace RabbitMQ_SendClient.UI
             if (level < 2)
             {
                 var deviceElement = new XElement("Device");
-                deviceElement.Add(new XAttribute("DeviceName", DeviceName));
+                deviceElement.Add(new XAttribute("DeviceName", this.DeviceName));
                 target.Add(deviceElement);
-                target = target.Elements("Device").Single(e => e.Attribute("DeviceName").Value == DeviceName);
-                target.Add(new XElement("DeviceAddress", DeviceAddress));
+                target = target.Elements("Device").Single(e => e.Attribute("DeviceName").Value == this.DeviceName);
+                target.Add(new XElement("DeviceAddress", this.DeviceAddress));
                 target.Add(new XElement("MemorySettings"));
             }
 
-            target =
-                doc.Root.Elements("Device")
-                    .Single(e => e.Attribute("DeviceName").Value == DeviceName)
-                    .Element("MemorySettings");
+            target = doc.Root.Elements("Device")
+                .Single(e => e.Attribute("DeviceName").Value == this.DeviceName)
+                .Element("MemorySettings");
 
             if (level < 3)
             {
                 if (doc.Root.Elements("Device")
-                        .Single(e => e.Attribute("DeviceName").Value == DeviceName)
-                        .Elements("MemorySettings").Elements("IsAbsolute").FirstOrDefault() == null)
-                    target.Add(new XElement("IsAbsolute", IsAbsolute));
+                        .Single(e => e.Attribute("DeviceName").Value == this.DeviceName)
+                        .Elements("MemorySettings")
+                        .Elements("IsAbsolute")
+                        .FirstOrDefault() == null)
+                    target.Add(new XElement("IsAbsolute", this.IsAbsolute));
                 target.Add(element);
             }
 
@@ -391,17 +463,19 @@ namespace RabbitMQ_SendClient.UI
 
         private void RbtnAbsolute_Checked(object sender, RoutedEventArgs e)
         {
-            if (!IsInitialized) return;
+            if (!this.IsInitialized)
+                return;
 
             RbtnOffset.IsChecked = false;
-            IsAbsolute = true;
+            this.IsAbsolute = true;
             UpdateAbsolute();
         }
 
         private void RbtnOffset_OnChecked(object sender, RoutedEventArgs e)
         {
             RbtnAbsolute.IsChecked = false;
-            IsAbsolute = false;
+            this.IsAbsolute = false;
+
             UpdateAbsolute();
         }
 
@@ -415,54 +489,57 @@ namespace RabbitMQ_SendClient.UI
             foreach (var xElement in doc.Root.Elements("Device"))
             {
                 var target = xElement.Element("MemorySettings");
-                target.Value = IsAbsolute.ToString();
+                target.Value = this.IsAbsolute.ToString();
             }
         }
 
         private void Nickname_SelectionChanged(object sender, RoutedEventArgs e)
         {
-            var dataCell = (TextBox) ((DataGridCell) sender).Content;
+            var dataCell = (TextBox)((DataGridCell)sender).Content;
 
             var index = ModbusAddresses.SelectedIndex;
 
-            if (dataCell.Text == ModbusAddressControl[index].Nickname) return;
+            if (dataCell.Text == this.ModbusAddressControl[index].Nickname)
+                return;
 
-            ModbusAddressControl[ModbusAddresses.SelectedIndex].Nickname = dataCell.Text;
+            this.ModbusAddressControl[ModbusAddresses.SelectedIndex].Nickname = dataCell.Text;
             SaveToFile(index);
         }
 
         private void Comment_SelectionChanged(object sender, RoutedEventArgs e)
         {
-            var dataCell = (TextBox) ((DataGridCell) sender).Content;
+            var dataCell = (TextBox)((DataGridCell)sender).Content;
             ;
 
             var index = ModbusAddresses.SelectedIndex;
 
-            if (dataCell.Text == ModbusAddressControl[index].Comments) return;
+            if (dataCell.Text == this.ModbusAddressControl[index].Comments)
+                return;
 
-            ModbusAddressControl[ModbusAddresses.SelectedIndex].Comments = dataCell.Text;
+            this.ModbusAddressControl[ModbusAddresses.SelectedIndex].Comments = dataCell.Text;
             SaveToFile(index);
         }
 
         private void BtnOK_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = true;
+            this.DialogResult = true;
             Close();
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            this.DialogResult = false;
             Close();
         }
 
         private void TxtSearchAddress_TextChanged(object sender, TextChangedEventArgs e)
         {
             var index = 0;
-            var searchField =((ComboBoxItem) CboSearchField.Items[CboSearchField.SelectedIndex]).Content.ToString();
-            foreach (var modBus in ModbusAddressControl)
+            var searchField =
+                ((ComboBoxItem)CboSearchField.Items[CboSearchField.SelectedIndex]).Content.ToString();
+            foreach (var modBus in this.ModbusAddressControl)
             {
-               if (searchField == "Modbus Address")
+                if (searchField == "Modbus Address")
                 {
                     if (modBus.ModBusAddress.ToLower().StartsWith(TxtSearchAddress.Text.ToLower()))
                     {
@@ -498,6 +575,161 @@ namespace RabbitMQ_SendClient.UI
         {
             LoadSettings();
             ModbusAddresses.Items.Refresh();
+        }
+
+        private void cboAddressFormat_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!IsInitialized) return;
+            if (cboAddressFormat.SelectedIndex == 0)
+                for (var index = 0; index < _addresses.Count; index++)
+                {
+                    if (int.TryParse(_addresses[index], out int num))
+                    {
+                        this.ModbusAddressControl[index].ModBusAddress = num.ToString("X4");
+                    }
+                    else
+                    {
+                        IFormatProvider provider = new CultureInfo("en-US");
+                        int.TryParse(_addresses[index], NumberStyles.HexNumber, provider, out int nm);
+                        this.ModbusAddressControl[index].ModBusAddress = nm.ToString("X4");
+                    }
+                }
+            else
+                foreach (var modBus in this.ModbusAddressControl)
+                {
+                    modBus.ModBusAddress = int.Parse(modBus.ModBusAddress, NumberStyles.HexNumber).ToString("D5");
+                }
+
+            ModbusAddresses.Items.Refresh();
+        }
+
+        private void BtnLoadCustom_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog();
+            dialog.DefaultExt = ".xml";
+            dialog.Filter =
+                "Comma Seperated Files(*.csv)|(*.csv)|eXtensible Markup Language (*.xml)|*.xml|JavaScript Object Notation(*.json)|(*.json)";
+
+            var result = dialog.ShowDialog();
+            string fileName;
+            if ((result != null) && result.Value)
+            {
+                fileName = dialog.FileName;
+            }
+            else
+            {
+                var docLocation = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                docLocation += @"\RabbitMQ Client\DefaultSettings.xml";
+
+                if (!Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) +
+                                      @"\RabbitMQ Client"))
+                    Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) +
+                                              @"\RabbitMQ Client");
+
+                if (!File.Exists(docLocation))
+                {
+                    try
+                    {
+                        var allLines = ReadAllResourceLines(Properties.Resources.ModbusAddresses);
+                        File.Create(docLocation).Close();
+                        File.WriteAllLines(docLocation, allLines);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Data format incorrect.\n\nDetialed Information:\n" + ex.Message,
+                            "Incorrect Format", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
+
+                fileName = docLocation;
+            }
+
+            if (fileName.Contains(".xml"))
+            {
+                try
+                {
+                    var ssReader = XDocument.Load(fileName);
+
+                    var target = ssReader.Root?.Element("Absolute");
+                    this.IsAbsolute = bool.Parse(target?.Value);
+                    target = ssReader.Root?.Element("CSV");
+
+                    var allLines = ReadAllResourceLines(target?.Value);
+                    _addresses = allLines.SelectMany(line => line.Split(',').ToList()).ToList();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Data format incorrect.\n\nDetialed Information:\n" + ex.Message,
+                        "Incorrect Format", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            else if (fileName.Contains(".json"))
+            {
+                var ssReader = File.ReadAllLines(fileName);
+
+                var allLines = ssReader.Aggregate("", (current, stringItem) => current + stringItem);
+
+                var csv = JsonConvert.DeserializeObject<CsvObject>(allLines);
+                ssReader = csv.Csv.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+                IsAbsolute = bool.Parse(csv.Absolute);
+                _addresses.Clear();
+                _addresses = ssReader.SelectMany(line => line.Split(',').ToList()).ToList();
+            }
+            else if (fileName.Contains(".csv"))
+            {
+                var allLines = File.ReadAllLines(fileName);
+                _addresses.Clear();
+                _addresses = allLines.SelectMany(line => line.Split(',').ToList()).ToList();
+            }
+            else
+            {
+                MessageBox.Show("Incorrect Fileformat, please choose the correct filetype.", "Incorrect Filetype",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            this.ModbusAddressControl.Clear();
+
+            for (var index = 0; index < _addresses.Count; index++)
+            {
+                var t = _addresses[index];
+                if (int.TryParse(t, out int num))
+                {
+                    if (!IsAbsolute) num--;
+                    _addresses[index] = num.ToString("X4");
+                }
+                else
+                {
+                    IFormatProvider provider = new CultureInfo("en-US");
+                    int.TryParse(t, NumberStyles.HexNumber, provider, out int nm);
+                    if (!IsAbsolute) nm--;
+                    _addresses[index] = nm.ToString("X4");
+                }
+
+                this.ModbusAddressControl.Add(
+                    new ModBus
+                    {
+                        IsChecked = false,
+                        ModBusAddress = t,
+                        Nickname = "",
+                        Comments = ""
+                    });
+            }
+
+            this.Dispatcher.Invoke((MethodInvoker)delegate
+           {
+               RbtnAbsolute.IsChecked = this.IsAbsolute;
+               RbtnOffset.IsChecked = !this.IsAbsolute;
+           });
+        }
+
+        private struct CsvObject
+        {
+            ///ToDo connect to FriendlyName for load configuration
+            internal string FriendlyName { get; set; }
+
+            internal string Absolute { get; set; }
+            internal string Csv { get; set; }
         }
     }
 

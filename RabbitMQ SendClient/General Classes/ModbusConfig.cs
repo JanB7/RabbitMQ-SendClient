@@ -1,12 +1,13 @@
-﻿using EasyModbus;
-using System;
-using System.IO.Ports;
-using System.Linq;
-using static RabbitMQ_SendClient.SystemVariables;
+﻿using static RabbitMQ_SendClient.SystemVariables;
 
 // ReSharper disable once CheckNamespace
 namespace RabbitMQ_SendClient.General_Classes
 {
+    using EasyModbus;
+    using System;
+    using System.IO.Ports;
+    using System.Linq;
+
     internal static class ModbusConfig
     {
         public static void CloseModbusSerial(Guid uidGuid)

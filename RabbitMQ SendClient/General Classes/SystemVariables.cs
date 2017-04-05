@@ -1,20 +1,21 @@
-﻿using EasyModbus;
-using RabbitMQ.Client;
-using RabbitMQ_SendClient.Properties;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.IO.Ports;
-using System.Linq;
-using System.Net;
-using System.Security.Cryptography;
-using System.Windows;
-using System.Xml.Linq;
-using static RabbitMQ_SendClient.MainWindow;
+﻿using static RabbitMQ_SendClient.MainWindow;
 
 namespace RabbitMQ_SendClient
 {
+    using EasyModbus;
+    using Properties;
+    using RabbitMQ.Client;
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
+    using System.IO.Ports;
+    using System.Linq;
+    using System.Net;
+    using System.Security.Cryptography;
+    using System.Windows;
+    using System.Xml.Linq;
+
     public static class SystemVariables
     {
         /// <summary>
@@ -76,7 +77,7 @@ namespace RabbitMQ_SendClient
 
         private static Process CheckProcess
         {
-            get { return _withEventsFieldProcess; }
+            get => _withEventsFieldProcess;
             set
             {
                 if (_withEventsFieldProcess != null)
@@ -113,6 +114,23 @@ namespace RabbitMQ_SendClient
             {1013, "RabbitMQ Exception - Wire Formatting"}
         };
 
+        public static string[] ReadAllResourceLines(string resourceText)
+        {
+            using (var reader = new StringReader(resourceText))
+            {
+                return EnumerateLines(reader).ToArray();
+            }
+        }
+
+        public static IEnumerable<string> EnumerateLines(TextReader reader)
+        {
+            string line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                yield return line;
+            }
+        }
+
         /// <summary>
         ///     Gets array index based on type of array used.
         ///     Can be of items: SerialCommunication| RabbitServerInformation | JsonObject | CheckListItem | MessageDataHistory
@@ -129,7 +147,8 @@ namespace RabbitMQ_SendClient
                     typeof(SerialCommunication), () =>
                     {
                         index +=
-                            SerialCommunications.TakeWhile(serialCommunication => serialCommunication.UidGuid != uidGuid)
+                            SerialCommunications
+                                .TakeWhile(serialCommunication => serialCommunication.UidGuid != uidGuid)
                                 .Count();
                         if (index > SerialCommunications.Length) index = -1;
                     }
@@ -145,7 +164,7 @@ namespace RabbitMQ_SendClient
                     typeof(JsonObject), () =>
                     {
                         index += JsonObjects.TakeWhile(jsonObject => jsonObject.UidGuid != uidGuid).Count();
-                        if (index > JsonObjects.Length - 1) index = -1;
+                        if (index > (JsonObjects.Length - 1)) index = -1;
                     }
                 },
                 {
@@ -153,15 +172,16 @@ namespace RabbitMQ_SendClient
                     {
                         index +=
                             AvailableModbusSerialPorts.TakeWhile(
-                                checkListItem => checkListItem.Uid != uidGuid.ToString()).Count();
-                        if (index > AvailableModbusSerialPorts.Count - 1)
+                                    checkListItem => checkListItem.Uid != uidGuid.ToString())
+                                .Count();
+                        if (index > (AvailableModbusSerialPorts.Count - 1))
                             index = 0;
                         else
                             return;
                         index +=
                             AvailableSerialPorts.TakeWhile(checkListItem => checkListItem.Uid != uidGuid.ToString())
                                 .Count();
-                        if (index > AvailableModbusSerialPorts.Count - 1)
+                        if (index > (AvailableModbusSerialPorts.Count - 1))
                             index = -1;
                     }
                 },
@@ -172,8 +192,9 @@ namespace RabbitMQ_SendClient
                             MessagesSentDataPair.Sum(
                                 observableCollection =>
                                     observableCollection.TakeWhile(
-                                        messageDataHistory => messageDataHistory.UidGuid != uidGuid).Count());
-                        if (index > MessagesSentDataPair.Length - 1) index = -1;
+                                            messageDataHistory => messageDataHistory.UidGuid != uidGuid)
+                                        .Count());
+                        if (index > (MessagesSentDataPair.Length - 1)) index = -1;
                     }
                 }
             };
@@ -181,6 +202,13 @@ namespace RabbitMQ_SendClient
             type[typeof(T)]();
 
             return index;
+        }
+
+        public static bool IsHex(IEnumerable<char> chars)
+        {
+            return chars.Select(c => ((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f')) ||
+                                     ((c >= 'A') && (c <= 'F')))
+                .All(isHex => isHex);
         }
 
         public static dynamic RemoveAtIndex<T>(int index, Array arrayToResize)
@@ -283,7 +311,8 @@ namespace RabbitMQ_SendClient
 
             var defaultFile = Resources.defaultXML;
             if (
-                !Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\RabbitMQ Client"))
+                !Directory.Exists(
+                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\RabbitMQ Client"))
                 Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) +
                                           @"\RabbitMQ Client");
 
@@ -307,7 +336,9 @@ namespace RabbitMQ_SendClient
             var docInformation = File.ReadAllText(docLocation);
             var docContent = new byte[docInformation.Length];
             for (var i = 0; i < docInformation.Length; i++)
+            {
                 docContent[i] = (byte) docInformation[i];
+            }
             var prehash = hashMe.ComputeHash(docContent);
             CheckProcess = Process.Start(docLocation);
             if (CheckProcess != null)
@@ -331,7 +362,9 @@ namespace RabbitMQ_SendClient
             Array.Resize(ref docContent, 0);
             Array.Resize(ref docContent, docInformation.Length);
             for (var i = 0; i < docInformation.Length; i++)
+            {
                 docContent[i] = (byte) docInformation[i];
+            }
             var posthash = hashMe.ComputeHash(docContent);
             return prehash != posthash;
         }
@@ -471,7 +504,9 @@ namespace RabbitMQ_SendClient
             {
                 _x = new double[50];
                 for (var i = 0; i < _x.Length; i++)
-                    _x[i] = MaximumErrors;
+                {
+                    _x[i] = this.MaximumErrors;
+                }
             }
 
             public void SetX(int index, double value)

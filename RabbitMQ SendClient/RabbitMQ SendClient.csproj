@@ -252,7 +252,6 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <AppDesigner Include="Properties\" />
-    <None Include="RabbitMQ SendClient.csproj.DotSettings" />
     <None Include="RabbitMQ SendClient.psproj" />
     <None Include="Resources\Settings.xsd">
       <SubType>Designer</SubType>
@@ -292,6 +291,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <DependentUpon>MessageData.mdf</DependentUpon>
     </Content>
+    <None Include="Resources\ModbusAddresses.txt" />
     <None Include="Resources\DefaultModbusSettingsFile.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

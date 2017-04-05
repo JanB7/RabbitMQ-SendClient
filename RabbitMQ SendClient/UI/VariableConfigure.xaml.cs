@@ -1,11 +1,12 @@
-﻿using System;
-using System.Windows;
-using static RabbitMQ_SendClient.SystemVariables;
+﻿using static RabbitMQ_SendClient.SystemVariables;
 
 // ReSharper disable CheckNamespace
 
 namespace RabbitMQ_SendClient.UI
 {
+    using System;
+    using System.Windows;
+
     /// <summary>
     ///     Interaction logic for VariableConfigure.xaml
     /// </summary>
@@ -14,15 +15,17 @@ namespace RabbitMQ_SendClient.UI
         public VariableConfigure(Guid uidGuid)
         {
             InitializeComponent();
-            UidGuid = uidGuid;
+            this.UidGuid = uidGuid;
             foreach (var friend in FriendlyName)
+            {
                 CboFriendlies.Items.Add(friend);
+            }
             if (CboFriendlies.Items.Count > 0)
                 CboFriendlies.SelectedIndex = 0;
         }
 
-        public Guid UidGuid { get; set; }
-        protected internal int SelectedIndex { get; set; }
+        private Guid UidGuid { get; }
+        private int SelectedIndex { get; set; }
 
         private static void ResizeJsonObject()
         {
@@ -34,17 +37,17 @@ namespace RabbitMQ_SendClient.UI
 
         private void OK_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = true;
+            this.DialogResult = true;
             ResizeJsonObject();
-            GetXML(CboFriendlies.Items[CboFriendlies.SelectedIndex].ToString(), UidGuid);
-            SelectedIndex = CboFriendlies.SelectedIndex;
+            GetXML(CboFriendlies.Items[CboFriendlies.SelectedIndex].ToString(), this.UidGuid);
+            this.SelectedIndex = CboFriendlies.SelectedIndex;
             Close();
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
-            SelectedIndex = -1;
+            this.DialogResult = false;
+            this.SelectedIndex = -1;
             Close();
         }
 

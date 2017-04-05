@@ -1,17 +1,18 @@
-﻿using System;
-using System.Diagnostics;
-using System.Net;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Forms;
-using System.Windows.Input;
-using static RabbitMQ_SendClient.GlobalRabbitMqServerFunctions;
+﻿using static RabbitMQ_SendClient.GlobalRabbitMqServerFunctions;
 using static RabbitMQ_SendClient.SystemVariables;
-using KeyEventArgs = System.Windows.Input.KeyEventArgs;
-using MessageBox = System.Windows.Forms.MessageBox;
 
 namespace RabbitMQ_SendClient
 {
+    using System;
+    using System.Diagnostics;
+    using System.Net;
+    using System.Windows;
+    using System.Windows.Controls;
+    using System.Windows.Forms;
+    using System.Windows.Input;
+    using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+    using MessageBox = System.Windows.Forms.MessageBox;
+
     /// <summary>
     ///     Interaction logic for SetupServer.xaml
     /// </summary>
@@ -21,7 +22,7 @@ namespace RabbitMQ_SendClient
 
         public SetupServer(Guid uidGuid)
         {
-            Index = GetIndex<RabbitServerInformation>(uidGuid);
+            this.Index = GetIndex<RabbitServerInformation>(uidGuid);
             InitializeComponent();
             InitialzeServerSettings();
         }
@@ -61,8 +62,8 @@ namespace RabbitMQ_SendClient
             ServerInformation[ServerInformation.Length - 1].VirtualHost = txtVirtualHost.Text;
             ServerInformation[ServerInformation.Length - 1].ExchangeName = txtExchangeName.Text;
             ServerInformation[ServerInformation.Length - 1].ChannelName = txtChannelName.Text;
-            ServerInformation[ServerInformation.Length - 1].ServerHeartbeat = (int) sldHeartBeat.Value;
-            ServerInformation[ServerInformation.Length - 1].NetworkRecoveryInterval = (int) sldNetworokRecInt.Value;
+            ServerInformation[ServerInformation.Length - 1].ServerHeartbeat = (int)sldHeartBeat.Value;
+            ServerInformation[ServerInformation.Length - 1].NetworkRecoveryInterval = (int)sldNetworokRecInt.Value;
 
             //Creates Connection
             try
@@ -76,11 +77,11 @@ namespace RabbitMQ_SendClient
                     ex.Source, MessageBoxButtons.YesNo, MessageBoxIcon.Stop);
                 if (msgboxResult == System.Windows.Forms.DialogResult.Yes)
                     return;
-                DialogResult = false;
+                this.DialogResult = false;
                 Close();
             }
 
-            DialogResult = FactoryChannel[Index].IsOpen;
+            this.DialogResult = FactoryChannel[this.Index].IsOpen;
 
             Close();
         }
@@ -100,17 +101,17 @@ namespace RabbitMQ_SendClient
         private void CboAutoRecovery_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
 
             switch (cboAutoRecovery.SelectedIndex)
             {
                 case 0:
-                    ServerInformation[Index].AutoRecovery = true;
+                    ServerInformation[this.Index].AutoRecovery = true;
                     sldNetworokRecInt.IsEnabled = true;
                     break;
 
                 case 1:
-                    ServerInformation[Index].AutoRecovery = false;
+                    ServerInformation[this.Index].AutoRecovery = false;
                     sldNetworokRecInt.IsEnabled = false;
                     break;
 
@@ -126,21 +127,21 @@ namespace RabbitMQ_SendClient
         /// <param name="e">Checkbox Value</param>
         private void GenerateChannel_Checked(object sender, RoutedEventArgs e)
         {
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
 
             try
             {
-                if (GenerateChannel.IsChecked != null && GenerateChannel.IsChecked.Value) //True
+                if ((GenerateChannel.IsChecked != null) && GenerateChannel.IsChecked.Value) //True
                 {
                     txtChannelName.IsEnabled = !GenerateChannel.IsChecked.Value;
                     txtChannelName.Text = Guid.NewGuid().ToString().Replace("-", string.Empty).Substring(0, 12);
-                    ServerInformation[Index].ChannelName = txtChannelName.Text;
+                    ServerInformation[this.Index].ChannelName = txtChannelName.Text;
                 }
-                else if (GenerateChannel.IsChecked != null && !GenerateChannel.IsChecked.Value) //False
+                else if ((GenerateChannel.IsChecked != null) && !GenerateChannel.IsChecked.Value) //False
                 {
                     txtChannelName.IsEnabled = !GenerateChannel.IsChecked.Value;
                     txtChannelName.Text = "Default";
-                    ServerInformation[Index].ChannelName = txtChannelName.Text;
+                    ServerInformation[this.Index].ChannelName = txtChannelName.Text;
                 }
                 else
                 {
@@ -161,20 +162,20 @@ namespace RabbitMQ_SendClient
         /// <param name="e">Checkbox Value</param>
         private void GenerateExchange_Checked(object sender, RoutedEventArgs e)
         {
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
             try
             {
-                if (GenerateExchange.IsChecked != null && GenerateExchange.IsChecked.Value) //True
+                if ((GenerateExchange.IsChecked != null) && GenerateExchange.IsChecked.Value) //True
                 {
                     txtExchangeName.IsEnabled = !GenerateExchange.IsChecked.Value;
                     txtExchangeName.Text = Guid.NewGuid().ToString().Replace("-", string.Empty).Substring(0, 12);
-                    ServerInformation[Index].ExchangeName = txtExchangeName.Text;
+                    ServerInformation[this.Index].ExchangeName = txtExchangeName.Text;
                 }
-                else if (GenerateExchange.IsChecked != null && !GenerateExchange.IsChecked.Value) //False
+                else if ((GenerateExchange.IsChecked != null) && !GenerateExchange.IsChecked.Value) //False
                 {
                     txtExchangeName.IsEnabled = !GenerateExchange.IsChecked.Value;
                     txtExchangeName.Text = "Default";
-                    ServerInformation[Index].ExchangeName = txtExchangeName.Text;
+                    ServerInformation[this.Index].ExchangeName = txtExchangeName.Text;
                 }
                 else
                 {
@@ -194,16 +195,16 @@ namespace RabbitMQ_SendClient
         /// </summary>
         private void InitialzeServerSettings()
         {
-            if (!IsInitialized) return;
-            txtServerAddress.Text = ServerInformation[Index].ServerAddress.ToString();
-            txtUserName.Text = ServerInformation[Index].UserName;
-            pwdPassword.Password = ServerInformation[Index].Password;
-            txtServerPort.Text = ServerInformation[Index].ServerPort.ToString();
-            txtVirtualHost.Text = ServerInformation[Index].VirtualHost;
-            txtExchangeName.Text = ServerInformation[Index].ExchangeName;
-            txtChannelName.Text = ServerInformation[Index].ChannelName;
-            sldHeartBeat.Value = ServerInformation[Index].ServerHeartbeat;
-            sldNetworokRecInt.Value = ServerInformation[Index].NetworkRecoveryInterval;
+            if (!this.IsInitialized) return;
+            txtServerAddress.Text = ServerInformation[this.Index].ServerAddress.ToString();
+            txtUserName.Text = ServerInformation[this.Index].UserName;
+            pwdPassword.Password = ServerInformation[this.Index].Password;
+            txtServerPort.Text = ServerInformation[this.Index].ServerPort.ToString();
+            txtVirtualHost.Text = ServerInformation[this.Index].VirtualHost;
+            txtExchangeName.Text = ServerInformation[this.Index].ExchangeName;
+            txtChannelName.Text = ServerInformation[this.Index].ChannelName;
+            sldHeartBeat.Value = ServerInformation[this.Index].ServerHeartbeat;
+            sldNetworokRecInt.Value = ServerInformation[this.Index].NetworkRecoveryInterval;
             cboAutoRecovery.SelectedIndex = 0;
         }
 
@@ -216,8 +217,8 @@ namespace RabbitMQ_SendClient
         private void PwdPassword_OnPasswordChanged(object sender, RoutedEventArgs e)
         {
             //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
-            ServerInformation[Index].Password = pwdPassword.Password;
+            if (!this.IsInitialized) return;
+            ServerInformation[this.Index].Password = pwdPassword.Password;
         }
 
         /// <summary>
@@ -228,11 +229,11 @@ namespace RabbitMQ_SendClient
         private void SldHeartBeat_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
 
-            var value = (int) sldHeartBeat.Value;
+            var value = (int)sldHeartBeat.Value;
             txtHeartbeat.Text = value.ToString();
-            ServerInformation[Index].ServerHeartbeat = value;
+            ServerInformation[this.Index].ServerHeartbeat = value;
         }
 
         /// <summary>
@@ -244,13 +245,13 @@ namespace RabbitMQ_SendClient
         private void SldNetworokRecInt_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
             try
             {
-                var value = (int) sldNetworokRecInt.Value;
+                var value = (int)sldNetworokRecInt.Value;
 
                 NetworkRecIntervalTxt.Text = value.ToString();
-                ServerInformation[Index].NetworkRecoveryInterval = value;
+                ServerInformation[this.Index].NetworkRecoveryInterval = value;
             }
             catch (Exception ex)
             {
@@ -262,17 +263,17 @@ namespace RabbitMQ_SendClient
         private void TxtChannelName_TextChanged(object sender, TextChangedEventArgs e)
         {
             //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
 
-            ServerInformation[Index].ChannelName = "default." + txtChannelName.Text;
+            ServerInformation[this.Index].ChannelName = "default." + txtChannelName.Text;
         }
 
         private void TxtExchangeName_TextChanged(object sender, TextChangedEventArgs e)
         {
             //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
 
-            ServerInformation[Index].ExchangeName = "default." + txtExchangeName.Text;
+            ServerInformation[this.Index].ExchangeName = "default." + txtExchangeName.Text;
         }
 
         private void TxtServerAddress_OnKeyDown(object sender, KeyEventArgs e)
@@ -284,7 +285,7 @@ namespace RabbitMQ_SendClient
         private void TxtServerAddress_OnLostFocus(object sender, RoutedEventArgs e)
         {
             //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
 
             try
             {
@@ -322,24 +323,30 @@ namespace RabbitMQ_SendClient
         private void TxtServerPort_TextChanged(object sender, TextChangedEventArgs e)
         {
             //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
 
-            ServerInformation[Index].ServerPort = Convert.ToInt32(txtServerPort.Text);
+            ServerInformation[this.Index].ServerPort = Convert.ToInt32(txtServerPort.Text);
         }
 
         private void TxtUserName_TextChanged(object sender, TextChangedEventArgs e)
         {
             //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
 
-            ServerInformation[Index].UserName = txtUserName.Text;
+            ServerInformation[this.Index].UserName = txtUserName.Text;
         }
 
         private void TxtVirtualHost_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
 
-            ServerInformation[Index].VirtualHost = txtVirtualHost.Text;
+            ServerInformation[this.Index].VirtualHost = txtVirtualHost.Text;
+        }
+
+        private void btnCancel_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
+            Close();
         }
     } //End of Class
 }

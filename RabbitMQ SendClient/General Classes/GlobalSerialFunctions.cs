@@ -1,14 +1,15 @@
-﻿using RabbitMQ.Client;
-using System;
-using System.Diagnostics;
-using System.IO.Ports;
-using System.Windows.Controls.DataVisualization.Charting;
-using System.Windows.Forms;
-using static RabbitMQ_SendClient.SystemVariables;
-using Application = System.Windows.Application;
+﻿using static RabbitMQ_SendClient.SystemVariables;
 
 namespace RabbitMQ_SendClient
 {
+    using RabbitMQ.Client;
+    using System;
+    using System.Diagnostics;
+    using System.IO.Ports;
+    using System.Windows.Controls.DataVisualization.Charting;
+    using System.Windows.Forms;
+    using Application = System.Windows.Application;
+
     public class GlobalSerialFunctions
     {
         private static readonly StackTrace StackTracing = new StackTrace();
@@ -33,7 +34,9 @@ namespace RabbitMQ_SendClient
             }
             SerialCommunications[index].SetX(StatsGroupings[index], pVal);
             for (var i = 0; i < 50; i++)
+            {
                 xBar += SerialCommunications[index].GetX(i);
+            }
 
             xBar = xBar / 50;
 
@@ -53,7 +56,9 @@ namespace RabbitMQ_SendClient
             {
                 var xbar = 0.0;
                 for (var i = SerialCommunications[index].MaximumErrors; i >= 0; i--)
+                {
                     xbar += SerialCommunications[index].GetX(i);
+                }
                 xbar = xbar / (SerialCommunications[index].MaximumErrors * 0.9);
 
                 return xbar > SerialCommunications[index].Ucl;
@@ -105,7 +110,9 @@ namespace RabbitMQ_SendClient
         {
             if (!SerialPorts[index].IsOpen) return;
             while (SerialPorts[index].IsOpen)
+            {
                 SerialPorts[index].Close();
+            }
 
             Application.Current.Dispatcher.Invoke((MethodInvoker) delegate
             {
@@ -120,8 +127,14 @@ namespace RabbitMQ_SendClient
             ServerInformation = RemoveAtIndex<RabbitServerInformation>(index, ServerInformation);
             MainWindow.Lineseries = RemoveAtIndex<LineSeries>(index, MainWindow.Lineseries);
 
-            while (FactoryChannel[index].IsOpen) FactoryChannel[index].Close();
-            while (FactoryConnection[index].IsOpen) FactoryConnection[index].Close();
+            while (FactoryChannel[index].IsOpen)
+            {
+                FactoryChannel[index].Close();
+            }
+            while (FactoryConnection[index].IsOpen)
+            {
+                FactoryConnection[index].Close();
+            }
 
             FactoryChannel = RemoveAtIndex<IModel>(index, FactoryChannel);
             FactoryConnection = RemoveAtIndex<IConnection>(index, FactoryConnection);
@@ -143,7 +156,9 @@ namespace RabbitMQ_SendClient
             {
                 if (SerialPorts[index].IsOpen)
                     while (SerialPorts[index].IsOpen)
+                    {
                         SerialPorts[index].Close();
+                    }
 
                 //Initializing the Serial Port
                 SerialPorts[index].PortName = SerialCommunications[index].ComPort;
@@ -163,7 +178,9 @@ namespace RabbitMQ_SendClient
             catch (UnauthorizedAccessException ex)
             {
                 while (SerialPorts[index].IsOpen)
+                {
                     SerialPorts[index].Close(); //Close port if opened
+                }
 
                 MessageBox.Show(@"Access to the port '" + SerialPorts[index].PortName + @"' is denied.",
                     @"Error opening Port",

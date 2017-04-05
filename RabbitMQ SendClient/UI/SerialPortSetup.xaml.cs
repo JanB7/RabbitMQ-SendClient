@@ -1,17 +1,18 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO.Ports;
-using System.Windows;
-using System.Windows.Forms;
-using System.Windows.Input;
-using static RabbitMQ_SendClient.SystemVariables;
-using KeyEventArgs = System.Windows.Input.KeyEventArgs;
-using MessageBox = System.Windows.Forms.MessageBox;
+﻿using static RabbitMQ_SendClient.SystemVariables;
 
 // ReSharper disable once CheckNamespace
 
 namespace RabbitMQ_SendClient.UI
 {
+    using System;
+    using System.Diagnostics;
+    using System.IO.Ports;
+    using System.Windows;
+    using System.Windows.Forms;
+    using System.Windows.Input;
+    using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+    using MessageBox = System.Windows.Forms.MessageBox;
+
     /// <summary>
     ///     Interaction logic for SerialPortSetup.xaml
     /// </summary>
@@ -27,7 +28,7 @@ namespace RabbitMQ_SendClient.UI
         {
             InitializeComponent();
             UidGuid = uidGuid;
-            SerialPortNum = SerialCommunications.Length - 1;
+            this.SerialPortNum = SerialCommunications.Length - 1;
             InitializeBaudRates();
             InitializeDataBits();
             InitializeStopBits();
@@ -45,7 +46,9 @@ namespace RabbitMQ_SendClient.UI
             try
             {
                 foreach (var rate in Enum.GetValues(typeof(BaudRates)))
+                {
                     cboBaudRate.Items.Add(rate.ToString());
+                }
 
                 cboBaudRate.SelectedIndex = 4;
                 cboBaudRate.IsEnabled = true;
@@ -64,7 +67,9 @@ namespace RabbitMQ_SendClient.UI
             try
             {
                 for (var i = 8; i >= 4; i--)
+                {
                     cboDataBits.Items.Add(i);
+                }
                 cboDataBits.IsEnabled = true;
                 cboDataBits.SelectedIndex = 0;
             }
@@ -82,7 +87,9 @@ namespace RabbitMQ_SendClient.UI
             try
             {
                 foreach (var stopBit in Enum.GetValues(typeof(StopBits)))
+                {
                     cboStopBits.Items.Add(stopBit);
+                }
                 cboStopBits.SelectedIndex = 0;
                 cboStopBits.IsEnabled = true;
             }
@@ -100,7 +107,9 @@ namespace RabbitMQ_SendClient.UI
             try
             {
                 foreach (var parity in Enum.GetValues(typeof(Parity)))
+                {
                     cboParity.Items.Add(parity);
+                }
                 cboParity.SelectedIndex = 0;
                 cboParity.IsEnabled = true;
             }
@@ -118,7 +127,9 @@ namespace RabbitMQ_SendClient.UI
             try
             {
                 foreach (var shake in Enum.GetValues(typeof(Handshake)))
+                {
                     cboFlowControl.Items.Add(shake);
+                }
                 cboFlowControl.SelectedIndex = 0;
                 cboFlowControl.IsEnabled = true;
 
@@ -156,14 +167,14 @@ namespace RabbitMQ_SendClient.UI
         private void SldReadTimeout_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             //Prevents actions from occuring during initialization
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
 
             txtReadTimeout.Text = ((int) sldReadTimeout.Value).ToString();
         }
 
         private void OK_Click(object sender, RoutedEventArgs e)
         {
-            SerialCommunications[SerialPortNum].UidGuid = UidGuid;
+            SerialCommunications[this.SerialPortNum].UidGuid = UidGuid;
             SetFlowControl();
             SetDataBits();
             SetReadTimeout();
@@ -172,13 +183,13 @@ namespace RabbitMQ_SendClient.UI
             MaximumErrors();
             SetMessageType();
 
-            DialogResult = true;
+            this.DialogResult = true;
             Close();
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            this.DialogResult = false;
             Close();
         }
 
@@ -187,7 +198,7 @@ namespace RabbitMQ_SendClient.UI
         /// </summary>
         private void SetDataBits()
         {
-            SerialCommunications[SerialPortNum].SerialBits =
+            SerialCommunications[this.SerialPortNum].SerialBits =
                 int.Parse(cboDataBits.Items[cboDataBits.SelectedIndex].ToString());
         }
 
@@ -197,25 +208,26 @@ namespace RabbitMQ_SendClient.UI
         private void SetFlowControl()
         {
             var flowControl =
-                (Handshake) Enum.Parse(typeof(Handshake), cboFlowControl.Items[cboFlowControl.SelectedIndex].ToString());
+                (Handshake) Enum.Parse(typeof(Handshake),
+                    cboFlowControl.Items[cboFlowControl.SelectedIndex].ToString());
 
-            SerialCommunications[SerialPortNum].FlowControl = flowControl;
+            SerialCommunications[this.SerialPortNum].FlowControl = flowControl;
             switch (flowControl)
             {
                 case Handshake.None:
-                    SerialCommunications[SerialPortNum].RtsEnable = false;
+                    SerialCommunications[this.SerialPortNum].RtsEnable = false;
                     break;
 
                 case Handshake.RequestToSend:
-                    SerialCommunications[SerialPortNum].RtsEnable = true;
+                    SerialCommunications[this.SerialPortNum].RtsEnable = true;
                     break;
 
                 case Handshake.RequestToSendXOnXOff:
-                    SerialCommunications[SerialPortNum].RtsEnable = true;
+                    SerialCommunications[this.SerialPortNum].RtsEnable = true;
                     break;
 
                 case Handshake.XOnXOff:
-                    SerialCommunications[SerialPortNum].RtsEnable = true;
+                    SerialCommunications[this.SerialPortNum].RtsEnable = true;
                     break;
 
                 default:
@@ -226,20 +238,20 @@ namespace RabbitMQ_SendClient.UI
 
         private void SetBaudRate()
         {
-            SerialCommunications[SerialPortNum].BaudRate =
+            SerialCommunications[this.SerialPortNum].BaudRate =
                 (BaudRates)
                 Enum.Parse(typeof(BaudRates), cboBaudRate.Items[cboBaudRate.SelectedIndex].ToString());
         }
 
         private void SetMessageType()
         {
-            SerialCommunications[SerialPortNum].MessageType =
+            SerialCommunications[this.SerialPortNum].MessageType =
                 cboMessageType.Items[cboMessageType.SelectedIndex].ToString();
         }
 
         private void SetReadTimeout()
         {
-            SerialCommunications[SerialPortNum].ReadTimeout = (int) sldReadTimeout.Value;
+            SerialCommunications[this.SerialPortNum].ReadTimeout = (int) sldReadTimeout.Value;
         }
 
         private void SetParity()
@@ -249,19 +261,19 @@ namespace RabbitMQ_SendClient.UI
             switch (parity)
             {
                 case "Odd":
-                    SerialCommunications[SerialPortNum].SerialParity = Parity.Odd;
+                    SerialCommunications[this.SerialPortNum].SerialParity = Parity.Odd;
                     break;
 
                 case "Even":
-                    SerialCommunications[SerialPortNum].SerialParity = Parity.Even;
+                    SerialCommunications[this.SerialPortNum].SerialParity = Parity.Even;
                     break;
 
                 case "Space":
-                    SerialCommunications[SerialPortNum].SerialParity = Parity.Space;
+                    SerialCommunications[this.SerialPortNum].SerialParity = Parity.Space;
                     break;
 
                 case "Mark":
-                    SerialCommunications[SerialPortNum].SerialParity = Parity.Mark;
+                    SerialCommunications[this.SerialPortNum].SerialParity = Parity.Mark;
                     break;
 
                 // ReSharper disable once RedundantCaseLabel
@@ -269,19 +281,19 @@ namespace RabbitMQ_SendClient.UI
                 // ReSharper disable once RedundantCaseLabel
                 case null:
                 default:
-                    SerialCommunications[SerialPortNum].SerialParity = Parity.None;
+                    SerialCommunications[this.SerialPortNum].SerialParity = Parity.None;
                     break;
             }
         }
 
         private void MaximumErrors()
         {
-            SerialCommunications[SerialPortNum].MaximumErrors = (int) sldMaxmumErrors.Value;
+            SerialCommunications[this.SerialPortNum].MaximumErrors = (int) sldMaxmumErrors.Value;
         }
 
         private void SldMaximumErrors_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
             txtMaximumErrors.Text = ((int) sldMaxmumErrors.Value).ToString();
         }
 

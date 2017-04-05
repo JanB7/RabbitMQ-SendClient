@@ -1,13 +1,14 @@
-﻿using RabbitMQ.Client;
-using RabbitMQ.Client.Exceptions;
-using System;
-using System.Diagnostics;
-using System.Net;
-using System.Windows.Forms;
-using static RabbitMQ_SendClient.SystemVariables;
+﻿using static RabbitMQ_SendClient.SystemVariables;
 
 namespace RabbitMQ_SendClient
 {
+    using RabbitMQ.Client;
+    using RabbitMQ.Client.Exceptions;
+    using System;
+    using System.Diagnostics;
+    using System.Net;
+    using System.Windows.Forms;
+
     public static class GlobalRabbitMqServerFunctions
     {
         private static readonly StackTrace StackTracing = new StackTrace();
@@ -51,8 +52,9 @@ namespace RabbitMQ_SendClient
         {
             try
             {
-                FactoryChannel[index].QueueDeclare(ServerInformation[index].ChannelName, queueDurable, false,
-                    queueAutoDelete, null);
+                FactoryChannel[index]
+                    .QueueDeclare(ServerInformation[index].ChannelName, queueDurable, false,
+                        queueAutoDelete, null);
             }
             catch (Exception ex)
             {
@@ -81,29 +83,33 @@ namespace RabbitMQ_SendClient
                         goto default;
                     case "fanout":
                     case "Fanout":
-                        FactoryChannel[index].ExchangeDeclare(ServerInformation[index].ExchangeName, ExchangeType.Fanout,
-                            exchangeDurability, autoDelete,
-                            null);
+                        FactoryChannel[index]
+                            .ExchangeDeclare(ServerInformation[index].ExchangeName, ExchangeType.Fanout,
+                                exchangeDurability, autoDelete,
+                                null);
                         break;
 
                     case "headers":
                     case "Headers":
-                        FactoryChannel[index].ExchangeDeclare(ServerInformation[index].ExchangeName,
-                            ExchangeType.Headers, exchangeDurability, autoDelete,
-                            null);
+                        FactoryChannel[index]
+                            .ExchangeDeclare(ServerInformation[index].ExchangeName,
+                                ExchangeType.Headers, exchangeDurability, autoDelete,
+                                null);
                         break;
 
                     case "topic":
                     case "Topic":
-                        FactoryChannel[index].ExchangeDeclare(ServerInformation[index].ExchangeName, ExchangeType.Topic,
-                            exchangeDurability, autoDelete,
-                            null);
+                        FactoryChannel[index]
+                            .ExchangeDeclare(ServerInformation[index].ExchangeName, ExchangeType.Topic,
+                                exchangeDurability, autoDelete,
+                                null);
                         break;
 
                     default:
-                        FactoryChannel[index].ExchangeDeclare(ServerInformation[index].ExchangeName, ExchangeType.Direct,
-                            exchangeDurability, autoDelete,
-                            null);
+                        FactoryChannel[index]
+                            .ExchangeDeclare(ServerInformation[index].ExchangeName, ExchangeType.Direct,
+                                exchangeDurability, autoDelete,
+                                null);
                         break;
                 }
             }
@@ -123,8 +129,9 @@ namespace RabbitMQ_SendClient
         {
             try
             {
-                FactoryChannel[index].QueueBind(ServerInformation[index].ChannelName,
-                    ServerInformation[index].ExchangeName, "");
+                FactoryChannel[index]
+                    .QueueBind(ServerInformation[index].ChannelName,
+                        ServerInformation[index].ExchangeName, "");
             }
             catch (Exception ex)
             {

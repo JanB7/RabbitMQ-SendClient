@@ -1,32 +1,33 @@
-﻿using Newtonsoft.Json;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Exceptions;
-using RabbitMQ_SendClient.UI;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Data;
-using System.Data.SqlClient;
-using System.Diagnostics;
-using System.IO.Ports;
-using System.Linq;
-using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Controls.DataVisualization.Charting;
-using System.Windows.Forms;
-using System.Windows.Media.Animation;
-using System.Windows.Threading;
-using static RabbitMQ_SendClient.General_Classes.ModbusConfig;
+﻿using static RabbitMQ_SendClient.General_Classes.ModbusConfig;
 using static RabbitMQ_SendClient.GlobalRabbitMqServerFunctions;
 using static RabbitMQ_SendClient.GlobalSerialFunctions;
 using static RabbitMQ_SendClient.SystemVariables;
-using CheckBox = System.Windows.Controls.CheckBox;
-using MessageBox = System.Windows.Forms.MessageBox;
 
 namespace RabbitMQ_SendClient
 {
+    using Newtonsoft.Json;
+    using RabbitMQ.Client;
+    using RabbitMQ.Client.Exceptions;
+    using System;
+    using System.Collections.Generic;
+    using System.Collections.ObjectModel;
+    using System.ComponentModel;
+    using System.Data;
+    using System.Data.SqlClient;
+    using System.Diagnostics;
+    using System.IO.Ports;
+    using System.Linq;
+    using System.Text;
+    using System.Windows;
+    using System.Windows.Controls;
+    using System.Windows.Controls.DataVisualization.Charting;
+    using System.Windows.Forms;
+    using System.Windows.Media.Animation;
+    using System.Windows.Threading;
+    using UI;
+    using CheckBox = System.Windows.Controls.CheckBox;
+    using MessageBox = System.Windows.Forms.MessageBox;
+
     /// <summary>
     ///     Main UI for RabbitMQ Client
     /// </summary>
@@ -48,17 +49,18 @@ namespace RabbitMQ_SendClient
 
         private static readonly StackTrace StackTracing = new StackTrace();
 
-        private static readonly string DatabaseLoc = AppDomain.CurrentDomain.BaseDirectory + "Database\\MessageData.mdf";
+        private static readonly string DatabaseLoc =
+            AppDomain.CurrentDomain.BaseDirectory + "Database\\MessageData.mdf";
 
         private readonly string _connString =
             $"Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=\"{DatabaseLoc}\";Integrated Security=True";
-
-        private double[] _messagesPerSecond = new double[0];
 
         private readonly Dictionary<DispatcherTimer, Guid> _modbusTimerId = new Dictionary<DispatcherTimer, Guid>();
 
         private readonly DateTime _previousTime = new DateTime();
         private readonly DispatcherTimer _systemTimer = new DispatcherTimer();
+
+        private double[] _messagesPerSecond = new double[0];
 
         /// <summary>
         ///     Mainline Executable to the RabbitMQ Client
@@ -88,7 +90,9 @@ namespace RabbitMQ_SendClient
             for (var i = 0; i < SerialPort.GetPortNames().Length; i++)
             {
                 while (SerialPorts[i].IsOpen)
+                {
                     SerialPorts[i].Close();
+                }
                 SerialPorts[i].Dispose();
                 CloseSerialPortUnexpectedly(i);
             }
@@ -178,7 +182,8 @@ namespace RabbitMQ_SendClient
                 var indexOf = ex.Message.IndexOf("\"", StringComparison.Ordinal);
                 var indexOff = ex.Message.IndexOf("\"", indexOf + 1, StringComparison.Ordinal);
                 var errmessage = ex.Message.Substring(indexOf + 1, indexOff - indexOf - 1);
-                MessageBox.Show(errmessage, @"Connection Already Closed", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                MessageBox.Show(errmessage, @"Connection Already Closed", MessageBoxButtons.OK,
+                    MessageBoxIcon.Asterisk);
 
                 return false;
             }
@@ -197,12 +202,20 @@ namespace RabbitMQ_SendClient
             _systemTimer.Stop();
 
             foreach (var port in SerialPorts)
+            {
                 while (port.IsOpen)
+                {
                     port.Close();
+                }
+            }
 
             foreach (var model in FactoryChannel)
+            {
                 while (model.IsOpen)
+                {
                     model.Close();
+                }
+            }
         }
 
         /// <summary>
@@ -228,7 +241,6 @@ namespace RabbitMQ_SendClient
                     }
                     i++;
                 }
-
 
                 SerialCommunications[index].TotalInformationReceived++;
                 CalculateNpChart(index);
@@ -366,12 +378,18 @@ namespace RabbitMQ_SendClient
         private void MainWindow_OnClosing(object sender, CancelEventArgs e)
         {
             foreach (var serialPort in SerialPorts)
+            {
                 if (serialPort.IsOpen)
                     serialPort.Close();
+            }
 
             foreach (var model in FactoryChannel)
+            {
                 while (model.IsOpen)
+                {
                     model.Close();
+                }
+            }
         }
 
         private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
@@ -408,7 +426,7 @@ namespace RabbitMQ_SendClient
         /// <param name="e"></param>
         private void SerialEnabled_CheckboxChecked(object sender, RoutedEventArgs e)
         {
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
 
             var cb = (CheckBox) sender;
             var uidGuid = Guid.Parse(cb.Uid);
@@ -435,7 +453,7 @@ namespace RabbitMQ_SendClient
 
                     var friendlyNameForm = new VariableConfigure(uidGuid);
                     var nameSet = friendlyNameForm.ShowDialog();
-                    if (nameSet != null && !nameSet.Value)
+                    if ((nameSet != null) && !nameSet.Value)
                         goto case null;
 
                     SetupFactory(uidGuid);
@@ -444,14 +462,14 @@ namespace RabbitMQ_SendClient
                     var configureServer = new SetupServer(uidGuid);
                     var serverConfigured = configureServer.ShowDialog();
 
-                    if (serverConfigured != null && !serverConfigured.Value)
+                    if ((serverConfigured != null) && !serverConfigured.Value)
                     {
                         //Canceled
                         Array.Resize(ref ServerInformation, ServerInformation.Length - 1);
                         goto case null;
                     }
                     SerialPorts[SerialPorts.Length - 1].DataReceived += DataReceivedHandler;
-                    var init = SerialPortInitialize(SerialPorts.Length - 1, IsInitialized);
+                    var init = SerialPortInitialize(SerialPorts.Length - 1, this.IsInitialized);
                     tbmarquee.Text += $"Serial Port {cb.Name} Active";
                     if (init) return;
 
@@ -489,12 +507,12 @@ namespace RabbitMQ_SendClient
 
         private void SerialEnabled_CheckboxUnchecked(object sender, RoutedEventArgs e)
         {
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
 
             var cb = (CheckBox) sender;
             var port = SerialPorts.FirstOrDefault(sp => sp.PortName == cb.Content.ToString());
 
-            if (port != null && port.IsOpen)
+            if ((port != null) && port.IsOpen)
                 port.Close();
         }
 
@@ -505,7 +523,7 @@ namespace RabbitMQ_SendClient
         /// <param name="e"></param>
         private void SerialModbusEnabled_CheckboxChecked(object sender, RoutedEventArgs e)
         {
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
 
             var cb = (CheckBox) sender;
             var uidGuid = Guid.Parse(cb.Uid);
@@ -528,9 +546,10 @@ namespace RabbitMQ_SendClient
                     SetupModbusSerial(uidGuid);
 
                     var setupSerialForm = new SerialPortSetup(uidGuid);
+                    setupSerialForm.cboMessageType.SelectedIndex = 1;
                     var activate = setupSerialForm.ShowDialog();
 
-                    if (activate == null || !activate.Value)
+                    if ((activate == null) || !activate.Value)
                     {
                         CloseModbusSerial(uidGuid);
                         return;
@@ -574,9 +593,10 @@ namespace RabbitMQ_SendClient
 
                     var addressesInitialized = modbusSelection.ShowDialog();
 
-                    if (addressesInitialized == null || !addressesInitialized.Value)
+                    if ((addressesInitialized == null) || !addressesInitialized.Value)
                     {
-                        MessageBox.Show(@"Failed to create Modbus Configuration", @"ERROR", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show(@"Failed to create Modbus Configuration", @"ERROR", MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
                         goto case false;
                     }
 
@@ -585,11 +605,12 @@ namespace RabbitMQ_SendClient
                     var configureServer = new SetupServer(uidGuid);
                     var serverConfigured = configureServer.ShowDialog();
 
-                    if (serverConfigured != null && !serverConfigured.Value)
+                    if ((serverConfigured != null) && !serverConfigured.Value)
                     {
                         Array.Resize(ref ServerInformation, ServerInformation.Length - 1);
                         Array.Resize(ref ModbusControls, ModbusControls.Length - 1);
-                        MessageBox.Show(@"Failed to open RabbitMQ Connection", @"ERROR", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show(@"Failed to open RabbitMQ Connection", @"ERROR", MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
                         break;
                     }
                     InitializeModbusClient(port);
@@ -601,7 +622,8 @@ namespace RabbitMQ_SendClient
                         ModbusControls[ModbusControls.Length - 1].ModbusTimers.IsEnabled = true;
                         break;
                     }
-                    MessageBox.Show(@"Failed to open Serial Port", @"ERROR", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(@"Failed to open Serial Port", @"ERROR", MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
                     goto case false; //unsuccessful
 
                 case false:
@@ -630,13 +652,12 @@ namespace RabbitMQ_SendClient
 
             var messagesPerSecond = _messagesPerSecond;
             Array.Resize(ref messagesPerSecond, messagesPerSecond.Length + 1);
-            messagesPerSecond[messagesPerSecond.Length -1] = new double();
+            messagesPerSecond[messagesPerSecond.Length - 1] = new double();
             _messagesPerSecond = messagesPerSecond;
-
 
             var lineSeries = Lineseries;
             Array.Resize(ref lineSeries, Lineseries.Length + 1);
-            lineSeries[lineSeries.Length -1] = new LineSeries()
+            lineSeries[lineSeries.Length - 1] = new LineSeries
             {
                 ItemsSource = MessagesSentDataPair[MessagesSentDataPair.Length - 1],
                 DependentValuePath = "Value",
@@ -654,11 +675,12 @@ namespace RabbitMQ_SendClient
             if (uidGuid == Guid.Empty) return;
 
             var index = ModbusControls.Select((val, ind) =>
-                new { ind, val }).First(e => e.val.UidGuid == uidGuid).ind;
+                    new {ind, val})
+                .First(e => e.val.UidGuid == uidGuid)
+                .ind;
             var modbusItem = ModbusControls.FirstOrDefault(e => e.UidGuid == uidGuid);
             var message = "";
 
-            
             foreach (var modbusAddress in modbusItem.ModbusAddressList)
             {
                 var address = modbusAddress.Item5;
@@ -690,7 +712,12 @@ namespace RabbitMQ_SendClient
 
             PublishMessage(message, index, uidGuid);
 
-            UpdateGraph(uidGuid, AvailableModbusSerialPorts[AvailableModbusSerialPorts.Select((val, ind) => new {ind,val}).First(e => e.val.Uid == uidGuid.ToString()).ind].Name);
+            UpdateGraph(uidGuid,
+                AvailableModbusSerialPorts[
+                        AvailableModbusSerialPorts.Select((val, ind) => new {ind, val})
+                            .First(e => e.val.Uid == uidGuid.ToString())
+                            .ind]
+                    .Name);
         }
 
         /// <summary>
@@ -701,7 +728,7 @@ namespace RabbitMQ_SendClient
         private void SystemTimerOnTick(object sender, EventArgs eventArgs)
         {
             //Prevents code from running before intialization
-            if (!IsInitialized) return;
+            if (!this.IsInitialized) return;
 
             ResizeSerialSelection();
             for (var i = 0; i < AvailableSerialPorts.Count; i++)
@@ -713,7 +740,9 @@ namespace RabbitMQ_SendClient
             }
 
             for (var i = 0; i < _messagesPerSecond.Length; i++)
+            {
                 _messagesPerSecond[i] = 0.0;
+            }
         }
 
         private void UpdateGraph(Guid uidGuid, string itemName)
@@ -726,14 +755,14 @@ namespace RabbitMQ_SendClient
             var index = GetIndex<MessageDataHistory>(uidGuid);
             if (index == -1) return;
 
-            Dispatcher.Invoke((MethodInvoker) delegate
+            this.Dispatcher.Invoke((MethodInvoker) delegate
             {
                 if (MessagesSentDataPair[index].Count > 60)
                     MessagesSentDataPair[index].RemoveAt(0);
                 var timeNow = DateTime.Now.Minute + ":" + DateTime.Now.Second;
                 _messagesPerSecond[index]++;
 
-                if (Lineseries[index] != null && (string) Lineseries[index].Title == itemName)
+                if ((Lineseries[index] != null) && ((string) Lineseries[index].Title == itemName))
                 {
                     var messageDataHistory = new MessageDataHistory
                     {

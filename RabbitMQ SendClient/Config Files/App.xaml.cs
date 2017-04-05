@@ -1,7 +1,7 @@
-﻿using System.Windows;
-
-namespace RabbitMQ_SendClient
+﻿namespace RabbitMQ_SendClient
 {
+    using System.Windows;
+
     /// <summary>
     ///     Interaction logic for App.xaml
     /// </summary>

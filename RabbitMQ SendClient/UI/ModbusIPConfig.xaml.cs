@@ -1,13 +1,13 @@
-﻿using System.ComponentModel;
-using System.Text.RegularExpressions;
-using System.Windows;
-using System.Windows.Forms;
-using System.Windows.Input;
-
-// ReSharper disable once CheckNamespace
+﻿// ReSharper disable once CheckNamespace
 
 namespace RabbitMQ_SendClient.UI
 {
+    using System.ComponentModel;
+    using System.Text.RegularExpressions;
+    using System.Windows;
+    using System.Windows.Forms;
+    using System.Windows.Input;
+
     /// <summary>
     ///     Interaction logic for ModbusIPConfig.xaml
     /// </summary>
@@ -44,9 +44,9 @@ namespace RabbitMQ_SendClient.UI
             ReadRegisters = false;
 
             if (!ReadCoils && !ReadRegisters)
-                Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = false; });
+                this.Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = false; });
             else if (!OK.IsEnabled)
-                Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = true; });
+                this.Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = true; });
         }
 
         private void ChkReadCoils_OnUnchecked(object sender, RoutedEventArgs e)
@@ -54,15 +54,15 @@ namespace RabbitMQ_SendClient.UI
             ReadCoils = false;
 
             if (!ReadCoils && !ReadRegisters)
-                Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = false; });
+                this.Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = false; });
             else if (!OK.IsEnabled)
-                Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = true; });
+                this.Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = true; });
         }
 
         private void ModbusIpConfig_OnClosing(object sender, CancelEventArgs e)
         {
-            if (!DialogResult.HasValue)
-                DialogResult = false;
+            if (!this.DialogResult.HasValue)
+                this.DialogResult = false;
         }
     }
 }
