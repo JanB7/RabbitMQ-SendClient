@@ -176,8 +176,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="General Classes\FormControl.cs" />
     <Compile Include="General Classes\GlobalRabbitMqServerFunctions.cs" />
     <Compile Include="General Classes\GlobalSerialFunctions.cs" />
+    <Compile Include="General Classes\GlocalTCPFunctions.cs" />
     <Compile Include="General Classes\ModbusConfig.cs" />
     <Compile Include="UI\ModbusIPConfig.xaml.cs">
       <DependentUpon>ModbusIPConfig.xaml</DependentUpon>

@@ -14,7 +14,7 @@ namespace RabbitMQ_SendClient
     using MessageBox = System.Windows.Forms.MessageBox;
 
     /// <summary>
-    ///     Interaction logic for SetupServer.xaml
+    /// Interaction logic for SetupServer.xaml 
     /// </summary>
     public partial class SetupServer
     {
@@ -93,11 +93,15 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        ///     Enables/Disables Recovery. UI Access ONLY.
-        ///     Automatically disables current connection if system detects changes to settings.
+        /// Enables/Disables Recovery. UI Access ONLY. Automatically disables current connection if
+        /// system detects changes to settings.
         /// </summary>
-        /// <param name="sender">ComboBox object in UI</param>
-        /// <param name="e">Value of ComboBox</param>
+        /// <param name="sender">
+        /// ComboBox object in UI 
+        /// </param>
+        /// <param name="e">
+        /// Value of ComboBox 
+        /// </param>
         private void CboAutoRecovery_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             //Prevents actions from occuring during initialization
@@ -121,10 +125,14 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        ///     Checkbox for generating a unique UUID to the system.
+        /// Checkbox for generating a unique UUID to the system. 
         /// </summary>
-        /// <param name="sender">Checkbox Object</param>
-        /// <param name="e">Checkbox Value</param>
+        /// <param name="sender">
+        /// Checkbox Object 
+        /// </param>
+        /// <param name="e">
+        /// Checkbox Value 
+        /// </param>
         private void GenerateChannel_Checked(object sender, RoutedEventArgs e)
         {
             if (!this.IsInitialized) return;
@@ -156,10 +164,14 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        ///     Checkbox for generating a unique UUID to the system.
+        /// Checkbox for generating a unique UUID to the system. 
         /// </summary>
-        /// <param name="sender">Checkbox Object</param>
-        /// <param name="e">Checkbox Value</param>
+        /// <param name="sender">
+        /// Checkbox Object 
+        /// </param>
+        /// <param name="e">
+        /// Checkbox Value 
+        /// </param>
         private void GenerateExchange_Checked(object sender, RoutedEventArgs e)
         {
             if (!this.IsInitialized) return;
@@ -190,8 +202,7 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        ///     puts preprogrammed values onto the form for consistent use.
-        ///     TODO replace with settings file
+        /// puts preprogrammed values onto the form for consistent use. TODO replace with settings file 
         /// </summary>
         private void InitialzeServerSettings()
         {
@@ -209,11 +220,13 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        ///     Provides an update to the password for the server.
-        ///     Automatically disables server on any password settings change.
+        /// Provides an update to the password for the server. Automatically disables server on any
+        /// password settings change.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">
+        /// </param>
+        /// <param name="e">
+        /// </param>
         private void PwdPassword_OnPasswordChanged(object sender, RoutedEventArgs e)
         {
             //Prevents actions from occuring during initialization
@@ -222,10 +235,14 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        ///     Heartbeat to keep connection active to the RabbitMQ Server. Value Range (5-30)
+        /// Heartbeat to keep connection active to the RabbitMQ Server. Value Range (5-30) 
         /// </summary>
-        /// <param name="sender">Slider Oboject</param>
-        /// <param name="e">Slider Value</param>
+        /// <param name="sender">
+        /// Slider Oboject 
+        /// </param>
+        /// <param name="e">
+        /// Slider Value 
+        /// </param>
         private void SldHeartBeat_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             //Prevents actions from occuring during initialization
@@ -237,11 +254,15 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        ///     Recovery Interval of the network. UI Access ONLY
-        ///     Automatically disables current connection if system detects changes to settings.
+        /// Recovery Interval of the network. UI Access ONLY Automatically disables current
+        /// connection if system detects changes to settings.
         /// </summary>
-        /// <param name="sender">Slider Object in the UI</param>
-        /// <param name="e">Value of Slider</param>
+        /// <param name="sender">
+        /// Slider Object in the UI 
+        /// </param>
+        /// <param name="e">
+        /// Value of Slider 
+        /// </param>
         private void SldNetworokRecInt_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             //Prevents actions from occuring during initialization
@@ -311,10 +332,12 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        ///     Address being changed. Do nothing. Checking should be done at the end.
+        /// Address being changed. Do nothing. Checking should be done at the end. 
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">
+        /// </param>
+        /// <param name="e">
+        /// </param>
         private void TxtServerAddress_TextChanged(object sender, TextChangedEventArgs e)
         {
             //do Nothing! checking happens on commit with either focus loss or enter
@@ -345,7 +368,7 @@ namespace RabbitMQ_SendClient
 
         private void btnCancel_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            this.DialogResult = false;
             Close();
         }
     } //End of Class

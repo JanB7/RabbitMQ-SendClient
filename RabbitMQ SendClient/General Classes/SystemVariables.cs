@@ -1,12 +1,12 @@
-﻿using static RabbitMQ_SendClient.MainWindow;
+﻿using static RabbitMQ_SendClient.GlobalSerialFunctions;
+using static RabbitMQ_SendClient.MainWindow;
+using static RabbitMQ_SendClient.General_Classes.GlocalTCPFunctions;
 
 namespace RabbitMQ_SendClient
 {
-    using EasyModbus;
-    using Properties;
-    using RabbitMQ.Client;
     using System;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.Diagnostics;
     using System.IO;
     using System.IO.Ports;
@@ -14,10 +14,57 @@ namespace RabbitMQ_SendClient
     using System.Net;
     using System.Security.Cryptography;
     using System.Windows;
+    using System.Windows.Controls.DataVisualization.Charting;
     using System.Xml.Linq;
+    using EasyModbus;
+    using Properties;
+    using RabbitMQ.Client;
 
     public static class SystemVariables
     {
+        #region Variables & Structures
+
+        private static Process CheckProcess
+        {
+            get => _withEventsFieldProcess;
+            set
+            {
+                if (_withEventsFieldProcess != null)
+                    _withEventsFieldProcess.Exited -= checkProcess_Exited;
+                _withEventsFieldProcess = value;
+                if (_withEventsFieldProcess != null)
+                    _withEventsFieldProcess.Exited += checkProcess_Exited;
+            }
+        }
+
+        public static IModel[] FactoryChannel { get; set; } = new IModel[0];
+        public static IConnection[] FactoryConnection { get; set; } = new IConnection[0];
+        public static IConnectionFactory[] Factory { get; set; } = new IConnectionFactory[0];
+        public static JsonObject[] JsonObjects { get; set; } = new JsonObject[0];
+
+        public static IPAddressTable[] IpAddressTables { get; set; } = new IPAddressTable[0];
+
+        /// <summary>
+        ///     Dictionary of Errors that can be thrown
+        /// </summary>
+        public static IDictionary<int, string> ErrorType { get; } = new Dictionary<int, string>
+        {
+            {0001, "Null Reference Exception"},
+            {1001, "RabbitMQ Exception - Connection Already Closed"},
+            {1003, "RabbitMQ Exception - Broker Unreachable"},
+            {1002, "RabbitMQ Exception - Authentication Failure"},
+            {1004, "RabbitMQ Exception - Channel Already Allocated and in Use"},
+            {1005, "RabbitMQ Exception - Connection Failure"},
+            {1006, "RabbitMQ Exception - Operation Interrupted"},
+            {1007, "RabbitMQ Exception - Packet Not Recognized"},
+            {1008, "RabbitMQ Exception - Possible Authentication Failure"},
+            {1009, "RabbitMQ Exception - Connection Already Closed"},
+            {1010, "RabbitMQ Exception - Protocol Version Mismatch"},
+            {1011, "RabbitMQ Exception - Unsupported Method"},
+            {1012, "RabbitMQ Exception - Unsupported Method Field"},
+            {1013, "RabbitMQ Exception - Wire Formatting"}
+        };
+
         /// <summary>
         ///     Standard Baud Rates used by majority of Serial Communcations
         /// </summary>
@@ -75,44 +122,130 @@ namespace RabbitMQ_SendClient
 
         public static string[] FriendlyName = new string[0];
 
-        private static Process CheckProcess
+        /// <summary>
+        ///     JSON Message Parameters.
+        /// </summary>
+        public struct JsonObject
         {
-            get => _withEventsFieldProcess;
-            set
+            public Guid UidGuid { get; set; }
+            public string DeviceName { get; set; }
+            public DateTime MessageDateTime { get; set; }
+            public string MessageType { get; set; }
+            public Messages[] Message { get; set; }
+        }
+
+        /// <summary>
+        ///     RabbitMQ Server Information
+        /// </summary>
+        public struct RabbitServerInformation
+        {
+            public Guid UidGuid { get; set; }
+            public bool AutoRecovery { get; set; }
+            public string ChannelName { get; set; }
+            public string Encoding { get; set; }
+            public string ExchangeName { get; set; }
+            public string MessageFormat { get; set; }
+            public string MessageType { get; set; }
+            public int NetworkRecoveryInterval { get; set; }
+            public string Password { get; set; }
+            public IPAddress ServerAddress { get; set; }
+            public int ServerHeartbeat { get; set; }
+            public int ServerPort { get; set; }
+            public string UserName { get; set; }
+            public string VirtualHost { get; set; }
+        }
+
+        public struct SerialCommunication
+        {
+            public Guid UidGuid { get; set; }
+            public BaudRates BaudRate { get; set; }
+            public string ComPort { get; set; }
+            public Handshake FlowControl { get; set; }
+            public int ReadTimeout { get; set; }
+            public bool RtsEnable { get; set; }
+            public int SerialBits { get; set; }
+            public Parity SerialParity { get; set; }
+            public StopBits SerialStopBits { get; set; }
+            public int TimeoutCounts { get; set; }
+            public int MaximumErrors { get; set; }
+            public double InformationErrors { get; set; }
+            public double TotalInformationReceived { get; set; }
+
+            public string MessageType { get; set; }
+
+            public double Ucl { get; set; }
+            public double Lcl { get; set; }
+
+            private double[] _x;
+
+            public void X()
             {
-                if (_withEventsFieldProcess != null)
-                    _withEventsFieldProcess.Exited -= checkProcess_Exited;
-                _withEventsFieldProcess = value;
-                if (_withEventsFieldProcess != null)
-                    _withEventsFieldProcess.Exited += checkProcess_Exited;
+                Array.Resize(ref _x, 0);
+                _x = new double[50];
+                for (var i = 0; i < _x.Length; i++)
+                {
+                    _x[i] = this.MaximumErrors;
+                }
+            }
+
+            public void X(int maximumErrors)
+            {
+                Array.Resize(ref _x, 0);
+                _x = new double[50];
+                for (var i = 0; i < _x.Length; i++)
+                {
+                    _x[i] = maximumErrors;
+                }
+            }
+
+            public void SetX(int index, double value)
+            {
+                _x[index] = value;
+            }
+
+            public double GetX(int index)
+            {
+                return _x[index];
             }
         }
 
-        public static IModel[] FactoryChannel { get; set; } = new IModel[0];
-        public static IConnection[] FactoryConnection { get; set; } = new IConnection[0];
-        public static IConnectionFactory[] Factory { get; set; } = new IConnectionFactory[0];
-        public static JsonObject[] JsonObjects { get; set; } = new JsonObject[0];
+        #endregion
 
-        /// <summary>
-        ///     Dictionary of Errors that can be thrown
-        /// </summary>
-        public static IDictionary<int, string> ErrorType { get; } = new Dictionary<int, string>
+        public static void IncreaseLineSeries(string itemName)
         {
-            {0001, "Null Reference Exception"},
-            {1001, "RabbitMQ Exception - Connection Already Closed"},
-            {1003, "RabbitMQ Exception - Broker Unreachable"},
-            {1002, "RabbitMQ Exception - Authentication Failure"},
-            {1004, "RabbitMQ Exception - Channel Already Allocated and in Use"},
-            {1005, "RabbitMQ Exception - Connection Failure"},
-            {1006, "RabbitMQ Exception - Operation Interrupted"},
-            {1007, "RabbitMQ Exception - Packet Not Recognized"},
-            {1008, "RabbitMQ Exception - Possible Authentication Failure"},
-            {1009, "RabbitMQ Exception - Connection Already Closed"},
-            {1010, "RabbitMQ Exception - Protocol Version Mismatch"},
-            {1011, "RabbitMQ Exception - Unsupported Method"},
-            {1012, "RabbitMQ Exception - Unsupported Method Field"},
-            {1013, "RabbitMQ Exception - Wire Formatting"}
-        };
+            Array.Resize(ref MessagesSentDataPair, MessagesSentDataPair.Length + 1);
+            MessagesSentDataPair[MessagesSentDataPair.Length - 1] = new ObservableCollection<MessageDataHistory>();
+
+            var messagesPerSecond = MessagesPerSecond;
+            Array.Resize(ref messagesPerSecond, messagesPerSecond.Length + 1);
+            messagesPerSecond[messagesPerSecond.Length - 1] = new double();
+            MessagesPerSecond = messagesPerSecond;
+
+            var statsGroupings = StatsGroupings;
+            Array.Resize(ref statsGroupings, StatsGroupings.Length + 1);
+            statsGroupings[statsGroupings.Length - 1] = new int();
+            StatsGroupings = statsGroupings;
+
+            var lineSeries = Lineseries;
+            Array.Resize(ref lineSeries, Lineseries.Length + 1);
+            lineSeries[lineSeries.Length - 1] = new LineSeries
+            {
+                ItemsSource = MessagesSentDataPair[MessagesSentDataPair.Length - 1],
+                DependentValuePath = "Value",
+                IndependentValuePath = "Key",
+                Title = itemName
+            };
+            Lineseries = lineSeries;
+        }
+
+        public static void DecreaseLineSeries(Guid uidGuid)
+        {
+            var index = GetIndex<CheckListItem>(uidGuid);
+            RemoveAtIndex<MessageDataHistory>(index, MessagesSentDataPair);
+            RemoveAtIndex<double>(index, MessagesPerSecond);
+            RemoveAtIndex<int>(index, StatsGroupings);
+            RemoveAtIndex<LineSeries>(index, Lineseries);
+        }
 
         public static string[] ReadAllResourceLines(string resourceText)
         {
@@ -122,7 +255,7 @@ namespace RabbitMQ_SendClient
             }
         }
 
-        public static IEnumerable<string> EnumerateLines(TextReader reader)
+        private static IEnumerable<string> EnumerateLines(TextReader reader)
         {
             string line;
             while ((line = reader.ReadLine()) != null)
@@ -132,12 +265,24 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        ///     Gets array index based on type of array used.
-        ///     Can be of items: SerialCommunication| RabbitServerInformation | JsonObject | CheckListItem | MessageDataHistory
+        ///     <para>
+        ///         Gets array index based on type of array used.
+        ///     </para>
+        ///     <para>
+        ///         Can be of items: <see cref="SerialCommunication" /> |
+        ///         <see cref="RabbitServerInformation" /> | <see cref="JsonObject" /> |
+        ///         <see cref="CheckListItem" /> | <see cref="MessageDataHistory" />
+        ///     </para>
         /// </summary>
-        /// <typeparam name="T">Struct type to check</typeparam>
-        /// <param name="uidGuid">Unique Identifier to match with the stuct</param>
-        /// <returns>Int value for index in the array</returns>
+        /// <typeparam name="T">
+        ///     Struct type to check
+        /// </typeparam>
+        /// <param name="uidGuid">
+        ///     Unique Identifier to match with the stuct
+        /// </param>
+        /// <returns>
+        ///     Int value for index in the array
+        /// </returns>
         public static int GetIndex<T>(Guid uidGuid)
         {
             var index = 0;
@@ -172,14 +317,14 @@ namespace RabbitMQ_SendClient
                     {
                         index +=
                             AvailableModbusSerialPorts.TakeWhile(
-                                    checkListItem => checkListItem.Uid != uidGuid.ToString())
+                                    checkListItem => checkListItem.UidGuid != uidGuid.ToString())
                                 .Count();
                         if (index > (AvailableModbusSerialPorts.Count - 1))
                             index = 0;
                         else
                             return;
                         index +=
-                            AvailableSerialPorts.TakeWhile(checkListItem => checkListItem.Uid != uidGuid.ToString())
+                            AvailableSerialPorts.TakeWhile(checkListItem => checkListItem.UidGuid != uidGuid.ToString())
                                 .Count();
                         if (index > (AvailableModbusSerialPorts.Count - 1))
                             index = -1;
@@ -196,6 +341,13 @@ namespace RabbitMQ_SendClient
                                         .Count());
                         if (index > (MessagesSentDataPair.Length - 1)) index = -1;
                     }
+                },
+                {
+                    typeof(IPAddressTable),() =>
+                    {
+                        index += IpAddressTables.TakeWhile(e => e.UidGuid != uidGuid).Count();
+                        if (index > (IpAddressTables.Length - 1)) index = -1;
+                    }
                 }
             };
 
@@ -204,17 +356,58 @@ namespace RabbitMQ_SendClient
             return index;
         }
 
-        public static bool IsHex(IEnumerable<char> chars)
+        public static CheckListItem? OppositeCheck(Guid uidGuid)
         {
-            return chars.Select(c => ((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f')) ||
-                                     ((c >= 'A') && (c <= 'F')))
-                .All(isHex => isHex);
+            var index = 0;
+            index +=
+                AvailableModbusSerialPorts.TakeWhile(
+                        checkListItem => checkListItem.UidGuid != uidGuid.ToString())
+                    .Count();
+            if (index > AvailableModbusSerialPorts.Count-1)
+                index = 0;
+            else
+                return AvailableSerialPorts[index];
+
+            index += AvailableSerialPorts.TakeWhile(checkListItem => checkListItem.UidGuid != uidGuid.ToString()).Count();
+
+            if (index > AvailableSerialPorts.Count-1)
+                return null;
+
+            return AvailableModbusSerialPorts[index];
+        }
+
+        public static int? CheckType(Guid uidGuid)
+        {
+            var index = 0;
+            index +=
+                AvailableModbusSerialPorts.TakeWhile(
+                        checkListItem => checkListItem.UidGuid != uidGuid.ToString())
+                    .Count();
+            if (index > AvailableModbusSerialPorts.Count-1)
+                index = 0;
+            else
+                return 2;
+
+            index += AvailableSerialPorts.TakeWhile(checkListItem => checkListItem.UidGuid != uidGuid.ToString()).Count();
+
+            if (index > AvailableSerialPorts.Count-1)
+                return null;
+
+            return 1;
         }
 
         public static dynamic RemoveAtIndex<T>(int index, Array arrayToResize)
         {
             var resizedArray = arrayToResize.Cast<T>().Select(item => item).ToList();
-            resizedArray.RemoveAt(index);
+            try
+            {
+                resizedArray.RemoveAt(index);
+            }
+            catch (Exception e) //out of bounds
+            {
+                return -1;
+            }
+
             arrayToResize = resizedArray.ToArray();
             return arrayToResize;
         }
@@ -227,9 +420,15 @@ namespace RabbitMQ_SendClient
         /// <summary>
         ///     Logs errors to file using System generated error and tracing code location
         /// </summary>
-        /// <param name="ex">Error generated by system/debugger</param>
-        /// <param name="level">LogLevel type indicating severity of error</param>
-        /// <param name="stackFrame">Stackframe for software line trace</param>
+        /// <param name="ex">
+        ///     Error generated by system/debugger
+        /// </param>
+        /// <param name="level">
+        ///     LogLevel type indicating severity of error
+        /// </param>
+        /// <param name="stackFrame">
+        ///     Stackframe for software line trace
+        /// </param>
         public static void LogError(Exception ex, LogLevel level, StackFrame stackFrame)
         {
             using (var w = File.AppendText("log.txt"))
@@ -302,6 +501,13 @@ namespace RabbitMQ_SendClient
                     return CreateFileAndMonitor();
                 }
             return CreateFileAndMonitor();
+        }
+
+        public static bool IsHex(IEnumerable<char> chars)
+        {
+            return chars.Select(c => ((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f')) ||
+                                     ((c >= 'A') && (c <= 'F')))
+                .All(isHex => isHex);
         }
 
         private static bool CreateFileAndMonitor()
@@ -433,8 +639,9 @@ namespace RabbitMQ_SendClient
                 //the file is unavailable because it is:
                 //still being written to
                 //or being processed by another thread
-                //or does not exist (has already been processed)
-                return true;
+                if (file.Exists) return true;
+                file.Create().Close();
+                return IsFileLocked(file);
             }
             finally
             {
@@ -445,86 +652,11 @@ namespace RabbitMQ_SendClient
             return false;
         }
 
-        /// <summary>
-        ///     JSON Message Parameters.
-        /// </summary>
-        public struct JsonObject
-        {
-            public Guid UidGuid { get; set; }
-            public string DeviceName { get; set; }
-            public DateTime MessageDateTime { get; set; }
-            public string MessageType { get; set; }
-            public Messages[] Message { get; set; }
-        }
-
-        /// <summary>
-        ///     RabbitMQ Server Information
-        /// </summary>
-        public struct RabbitServerInformation
-        {
-            public Guid UidGuid { get; set; }
-            public bool AutoRecovery { get; set; }
-            public string ChannelName { get; set; }
-            public string Encoding { get; set; }
-            public string ExchangeName { get; set; }
-            public string MessageFormat { get; set; }
-            public string MessageType { get; set; }
-            public int NetworkRecoveryInterval { get; set; }
-            public string Password { get; set; }
-            public IPAddress ServerAddress { get; set; }
-            public int ServerHeartbeat { get; set; }
-            public int ServerPort { get; set; }
-            public string UserName { get; set; }
-            public string VirtualHost { get; set; }
-        }
-
-        public struct SerialCommunication
-        {
-            public Guid UidGuid { get; set; }
-            public BaudRates BaudRate { get; set; }
-            public string ComPort { get; set; }
-            public Handshake FlowControl { get; set; }
-            public int ReadTimeout { get; set; }
-            public bool RtsEnable { get; set; }
-            public int SerialBits { get; set; }
-            public Parity SerialParity { get; set; }
-            public StopBits SerialStopBits { get; set; }
-            public int TimeoutCounts { get; set; }
-            public int MaximumErrors { get; set; }
-            public double InformationErrors { get; set; }
-            public double TotalInformationReceived { get; set; }
-
-            public string MessageType { get; set; }
-
-            public double Ucl { get; set; }
-
-            private double[] _x;
-
-            public void X()
-            {
-                _x = new double[50];
-                for (var i = 0; i < _x.Length; i++)
-                {
-                    _x[i] = this.MaximumErrors;
-                }
-            }
-
-            public void SetX(int index, double value)
-            {
-                _x[index] = value;
-            }
-
-            public double GetX(int index)
-            {
-                return _x[index];
-            }
-        }
-
         /*
          * var indata = JsonConvert.DeserializeObject<Messages[]>(datInfo.Message);
                     var message = new JsonObject
                     {
-                        UidGuid = Guid.Parse(AvailableSerialPorts[index].Uid),
+                        UidGuid = Guid.Parse(AvailableSerialPorts[index].UidGuid),
                         Message = indata,
                         DeviceName = datInfo.DeviceType,
                         MessageDateTime = datInfo.TimeStamp,
@@ -535,7 +667,11 @@ namespace RabbitMQ_SendClient
 
     public class Messages
     {
+        #region Variables & Structures
+
         public string Name { get; set; }
         public dynamic Value { get; set; }
+
+        #endregion
     }
 }

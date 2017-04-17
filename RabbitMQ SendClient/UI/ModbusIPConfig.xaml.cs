@@ -2,25 +2,29 @@
 
 namespace RabbitMQ_SendClient.UI
 {
+    using System;
     using System.ComponentModel;
+    using System.Net;
     using System.Text.RegularExpressions;
     using System.Windows;
+    using System.Windows.Controls;
     using System.Windows.Forms;
     using System.Windows.Input;
+    using System.Windows.Media.Animation;
+    using static System.UInt16;
+    using MessageBox = System.Windows.Forms.MessageBox;
 
     /// <summary>
-    ///     Interaction logic for ModbusIPConfig.xaml
+    /// Interaction logic for ModbusIPConfig.xaml 
     /// </summary>
     public partial class ModbusIpConfig : Window
     {
-        public bool ReadCoils;
-        public bool ReadRegisters = true;
+        public IPAddress IpAddress { get; set; } = new IPAddress(IPAddress.Parse("127.0.0.1").Address);
+        public ushort Port { get; set; }
 
         public ModbusIpConfig()
         {
             InitializeComponent();
-            ChkReadRegisters.IsChecked = ReadRegisters;
-            ChkReadCoils.IsChecked = ReadCoils;
         }
 
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
@@ -29,40 +33,67 @@ namespace RabbitMQ_SendClient.UI
             e.Handled = regex.IsMatch(e.Text);
         }
 
-        private void ChkReadRegisters_OnChecked(object sender, RoutedEventArgs e)
-        {
-            ReadRegisters = true;
-        }
-
-        private void ChkReadCoils_Checked(object sender, RoutedEventArgs e)
-        {
-            ReadCoils = true;
-        }
-
-        private void ChkReadRegisters_OnUnchecked(object sender, RoutedEventArgs e)
-        {
-            ReadRegisters = false;
-
-            if (!ReadCoils && !ReadRegisters)
-                this.Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = false; });
-            else if (!OK.IsEnabled)
-                this.Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = true; });
-        }
-
-        private void ChkReadCoils_OnUnchecked(object sender, RoutedEventArgs e)
-        {
-            ReadCoils = false;
-
-            if (!ReadCoils && !ReadRegisters)
-                this.Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = false; });
-            else if (!OK.IsEnabled)
-                this.Dispatcher.Invoke((MethodInvoker) delegate { OK.IsEnabled = true; });
-        }
-
         private void ModbusIpConfig_OnClosing(object sender, CancelEventArgs e)
         {
             if (!this.DialogResult.HasValue)
                 this.DialogResult = false;
+        }
+
+        private void OK_Click(object sender, RoutedEventArgs e)
+        {
+            this.IpAddress = IPAddress.Parse(TxtIpAddress1.Text + "." + TxtIpAddress2.Text + "." + TxtIpAddress3.Text + "." + TxtIpAddress4.Text);
+            if (!TryParse(TxtPortNumber.Text, out ushort result))
+            {
+                result = MinValue;
+            }
+            this.Port = result;
+            this.DialogResult = true;
+        }
+
+        private void TxtPortNumber_TextChanged(object sender, TextCompositionEventArgs e)
+        {
+            var regex = new Regex("[^0-9]+");
+            e.Handled = regex.IsMatch(e.Text);
+
+            try
+            {
+                if (TryParse(TxtPortNumber.Text, out ushort result)) return;
+                var outOfBounds = PortOutOfBounds();
+                if (outOfBounds == null)
+                    TxtPortNumber.Text = "502";
+                else if (outOfBounds == true)
+                {
+                    TxtPortNumber.Text = "";
+                }
+            }
+            catch (Exception)
+            {
+                var outOfBounds = PortOutOfBounds();
+                if (outOfBounds == null)
+                    TxtPortNumber.Text = "502";
+                else if (outOfBounds == true)
+                {
+                    TxtPortNumber.Text = "";
+                }
+            }
+        }
+
+        private bool? PortOutOfBounds()
+        {
+            var result = MessageBox.Show(@"Port out of bounds. Please enter a number between 1-65535", @"Out of Range", MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Hand);
+
+            if (result == System.Windows.Forms.DialogResult.Retry)
+            {
+                return true;
+            }
+            else if (result == System.Windows.Forms.DialogResult.Abort)
+            {
+                return null;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }

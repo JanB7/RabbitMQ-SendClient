@@ -8,7 +8,7 @@ namespace RabbitMQ_SendClient.UI
     using System.Windows;
 
     /// <summary>
-    ///     Interaction logic for VariableConfigure.xaml
+    /// Interaction logic for VariableConfigure.xaml 
     /// </summary>
     public partial class VariableConfigure
     {
@@ -24,8 +24,12 @@ namespace RabbitMQ_SendClient.UI
                 CboFriendlies.SelectedIndex = 0;
         }
 
+        #region Variables & Structures
+
         private Guid UidGuid { get; }
         private int SelectedIndex { get; set; }
+
+        #endregion Variables & Structures
 
         private static void ResizeJsonObject()
         {

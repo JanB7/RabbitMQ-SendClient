@@ -14,16 +14,17 @@ namespace RabbitMQ_SendClient.UI
     using MessageBox = System.Windows.Forms.MessageBox;
 
     /// <summary>
-    ///     Interaction logic for SerialPortSetup.xaml
+    /// Interaction logic for SerialPortSetup.xaml 
     /// </summary>
     public partial class SerialPortSetup
     {
         private static readonly StackTrace StackTrace = new StackTrace();
 
         /// <summary>
-        ///     Main Class for the Serial Port form. Used to initialize the system.
+        /// Main Class for the Serial Port form. Used to initialize the system. 
         /// </summary>
-        /// <param name="uidGuid"></param>
+        /// <param name="uidGuid">
+        /// </param>
         public SerialPortSetup(Guid uidGuid)
         {
             InitializeComponent();
@@ -37,9 +38,9 @@ namespace RabbitMQ_SendClient.UI
             InitializeMessageType();
         }
 
-        public static Guid UidGuid { get; set; }
+        private static Guid UidGuid { get; set; }
 
-        public int SerialPortNum { get; set; } //number of port that is being configured
+        private int SerialPortNum { get; set; } //number of port that is being configured
 
         private void InitializeBaudRates()
         {
@@ -160,16 +161,18 @@ namespace RabbitMQ_SendClient.UI
         }
 
         /// <summary>
-        ///     Updates text for slider
+        /// Updates text for slider 
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">
+        /// </param>
+        /// <param name="e">
+        /// </param>
         private void SldReadTimeout_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             //Prevents actions from occuring during initialization
             if (!this.IsInitialized) return;
 
-            txtReadTimeout.Text = ((int) sldReadTimeout.Value).ToString();
+            txtReadTimeout.Text = ((int)sldReadTimeout.Value).ToString();
         }
 
         private void OK_Click(object sender, RoutedEventArgs e)
@@ -194,7 +197,7 @@ namespace RabbitMQ_SendClient.UI
         }
 
         /// <summary>
-        ///     Sets the Data bits for the port being configured.
+        /// Sets the Data bits for the port being configured. 
         /// </summary>
         private void SetDataBits()
         {
@@ -203,12 +206,12 @@ namespace RabbitMQ_SendClient.UI
         }
 
         /// <summary>
-        ///     Sets FlowControl and Handshake of the port being configured.
+        /// Sets FlowControl and Handshake of the port being configured. 
         /// </summary>
         private void SetFlowControl()
         {
             var flowControl =
-                (Handshake) Enum.Parse(typeof(Handshake),
+                (Handshake)Enum.Parse(typeof(Handshake),
                     cboFlowControl.Items[cboFlowControl.SelectedIndex].ToString());
 
             SerialCommunications[this.SerialPortNum].FlowControl = flowControl;
@@ -251,7 +254,7 @@ namespace RabbitMQ_SendClient.UI
 
         private void SetReadTimeout()
         {
-            SerialCommunications[this.SerialPortNum].ReadTimeout = (int) sldReadTimeout.Value;
+            SerialCommunications[this.SerialPortNum].ReadTimeout = (int)sldReadTimeout.Value;
         }
 
         private void SetParity()
@@ -288,13 +291,13 @@ namespace RabbitMQ_SendClient.UI
 
         private void MaximumErrors()
         {
-            SerialCommunications[this.SerialPortNum].MaximumErrors = (int) sldMaxmumErrors.Value;
+            SerialCommunications[this.SerialPortNum].MaximumErrors = (int)sldMaxmumErrors.Value;
         }
 
         private void SldMaximumErrors_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (!this.IsInitialized) return;
-            txtMaximumErrors.Text = ((int) sldMaxmumErrors.Value).ToString();
+            txtMaximumErrors.Text = ((int)sldMaxmumErrors.Value).ToString();
         }
 
         private void SerialPortSetup_OnKeyDown(object sender, KeyEventArgs e)

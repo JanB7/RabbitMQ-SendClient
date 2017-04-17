@@ -5,7 +5,7 @@
   <xs:element name="Device">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="FriendlyName" type="xs:string" />
+        <xs:element name="FriendlyItemName" type="xs:string" />
         <xs:element name="variables">
           <xs:complexType>
             <xs:sequence>

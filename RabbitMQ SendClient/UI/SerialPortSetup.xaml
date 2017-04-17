@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:RabbitMQ_SendClient.UI"
         mc:Ignorable="d"
         Title="Unisphere" Height="289.741" Width="274"
-        KeyDown="SerialPortSetup_OnKeyDown">
+        KeyDown="SerialPortSetup_OnKeyDown" WindowStartupLocation="CenterOwner" ResizeMode="CanMinimize">
     <Grid>
         <Slider x:Name="sldReadTimeout" HorizontalAlignment="Left" Margin="10,153,0,0" VerticalAlignment="Top" Width="245" LargeChange="2" Maximum="5000" Minimum="5" SmallChange="1" TickPlacement="BottomRight" Value="1000" TickFrequency="100" Cursor="Hand" ValueChanged="SldReadTimeout_ValueChanged" />
         <TextBlock x:Name="textBlock12" HorizontalAlignment="Left" Margin="10,53,0,0"

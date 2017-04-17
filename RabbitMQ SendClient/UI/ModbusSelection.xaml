@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Unisphere" ResizeMode="CanMinimize" Width="910" Height="446" Margin="0,0,10,10" WindowStartupLocation="CenterOwner"
+        Title="Unisphere" ResizeMode="CanMinimize" Width="933" Height="446" Margin="0,0,10,10" WindowStartupLocation="CenterOwner"
         ContentRendered="ModbusSelection_OnContentRendered">
     <Grid>
         <Grid Margin="10,63,10,0" Height="312" VerticalAlignment="Top">

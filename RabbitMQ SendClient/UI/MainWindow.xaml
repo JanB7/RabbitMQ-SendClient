@@ -6,7 +6,7 @@
     xmlns:dv="clr-namespace:System.Windows.Controls.DataVisualization.Charting;assembly=System.Windows.Controls.DataVisualization.Toolkit"
     x:Class="RabbitMQ_SendClient.MainWindow"
     mc:Ignorable="d"
-    Title="Unisphere" Height="406" Width="533" WindowStartupLocation="CenterScreen"
+    Title="Unisphere" Height="406" Width="533" WindowStartupLocation="CenterOwner"
     ResizeMode="CanMinimize" SizeToContent="WidthAndHeight" BorderBrush="#FF2D2D30" Background="#FF414147"
     Foreground="#FF1C1C1C" Closing="MainWindow_OnClosing" Loaded="MainWindow_OnLoaded">
     <Grid Margin="0,0,0,1">
@@ -21,8 +21,8 @@
                             <ListBox x:Name="LstSerial" Height="100">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <CheckBox IsChecked="{Binding IsChecked}" Content="{Binding Content}"
-                                                  Uid="{Binding Uid}" Checked="SerialEnabled_CheckboxChecked"
+                                        <CheckBox IsChecked="{Binding IsChecked,Mode=TwoWay}" Content="{Binding Content}"
+                                                  Uid="{Binding UidGuid}" Checked="SerialEnabled_CheckboxChecked"
                                                   Unchecked="SerialEnabled_CheckboxUnchecked" />
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
@@ -36,8 +36,9 @@
                             <ListBox x:Name="LstModbusSerial" Height="100">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <CheckBox IsChecked="{Binding IsChecked}" Content="{Binding Content}"
-                                                  Uid="{Binding Uid}" Checked="SerialModbusEnabled_CheckboxChecked" />
+                                        <CheckBox IsChecked="{Binding IsChecked,Mode=TwoWay}" Content="{Binding Content}"
+                                                  Uid="{Binding UidGuid}" Checked="ModbusTCP_EnableChecked"
+                                                  Unchecked="ModbusTCP_EnableUnchecked" />
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
@@ -47,7 +48,16 @@
                             Margin="282,10,0,0" VerticalAlignment="Top" Width="131">
                         <StackPanel Orientation="Vertical">
                             <TextBlock x:Name="textBlock13" Text="Modbus TCP" TextAlignment="Center" />
-                            <ListBox x:Name="lstModbusTCP" Height="100" />
+                            <ListBox x:Name="lstModbusTCP" Height="100">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsChecked,Mode=TwoWay}" Content="{Binding Content}"
+                                                  Uid="{Binding UidGuid}" Checked="SerialModbusEnabled_CheckboxChecked"
+                                                  Unchecked="SerialModbusEnabled_OnUnchecked" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
                             <Button x:Name="AddModbusTCP" Content="Add" HorizontalAlignment="Right" Width="70"
                                     Margin="0,3,5,0" VerticalAlignment="Bottom" Click="AddModbusTCP_Click" />
                         </StackPanel>
@@ -71,7 +81,7 @@
         <StatusBar Height="25" VerticalAlignment="Bottom" BorderThickness="0,1,0,0">
             <Canvas>
                 <Canvas Canvas.Left="150" Canvas.Top="100" ClipToBounds="True" Name="canMain">
-                    <TextBlock Margin="0,40" FontSize="25" Name="tbmarquee"></TextBlock>
+                    <TextBlock Margin="0,40" FontSize="25" Name="tbmarquee" />
                 </Canvas>
             </Canvas>
         </StatusBar>

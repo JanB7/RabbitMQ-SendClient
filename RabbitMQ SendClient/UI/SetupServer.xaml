@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Unisphere" Height="250" Width="499">
+        Title="Unisphere" Height="250" Width="499" WindowStartupLocation="CenterOwner" ResizeMode="CanMinimize">
     <Grid>
         <UniformGrid>
             <Grid Background="#FFE5E5E5">
@@ -19,7 +19,7 @@
                 </Grid>
                 <Grid Margin="10,44,0,0" HorizontalAlignment="Left" Width="120" Height="53" VerticalAlignment="Top">
                     <TextBlock x:Name="textBlock2" HorizontalAlignment="Left" TextWrapping="Wrap"
-                                       Text="User Name:" VerticalAlignment="Top" RenderTransformOrigin="0.204,0.312" />
+                                       Text="User ItemName:" VerticalAlignment="Top" RenderTransformOrigin="0.204,0.312" />
                     <TextBox x:Name="txtUserName" HorizontalAlignment="Left" Height="23" Margin="0,16,0,0"
                                      TextWrapping="Wrap" Text="User" VerticalAlignment="Top" Width="120"
                                      TextChanged="TxtUserName_TextChanged" />
@@ -44,7 +44,7 @@
                                  TextWrapping="Wrap" Text="Default" VerticalAlignment="Top" Width="125"
                                  TextChanged="TxtVirtualHost_TextChanged" ToolTip="DO NOT CHANGE UNLESS YOU ARE SURE!" />
                 <TextBlock x:Name="textBlock6" HorizontalAlignment="Left" Margin="135,44,0,0"
-                                   TextWrapping="Wrap" Text="Exchange Name:" VerticalAlignment="Top" />
+                                   TextWrapping="Wrap" Text="Exchange ItemName:" VerticalAlignment="Top" />
                 <TextBox x:Name="txtExchangeName" HorizontalAlignment="Left" Height="23" Margin="135,60,0,0"
                                  TextWrapping="Wrap" Text="Default" VerticalAlignment="Top" Width="125"
                                  TextChanged="TxtExchangeName_TextChanged" />
@@ -52,7 +52,7 @@
                                  TextWrapping="Wrap" Text="Default" VerticalAlignment="Top" Width="125"
                                  TextChanged="TxtChannelName_TextChanged" />
                 <TextBlock x:Name="textBlock7" HorizontalAlignment="Left" Margin="135,88,0,0"
-                                   TextWrapping="Wrap" Text="Channel Name:" VerticalAlignment="Top" />
+                                   TextWrapping="Wrap" Text="Channel ItemName:" VerticalAlignment="Top" />
                 <TextBlock x:Name="textBlock10" HorizontalAlignment="Left" Margin="265,77,0,0"
                                    TextWrapping="Wrap" Text="Heartbeat" VerticalAlignment="Top" />
                 <Grid Height="32" Margin="265,93,10,0" VerticalAlignment="Top">

@@ -126,7 +126,7 @@
   </data>
   <data name="Invalid_Server_URL" xml:space="preserve">
     <value>Not a valid address.
-Please enter a valid IP Address or Fully Qualified Domain Name FQDN
+Please enter a valid IP Address or Fully Qualified Domain ItemName FQDN
 See Help for more information.</value>
   </data>
   <data name="SetupServer_btnOK_Click_YesToEdit" xml:space="preserve">

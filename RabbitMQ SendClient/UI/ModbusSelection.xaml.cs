@@ -1,20 +1,22 @@
 ﻿using static RabbitMQ_SendClient.MainWindow;
 using static RabbitMQ_SendClient.SystemVariables;
+using static RabbitMQ_SendClient.General_Classes.ModbusConfig;
 
 // ReSharper disable once CheckNamespace
 
 namespace RabbitMQ_SendClient.UI
 {
-    using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using System.Text.RegularExpressions;
     using System.Windows;
     using System.Windows.Controls;
     using System.Windows.Forms;
     using System.Xml.Linq;
+    using Newtonsoft.Json;
     using Button = System.Windows.Controls.Button;
     using CheckBox = System.Windows.Controls.CheckBox;
     using DataGridCell = System.Windows.Controls.DataGridCell;
@@ -23,7 +25,7 @@ namespace RabbitMQ_SendClient.UI
     using TextBox = System.Windows.Controls.TextBox;
 
     /// <summary>
-    ///     Interaction logic for ModbusSelection.xaml
+    /// Interaction logic for ModbusSelection.xaml 
     /// </summary>
     public partial class ModbusSelection
     {
@@ -92,6 +94,7 @@ namespace RabbitMQ_SendClient.UI
                     ?.Elements("MemoryBlock");
                 if (target == null)
                     return;
+
                 foreach (var xElement in target)
                 {
                     var activeElement = xElement.Element("Active");
@@ -101,7 +104,11 @@ namespace RabbitMQ_SendClient.UI
                             e => e.ModBusAddress ==
                                  xElement.Element("ModBusAddress")?.Value);
                         if (firstOrDefault != null)
+                        {
                             firstOrDefault.IsChecked = bool.Parse(activeElement.Value);
+                            if (firstOrDefault.IsChecked)
+                                UpdateAddressList(firstOrDefault.IsChecked, this.ModbusAddressControl.IndexOf(firstOrDefault));
+                        }
                     }
 
                     var functionElement = xElement.Element("FunctionCodes");
@@ -467,7 +474,9 @@ namespace RabbitMQ_SendClient.UI
                 return;
 
             RbtnOffset.IsChecked = false;
+
             this.IsAbsolute = true;
+            UpdateTable();
             UpdateAbsolute();
         }
 
@@ -475,7 +484,7 @@ namespace RabbitMQ_SendClient.UI
         {
             RbtnAbsolute.IsChecked = false;
             this.IsAbsolute = false;
-
+            UpdateTable();
             UpdateAbsolute();
         }
 
@@ -522,12 +531,24 @@ namespace RabbitMQ_SendClient.UI
 
         private void BtnOK_Click(object sender, RoutedEventArgs e)
         {
+            foreach (var modbusControl in ModbusControls)
+            {
+                for (var index = 0; index < modbusControl.ModbusAddressList.Count; index++)
+                {
+                    var tuple = modbusControl.ModbusAddressList[index];
+                    if (tuple.Item1 || tuple.Item2 || tuple.Item3 || tuple.Item4) continue;
+                    //all false, remove
+                    modbusControl.ModbusAddressList.Remove(tuple);
+                    index--;
+                }
+            }
             this.DialogResult = true;
             Close();
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
+            Array.Clear(ModbusControls, 0, ModbusControls.Length - 1);
             this.DialogResult = false;
             Close();
         }
@@ -579,36 +600,18 @@ namespace RabbitMQ_SendClient.UI
 
         private void cboAddressFormat_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (!IsInitialized) return;
-            if (cboAddressFormat.SelectedIndex == 0)
-                for (var index = 0; index < _addresses.Count; index++)
-                {
-                    if (int.TryParse(_addresses[index], out int num))
-                    {
-                        this.ModbusAddressControl[index].ModBusAddress = num.ToString("X4");
-                    }
-                    else
-                    {
-                        IFormatProvider provider = new CultureInfo("en-US");
-                        int.TryParse(_addresses[index], NumberStyles.HexNumber, provider, out int nm);
-                        this.ModbusAddressControl[index].ModBusAddress = nm.ToString("X4");
-                    }
-                }
-            else
-                foreach (var modBus in this.ModbusAddressControl)
-                {
-                    modBus.ModBusAddress = int.Parse(modBus.ModBusAddress, NumberStyles.HexNumber).ToString("D5");
-                }
-
-            ModbusAddresses.Items.Refresh();
+            if (!this.IsInitialized) return;
+            UpdateTable();
         }
 
         private void BtnLoadCustom_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new OpenFileDialog();
-            dialog.DefaultExt = ".xml";
-            dialog.Filter =
-                "Comma Seperated Files(*.csv)|(*.csv)|eXtensible Markup Language (*.xml)|*.xml|JavaScript Object Notation(*.json)|(*.json)";
+            var dialog = new OpenFileDialog
+            {
+                DefaultExt = "*.xml",
+                Filter =
+                    "Comma Seperated Files(*.csv)|(*.csv)|eXtensible Markup Language (*.xml)|*.xml|JavaScript Object Notation(*.json)|(*.json)"
+            };
 
             var result = dialog.ShowDialog();
             string fileName;
@@ -627,7 +630,6 @@ namespace RabbitMQ_SendClient.UI
                                               @"\RabbitMQ Client");
 
                 if (!File.Exists(docLocation))
-                {
                     try
                     {
                         var allLines = ReadAllResourceLines(Properties.Resources.ModbusAddresses);
@@ -639,7 +641,6 @@ namespace RabbitMQ_SendClient.UI
                         MessageBox.Show("Data format incorrect.\n\nDetialed Information:\n" + ex.Message,
                             "Incorrect Format", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
-                }
 
                 fileName = docLocation;
             }
@@ -651,7 +652,7 @@ namespace RabbitMQ_SendClient.UI
                     var ssReader = XDocument.Load(fileName);
 
                     var target = ssReader.Root?.Element("Absolute");
-                    this.IsAbsolute = bool.Parse(target?.Value);
+                    if (target != null) this.IsAbsolute = bool.Parse(target.Value);
                     target = ssReader.Root?.Element("CSV");
 
                     var allLines = ReadAllResourceLines(target?.Value);
@@ -671,7 +672,7 @@ namespace RabbitMQ_SendClient.UI
 
                 var csv = JsonConvert.DeserializeObject<CsvObject>(allLines);
                 ssReader = csv.Csv.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
-                IsAbsolute = bool.Parse(csv.Absolute);
+                this.IsAbsolute = bool.Parse(csv.Absolute);
                 _addresses.Clear();
                 _addresses = ssReader.SelectMany(line => line.Split(',').ToList()).ToList();
             }
@@ -687,40 +688,102 @@ namespace RabbitMQ_SendClient.UI
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-
-            this.ModbusAddressControl.Clear();
-
-            for (var index = 0; index < _addresses.Count; index++)
-            {
-                var t = _addresses[index];
-                if (int.TryParse(t, out int num))
-                {
-                    if (!IsAbsolute) num--;
-                    _addresses[index] = num.ToString("X4");
-                }
-                else
-                {
-                    IFormatProvider provider = new CultureInfo("en-US");
-                    int.TryParse(t, NumberStyles.HexNumber, provider, out int nm);
-                    if (!IsAbsolute) nm--;
-                    _addresses[index] = nm.ToString("X4");
-                }
-
-                this.ModbusAddressControl.Add(
-                    new ModBus
-                    {
-                        IsChecked = false,
-                        ModBusAddress = t,
-                        Nickname = "",
-                        Comments = ""
-                    });
-            }
+            UpdateTable();
+            LoadSettings();
 
             this.Dispatcher.Invoke((MethodInvoker)delegate
            {
                RbtnAbsolute.IsChecked = this.IsAbsolute;
                RbtnOffset.IsChecked = !this.IsAbsolute;
            });
+        }
+
+        private static bool IsDigitsOnly(string str)
+        {
+            return str.All(c => (c >= '0') && (c <= '9'));
+        }
+
+        private void UpdateTable()
+        {
+            this.ModbusAddressControl.Clear();
+
+            for (var i = 0; i < _addresses.Count; i++)
+            {
+                _addresses[i] = Regex.Replace(_addresses[i], @"\t|\n|\r", "");
+
+                if (_addresses[i] != "") continue;
+                _addresses.RemoveAt(i);
+                i = i - 1;
+            }
+
+            var isNotHex = _addresses.All(IsDigitsOnly);
+
+            if (isNotHex)
+                for (var index = 0; index < _addresses.Count; index++)
+                {
+                    this.ModbusAddressControl.Add(
+                        new ModBus
+                        {
+                            IsChecked = false,
+                            Nickname = "",
+                            Comments = ""
+                        });
+
+                    if (int.TryParse(_addresses[index], out int num))
+                    {
+                        if (!this.IsAbsolute) num--;
+                        this.ModbusAddressControl[index].ModBusAddress =
+                            num.ToString(cboAddressFormat.SelectedIndex == 0 ? "X4" : "D5");
+                    }
+                    else
+                    {
+                        var provider = CultureInfo.CurrentCulture;
+                        int.TryParse(_addresses[index], NumberStyles.HexNumber, provider, out int nm);
+                        if (!this.IsAbsolute) nm--;
+                        this.ModbusAddressControl[index].ModBusAddress =
+                            nm.ToString(cboAddressFormat.SelectedIndex == 0 ? "X4" : "D5");
+                    }
+                }
+            else
+                foreach (var t in _addresses)
+                {
+                    try
+                    {
+                        this.ModbusAddressControl.Add(
+                            new ModBus
+                            {
+                                IsChecked = false,
+                                Nickname = "",
+                                ModBusAddress = !this.IsAbsolute
+                                    ? (int.Parse(t, NumberStyles.HexNumber) - 1).ToString("X4")
+                                    : t,
+                                Comments = ""
+                            });
+                    }
+                    catch (Exception)
+                    {
+                        this.ModbusAddressControl.Clear();
+                        for (var i = 0; i < 10000; i++)
+                        {
+                            this.ModbusAddressControl.Add(new ModBus
+                            {
+                                IsChecked = false,
+                                ModBusAddress = (i - 1).ToString("X4"),
+                                Nickname = "",
+                                Comments = ""
+                            });
+                            _addresses.Add((i - 1).ToString("X4"));
+                        }
+                        LoadSettings();
+
+                        MessageBox.Show(
+                            "Addresses in neither hex nor integer format. Please check address format and try again",
+                            "Formatting error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+
+            LoadSettings();
+            ModbusAddresses.Items.Refresh();
         }
 
         private struct CsvObject
