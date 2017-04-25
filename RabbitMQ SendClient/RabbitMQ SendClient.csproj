@@ -143,17 +143,35 @@
     <Reference Include="EasyModbus">
       <HintPath>..\..\..\Sample Code\EasyModbus V2.8\EasyModbusLibrary for .NET (DLL)\EasyModbus.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.VisualStudio.Modeling.Sdk.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.Modeling.Sdk.Diagrams.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.Modeling.Sdk.Integration.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="microsoft.visualstudio.modeling.sdk.integration.shell.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.Modeling.Sdk.Shell.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.OLE.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.Shell.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.Shell.Immutable.10.0, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.Shell.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.Shell.Interop.8.0, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.VSHelp, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
+    </Reference>
+    <Reference Include="Opc.UaFx.Advanced, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0220af0d33d50236, processorArchitecture=MSIL">
+      <HintPath>..\packages\Opc.UaFx.Advanced.1.5.11.5\lib\net45\Opc.UaFx.Advanced.dll</HintPath>
     </Reference>
     <Reference Include="RabbitMQ.Client, Version=4.0.0.0, Culture=neutral, PublicKeyToken=89e7d7c5feba84ce, processorArchitecture=MSIL">
       <HintPath>..\packages\RabbitMQ.Client.4.1.1\lib\net451\RabbitMQ.Client.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.IdentityModel" />
     <Reference Include="System.Windows.Controls.DataVisualization.Toolkit, Version=3.5.40128.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
@@ -177,15 +195,20 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="General Classes\FormControl.cs" />
+    <Compile Include="General Classes\GlobalOPCFunctions.cs" />
     <Compile Include="General Classes\GlobalRabbitMqServerFunctions.cs" />
     <Compile Include="General Classes\GlobalSerialFunctions.cs" />
     <Compile Include="General Classes\GlocalTCPFunctions.cs" />
+    <Compile Include="General Classes\HeaderToImageConverter.cs" />
     <Compile Include="General Classes\ModbusConfig.cs" />
     <Compile Include="UI\ModbusIPConfig.xaml.cs">
       <DependentUpon>ModbusIPConfig.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\ModbusSelection.xaml.cs">
       <DependentUpon>ModbusSelection.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\OPCControl.xaml.cs">
+      <DependentUpon>OPCControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\SerialPortSetup.xaml.cs">
       <DependentUpon>SerialPortSetup.xaml</DependentUpon>
@@ -214,6 +237,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UI\ModbusSelection.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\OPCControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -249,6 +276,8 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <None Include="Config Files\packages.config" />
+    <None Include="Opc.UaFx.Advanced\Opc.UaFx.Advanced.chm" />
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -293,6 +322,26 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <DependentUpon>MessageData.mdf</DependentUpon>
     </Content>
+    <None Include="Resources\Connect.png" />
+    <Content Include="Icons\broken-link.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Icons\link.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Resource Include="Icons\organization-1.png" />
+    <Resource Include="Icons\organization-2.png" />
+    <Resource Include="Icons\organization-3.png" />
+    <Resource Include="Icons\organization-4.png" />
+    <Resource Include="Icons\organization-5.png" />
+    <Resource Include="Icons\organization-6.png" />
+    <Resource Include="Icons\organization-7.png" />
+    <Resource Include="Icons\organization-8.png" />
+    <Resource Include="Icons\organization-9.png" />
+    <Resource Include="Icons\organization.png" />
+    <Content Include="Opc.UaFx.Advanced\Opc.UaFx.Advanced.dll" />
+    <Content Include="Opc.UaFx.Advanced\OpcWatch.exe" />
+    <Resource Include="Opc.UaFx.Advanced\Version.txt" />
     <None Include="Resources\ModbusAddresses.txt" />
     <None Include="Resources\DefaultModbusSettingsFile.txt" />
   </ItemGroup>

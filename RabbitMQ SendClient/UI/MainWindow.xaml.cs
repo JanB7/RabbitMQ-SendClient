@@ -15,7 +15,6 @@ namespace RabbitMQ_SendClient
     using System.IO;
     using System.IO.Ports;
     using System.Linq;
-    using System.Runtime.CompilerServices;
     using System.Text;
     using System.Threading;
     using System.Windows;
@@ -28,7 +27,6 @@ namespace RabbitMQ_SendClient
     using Newtonsoft.Json;
     using RabbitMQ.Client;
     using RabbitMQ.Client.Exceptions;
-    using Application = System.Windows.Application;
     using CheckBox = System.Windows.Controls.CheckBox;
     using MessageBox = System.Windows.Forms.MessageBox;
 
@@ -49,7 +47,7 @@ namespace RabbitMQ_SendClient
 
             InitializeSerialPorts();
             InitializeHeartBeatTimer();
-            lstModbusTCP.DataContext = ModbusTCP;
+            lstModbusTCP.DataContext = ModbusTcp;
 
             _systemTimer.Start();
         }
@@ -66,7 +64,22 @@ namespace RabbitMQ_SendClient
         protected internal static readonly ObservableCollection<CheckListItem> AvailableSerialPorts =
             new ObservableCollection<CheckListItem>();
 
-        protected internal static readonly ObservableCollection<CheckListItem> ModbusTCP = new ObservableCollection<CheckListItem>();
+        private static readonly ObservableCollection<CheckListItem> ModbusTcp = new ObservableCollection<CheckListItem>();
+
+        /// <summary>
+        /// <para>
+        /// Observable collection containing struct of <see cref="MessageDataHistory" /> 
+        /// </para>
+        /// <example> Struct Format 
+        /// <code>
+        /// protected internal struct MessageDataHistory
+        /// {
+        ///     internal KeyValuePair&lt;string, double&gt; KeyPair { get; set; }
+        ///     internal Guid UidGuid { get; set; }
+        /// }
+        /// </code>
+        /// </example> 
+        /// </summary>
 
         internal static ObservableCollection<MessageDataHistory>[] MessagesSentDataPair =
             new ObservableCollection<MessageDataHistory>[0];
@@ -83,6 +96,9 @@ namespace RabbitMQ_SendClient
             public string UidGuid { get; set; }
         }
 
+        /// <summary>
+        /// Contains KeyPairValue(string, double) and UidGuid 
+        /// </summary>
         protected internal struct MessageDataHistory
         {
             internal KeyValuePair<string, double> KeyPair { get; set; }
@@ -103,7 +119,7 @@ namespace RabbitMQ_SendClient
                     SerialPorts[i].Close();
                 }
                 SerialPorts[i].Dispose();
-                CloseSerialPortUnexpectedly(i, UIDispatcher);
+                CloseSerialPortUnexpectedly(i, UiDispatcher);
             }
 
             //Disposes of timer in a threadsafe manner
@@ -113,7 +129,7 @@ namespace RabbitMQ_SendClient
 
         private readonly DateTime _previousTime = new DateTime();
         private readonly DispatcherTimer _systemTimer = new DispatcherTimer();
-        private static Dispatcher UIDispatcher = Dispatcher.CurrentDispatcher;
+        private static readonly Dispatcher UiDispatcher = Dispatcher.CurrentDispatcher;
 
         private void GetFriendlyDeviceNames()
         {
@@ -161,7 +177,7 @@ namespace RabbitMQ_SendClient
                         {
                             var sf = StackTracing.GetFrame(0);
                             LogError(ex, LogLevel.Critical, sf);
-                            CloseSerialPortUnexpectedly(index, UIDispatcher);
+                            CloseSerialPortUnexpectedly(index, UiDispatcher);
                             return true;
                         }
                     }
@@ -337,14 +353,31 @@ namespace RabbitMQ_SendClient
         /// Provides the required closing processes. Allows for safe shutdown of the program 
         /// </summary>
         /// <param name="sender">
+        /// The source of the event. 
         /// </param>
         /// <param name="e">
+        /// An <see cref="T:System.ComponentModel.CancelEventArgs"> CancelEventArgs </see> that
+        /// contains the event data.
         /// </param>
+        /// <remarks>
+        /// </remarks>
         private void MainWindow_OnClosing(object sender, CancelEventArgs e)
         {
             CloseSafely();
         }
 
+        /// <summary>
+        /// Main Window Loading 
+        /// </summary>
+        /// <param name="sender">
+        /// The source of the event. 
+        /// </param>
+        /// <param name="e">
+        /// An <see cref="T:System.Windows.RoutedEventArgs"> RoutedEventArgs </see> that contains the
+        /// event data.
+        /// </param>
+        /// <remarks>
+        /// </remarks>
         private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
         {
             var doubleAnimation = new DoubleAnimation
@@ -367,8 +400,8 @@ namespace RabbitMQ_SendClient
             var ports = SerialPort.GetPortNames();
             for (var i = 0; i < ports.Length; i++)
             {
-                var portName = ports[i];
-                if (portName == AvailableSerialPorts[i].Content)
+                if ((AvailableSerialPorts.Count - 1) < i) break;
+                if (ports[i] == AvailableSerialPorts[i].Content)
                 {
                 }
             }
@@ -429,7 +462,7 @@ namespace RabbitMQ_SendClient
 
         private void SerialModbusEnabled_OnUnchecked(object sender, RoutedEventArgs e)
         {
-            var uidGuid = Guid.Parse(((CheckBox) sender).Uid);
+            var uidGuid = Guid.Parse(((CheckBox)sender).Uid);
             tbmarquee.Text = tbmarquee.Text.Replace($"Serial Port {AvailableModbusSerialPorts[GetIndex<CheckListItem>(uidGuid)].ItemName} Active ", "");
         }
 
@@ -461,7 +494,7 @@ namespace RabbitMQ_SendClient
                 return;
             }
 
-            if ((!ModbusClients[ModbusClients.Length - 1].Connected)|| (!UserConfigureFactory(uidGuid) ?? true))
+            if ((!ModbusClients[ModbusClients.Length - 1].Connected) || (!UserConfigureFactory(uidGuid) ?? true))
             {
                 UserCancelConfigureModbusAddresses(uidGuid);
                 ShutdownFactory(uidGuid);
@@ -470,7 +503,7 @@ namespace RabbitMQ_SendClient
             }
             else
             {
-                InitializeModbusClient(SerialPorts[SerialPorts.Length-1]);
+                InitializeModbusClient(SerialPorts[SerialPorts.Length - 1]);
                 InitializeRead(uidGuid);
                 ModbusControls[ModbusControls.Length - 1].ModbusTimers.IsEnabled = true;
                 tbmarquee.Text += $"Serial Port {AvailableModbusSerialPorts[GetIndex<CheckListItem>(uidGuid)].ItemName} Active";
@@ -808,7 +841,6 @@ namespace RabbitMQ_SendClient
            });
         }
 
-
         private void AddModbusTCP_Click(object sender, RoutedEventArgs e)
         {
             var uidGuid = Guid.NewGuid();
@@ -823,7 +855,7 @@ namespace RabbitMQ_SendClient
                 return;
             }
 
-            if (!ModbusClients[ModbusClients.Length - 1].Connected || (!UserConfigureFactory(uidGuid) ?? true ))
+            if (!ModbusClients[ModbusClients.Length - 1].Connected || (!UserConfigureFactory(uidGuid) ?? true))
             {
                 UserCancelConfigureModbusAddresses(uidGuid);
                 ShutdownFactory(uidGuid);
@@ -841,11 +873,11 @@ namespace RabbitMQ_SendClient
                     ItemName = IpAddressTables[IpAddressTables.Length - 1].IpAddress + ":" +
                                IpAddressTables[IpAddressTables.Length - 1].Port
                 };
-                ModbusTCP.Add(checkListItem);
-                InitializeModbusClient(IpAddressTables[IpAddressTables.Length -1].IpAddress.ToString(),IpAddressTables[IpAddressTables.Length -1].Port,false);
+                ModbusTcp.Add(checkListItem);
+                InitializeModbusClient(IpAddressTables[IpAddressTables.Length - 1].IpAddress.ToString(), IpAddressTables[IpAddressTables.Length - 1].Port, false);
                 InitializeRead(uidGuid);
                 ModbusControls[ModbusControls.Length - 1].ModbusTimers.IsEnabled = true;
-                tbmarquee.Text += $"Serial Port {ModbusTCP[GetIndex<CheckListItem>(uidGuid)].ItemName} Active";
+                tbmarquee.Text += $"Serial Port {ModbusTcp[GetIndex<CheckListItem>(uidGuid)].ItemName} Active";
             }
         }
 

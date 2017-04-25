@@ -136,7 +136,7 @@ namespace RabbitMQ_SendClient.General_Classes
                 UidGuid = uidGuid,
                 MaximumErrors = 10
             };
-            SerialCommunications[SerialCommunications.Length - 1].X(SerialCommunications[SerialCommunications.Length -1].MaximumErrors);
+            SerialCommunications[SerialCommunications.Length - 1].SetupX(SerialCommunications[SerialCommunications.Length -1].MaximumErrors);
         }
 
         public static void InitializeModbusClient(ModbusClient client)

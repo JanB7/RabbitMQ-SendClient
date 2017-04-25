@@ -61,6 +61,16 @@ namespace RabbitMQ_SendClient.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap broken_link {
+            get {
+                object obj = ResourceManager.GetObject("broken_link", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
         ///
         ///&lt;ModbusAddresses&gt;
@@ -96,6 +106,16 @@ namespace RabbitMQ_SendClient.Properties {
         internal static string Invalid_Server_URL {
             get {
                 return ResourceManager.GetString("Invalid_Server_URL", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap link {
+            get {
+                object obj = ResourceManager.GetObject("link", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         

@@ -13,7 +13,6 @@ namespace RabbitMQ_SendClient
     using System.Windows.Forms;
     using System.Windows.Threading;
     using UI;
-    using Application = System.Windows.Application;
 
     public static class GlobalSerialFunctions
     {
@@ -43,7 +42,7 @@ namespace RabbitMQ_SendClient
                 grouping = int.Parse(serialVal.Substring(serialVal.Length -
                                                          SerialCommunications[index].MaximumErrors.ToString().Length));
             else
-                grouping = int.Parse(SerialCommunications[index].TotalInformationReceived.ToString());
+                grouping = (int)SerialCommunications[index].TotalInformationReceived;
 
             if ((grouping % SerialCommunications[index].MaximumErrors) == 0)
             {
@@ -51,6 +50,7 @@ namespace RabbitMQ_SendClient
                     StatsGroupings[index] = 0;
 
                 StatsGroupings[index]++;
+                SerialCommunications[index].InformationErrors = 0;
             }
 
             SerialCommunications[index].SetX(StatsGroupings[index], pVal);
@@ -61,7 +61,6 @@ namespace RabbitMQ_SendClient
             }
 
             xBar = xBar / 50;
-
             SerialCommunications[index].Ucl = xBar + 3 *
                                               Math.Sqrt(xBar * (1 - xBar /
                                                                 SerialCommunications[index].MaximumErrors));
@@ -84,11 +83,12 @@ namespace RabbitMQ_SendClient
             {
                 SerialCommunications[index].InformationErrors++;
                 var xbar = 0.0;
+
                 for (var i = SerialCommunications[index].MaximumErrors; i >= 0; i--)
                 {
-                    xbar += SerialCommunications[index].GetX(i) * 0.95;
+                    xbar += SerialCommunications[index].GetX(i);
                 }
-                xbar = xbar / (SerialCommunications[index].MaximumErrors*0.95);
+                xbar = xbar / SerialCommunications[index].MaximumErrors; // np̅=(Ʃnp)/k where n = number of defective items and k = number of subgroups
 
                 return xbar > SerialCommunications[index].Ucl;
             }
@@ -152,7 +152,7 @@ namespace RabbitMQ_SendClient
             var success = setupSerialForm.ShowDialog(); //Confirm Settings
 
             SerialCommunications[SerialCommunications.Length - 1]
-                .X(SerialCommunications[SerialCommunications.Length - 1].MaximumErrors);
+                .SetupX(SerialCommunications[SerialCommunications.Length - 1].MaximumErrors);
 
             return success;
         }
@@ -172,7 +172,7 @@ namespace RabbitMQ_SendClient
 
         internal static void RemoveSerial(Guid uidGuid)
         {
-            var index = GetIndex<CheckListItem>(uidGuid);
+            var index = GetIndex<SerialCommunication>(uidGuid);
 
             if (SerialPorts[index].IsOpen) SerialPorts[index].Close();
             RemoveAtIndex<SerialPort>(index, SerialPorts);
@@ -192,47 +192,47 @@ namespace RabbitMQ_SendClient
                 SerialPorts[index].Close();
             }
 
-            uiDispatcher.Invoke((MethodInvoker) delegate
-            {
-;
-                var i = 0;
-                i += AvailableSerialPorts.TakeWhile(e => Guid.Parse(e.UidGuid) == SerialCommunications[index].UidGuid).Count();
+            uiDispatcher.Invoke((MethodInvoker)delegate
+           {
+               ;
+               var i = 0;
+               i += AvailableSerialPorts.TakeWhile(e => Guid.Parse(e.UidGuid) == SerialCommunications[index].UidGuid).Count();
 
-                if (i > AvailableSerialPorts.Count - 1)
-                {
-                    i = 0;
-                    i += AvailableModbusSerialPorts.TakeWhile(e => Guid.Parse(e.UidGuid) == SerialCommunications[index].UidGuid).Count();
-                    if(i > AvailableModbusSerialPorts.Count -1) throw new NullReferenceException();
+               if (i > AvailableSerialPorts.Count - 1)
+               {
+                   i = 0;
+                   i += AvailableModbusSerialPorts.TakeWhile(e => Guid.Parse(e.UidGuid) == SerialCommunications[index].UidGuid).Count();
+                   if (i > AvailableModbusSerialPorts.Count - 1) throw new NullReferenceException();
 
-                    var checklistItem = new CheckListItem
-                    {
-                        IsChecked = false,
-                        Content = AvailableModbusSerialPorts[i].Content,
-                        ItemName = AvailableModbusSerialPorts[i].ItemName,
-                        UidGuid = AvailableModbusSerialPorts[i].UidGuid
-                    };
+                   var checklistItem = new CheckListItem
+                   {
+                       IsChecked = false,
+                       Content = AvailableModbusSerialPorts[i].Content,
+                       ItemName = AvailableModbusSerialPorts[i].ItemName,
+                       UidGuid = AvailableModbusSerialPorts[i].UidGuid
+                   };
 
-                    AvailableModbusSerialPorts.RemoveAt(i);
-                    AvailableModbusSerialPorts.Insert(i, checklistItem);
-                }
-                else
-                {
-                    var checkListItem = new CheckListItem
-                    {
-                        Content = AvailableSerialPorts[i].Content,
-                        IsChecked = false,
-                        ItemName = AvailableSerialPorts[i].ItemName,
-                        UidGuid = AvailableSerialPorts[i].UidGuid
-                    };
+                   AvailableModbusSerialPorts.RemoveAt(i);
+                   AvailableModbusSerialPorts.Insert(i, checklistItem);
+               }
+               else
+               {
+                   var checkListItem = new CheckListItem
+                   {
+                       Content = AvailableSerialPorts[i].Content,
+                       IsChecked = false,
+                       ItemName = AvailableSerialPorts[i].ItemName,
+                       UidGuid = AvailableSerialPorts[i].UidGuid
+                   };
 
-                    AvailableSerialPorts.RemoveAt(i);
-                    AvailableSerialPorts.Insert(i, checkListItem);
-                }
+                   AvailableSerialPorts.RemoveAt(i);
+                   AvailableSerialPorts.Insert(i, checkListItem);
+               }
 
-                MessageBox.Show(
-                    @"Error with Serial Port. Closing connection. Please check settings and connection and try again.",
-                    @"Serial Port Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            });
+               MessageBox.Show(
+                   @"Error with Serial Port. Closing connection. Please check settings and connection and try again.",
+                   @"Serial Port Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+           });
             SerialPorts = RemoveAtIndex<SerialPort>(index, SerialPorts);
             SerialCommunications = RemoveAtIndex<SerialCommunication>(index, SerialCommunications);
             StatsGroupings = RemoveAtIndex<int>(index, StatsGroupings);
@@ -254,7 +254,7 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        /// Initializes serial port with settings from global settings file. TODO write settings to file
+        /// Initializes serial port with settings from global settings file. TODO write settings to file 
         /// </summary>
         /// <param name="index">
         /// Index of Global Variable related to CheckboxList 
@@ -279,14 +279,14 @@ namespace RabbitMQ_SendClient
 
                 //Initializing the Serial Port
                 SerialPorts[index].PortName = SerialCommunications[index].ComPort;
-                SerialPorts[index].BaudRate = (int) SerialCommunications[index].BaudRate;
+                SerialPorts[index].BaudRate = (int)SerialCommunications[index].BaudRate;
                 SerialPorts[index].Parity = SerialCommunications[index].SerialParity;
                 SerialPorts[index].StopBits = SerialCommunications[index].SerialStopBits;
                 SerialPorts[index].DataBits = SerialCommunications[index].SerialBits;
                 SerialPorts[index].Handshake = SerialCommunications[index].FlowControl;
                 SerialPorts[index].RtsEnable = SerialCommunications[index].RtsEnable;
                 SerialPorts[index].ReadTimeout = SerialCommunications[index].ReadTimeout;
-                SerialCommunications[index].X();
+                SerialCommunications[index].SetupX();
 
                 SerialPorts[index].Open();
 

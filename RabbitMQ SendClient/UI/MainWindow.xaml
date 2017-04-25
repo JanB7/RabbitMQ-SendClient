@@ -21,7 +21,8 @@
                             <ListBox x:Name="LstSerial" Height="100">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <CheckBox IsChecked="{Binding IsChecked,Mode=TwoWay}" Content="{Binding Content}"
+                                        <CheckBox IsChecked="{Binding IsChecked,Mode=TwoWay}"
+                                                  Content="{Binding Content}"
                                                   Uid="{Binding UidGuid}" Checked="SerialEnabled_CheckboxChecked"
                                                   Unchecked="SerialEnabled_CheckboxUnchecked" />
                                     </DataTemplate>
@@ -36,7 +37,8 @@
                             <ListBox x:Name="LstModbusSerial" Height="100">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <CheckBox IsChecked="{Binding IsChecked,Mode=TwoWay}" Content="{Binding Content}"
+                                        <CheckBox IsChecked="{Binding IsChecked,Mode=TwoWay}"
+                                                  Content="{Binding Content}"
                                                   Uid="{Binding UidGuid}" Checked="ModbusTCP_EnableChecked"
                                                   Unchecked="ModbusTCP_EnableUnchecked" />
                                     </DataTemplate>
@@ -51,7 +53,8 @@
                             <ListBox x:Name="lstModbusTCP" Height="100">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <CheckBox IsChecked="{Binding IsChecked,Mode=TwoWay}" Content="{Binding Content}"
+                                        <CheckBox IsChecked="{Binding IsChecked,Mode=TwoWay}"
+                                                  Content="{Binding Content}"
                                                   Uid="{Binding UidGuid}" Checked="SerialModbusEnabled_CheckboxChecked"
                                                   Unchecked="SerialModbusEnabled_OnUnchecked" />
                                     </DataTemplate>
@@ -79,11 +82,13 @@
             </TabItem>
         </TabControl>
         <StatusBar Height="25" VerticalAlignment="Bottom" BorderThickness="0,1,0,0">
-            <Canvas>
-                <Canvas Canvas.Left="150" Canvas.Top="100" ClipToBounds="True" Name="canMain">
-                    <TextBlock Margin="0,40" FontSize="25" Name="tbmarquee" />
+            <StatusBarItem>
+                <Canvas>
+                    <Canvas Canvas.Left="150" Canvas.Top="100" ClipToBounds="True" Name="canMain">
+                        <TextBlock Margin="0,40" FontSize="25" Name="tbmarquee" />
+                    </Canvas>
                 </Canvas>
-            </Canvas>
+            </StatusBarItem>
         </StatusBar>
     </Grid>
 </Window>

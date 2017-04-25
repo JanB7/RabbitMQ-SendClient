@@ -1,5 +1,4 @@
-﻿using static RabbitMQ_SendClient.MainWindow;
-using static RabbitMQ_SendClient.SystemVariables;
+﻿using static RabbitMQ_SendClient.SystemVariables;
 using static RabbitMQ_SendClient.General_Classes.ModbusConfig;
 
 // ReSharper disable once CheckNamespace

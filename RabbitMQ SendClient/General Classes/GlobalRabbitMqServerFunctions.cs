@@ -3,14 +3,14 @@ using static RabbitMQ_SendClient.SystemVariables;
 
 namespace RabbitMQ_SendClient
 {
-    using RabbitMQ.Client;
-    using RabbitMQ.Client.Exceptions;
     using System;
     using System.Data;
     using System.Data.SqlClient;
     using System.Diagnostics;
     using System.Net;
     using System.Windows.Forms;
+    using RabbitMQ.Client;
+    using RabbitMQ.Client.Exceptions;
 
     public static class GlobalRabbitMqServerFunctions
     {
@@ -19,7 +19,7 @@ namespace RabbitMQ_SendClient
         private static readonly string DatabaseLoc =
             AppDomain.CurrentDomain.BaseDirectory + "Database\\MessageData.mdf";
 
-        private static readonly string _connString =
+        private static readonly string ConnString =
             $"Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=\"{DatabaseLoc}\";Integrated Security=True";
 
         private static readonly StackTrace StackTracing = new StackTrace();
@@ -50,7 +50,7 @@ namespace RabbitMQ_SendClient
                 VirtualHost = ServerInformation[index].VirtualHost,
                 Port = ServerInformation[index].ServerPort,
                 AutomaticRecoveryEnabled = ServerInformation[index].AutoRecovery,
-                RequestedHeartbeat = (ushort) ServerInformation[index].ServerHeartbeat,
+                RequestedHeartbeat = (ushort)ServerInformation[index].ServerHeartbeat,
                 NetworkRecoveryInterval = TimeSpan.FromSeconds(ServerInformation[index].NetworkRecoveryInterval),
                 TopologyRecoveryEnabled = ServerInformation[index].AutoRecovery
             };
@@ -214,14 +214,20 @@ namespace RabbitMQ_SendClient
             var index = GetIndex<RabbitServerInformation>(uidGuid);
 
             RemoveAtIndex<RabbitServerInformation>(index, ServerInformation);
+            try
+            {
+                if (FactoryChannel[index].IsOpen) FactoryChannel[index].Close();
+                RemoveAtIndex<IModel>(index, FactoryChannel);
 
-            if (FactoryChannel[index].IsOpen) FactoryChannel[index].Close();
-            RemoveAtIndex<IModel>(index, FactoryChannel);
+                if (FactoryConnection[index].IsOpen) FactoryConnection[index].Close();
+                RemoveAtIndex<IConnection>(index, FactoryConnection);
 
-            if (FactoryConnection[index].IsOpen) FactoryConnection[index].Close();
-            RemoveAtIndex<IConnection>(index, FactoryConnection);
-
-            RemoveAtIndex<IConnectionFactory>(index, Factory);
+                RemoveAtIndex<IConnectionFactory>(index, Factory);
+            }
+            catch (AlreadyClosedException)
+            {
+                //Do nothing, already closed
+            }
         }
 
         public static void StartServer()
@@ -293,8 +299,7 @@ namespace RabbitMQ_SendClient
         {
             var index = GetIndex<RabbitServerInformation>(uidGuid);
             if (index == -1) return;
-            else index--;
-            
+            index--;
 
             var datInfo = new DataBaseInfo
             {
@@ -313,7 +318,7 @@ namespace RabbitMQ_SendClient
                 +
                 "(@message,@timestamp,@friendlyname,@channel,@exchange,@serveraddress,@deliverytag,@devicetype)";
 
-            using (var conn = new SqlConnection(_connString))
+            using (var conn = new SqlConnection(ConnString))
             {
                 var command = new SqlCommand(sqlString, conn)
                 {
@@ -337,11 +342,11 @@ namespace RabbitMQ_SendClient
         {
             const string sqlString = "DELETE FROM[dbo].[MessageData] WHERE [DeliveryTag] = @uuid";
 
-            using (var conn = new SqlConnection(_connString))
+            using (var conn = new SqlConnection(ConnString))
             {
                 try
                 {
-                    var command = new SqlCommand(sqlString, conn) {CommandType = CommandType.Text};
+                    var command = new SqlCommand(sqlString, conn) { CommandType = CommandType.Text };
                     command.Parameters.AddWithValue("@uuid", uidGuid);
                     conn.Open();
                     command.ExecuteNonQuery();

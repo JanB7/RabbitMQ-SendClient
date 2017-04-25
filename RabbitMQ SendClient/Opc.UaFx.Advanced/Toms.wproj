@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ArrayOfWatchProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <WatchProject>
+    <ServerAddress>opc.tcp://130.113.130.104:49321/</ServerAddress>
+    <ApplicationUri />
+    <UserIdentity>
+      <Name />
+      <Password />
+      <Certificate />
+    </UserIdentity>
+    <AutoAcceptUntrustedCertificates>true</AutoAcceptUntrustedCertificates>
+    <CertificateStores />
+    <Policy />
+  </WatchProject>
+</ArrayOfWatchProject>

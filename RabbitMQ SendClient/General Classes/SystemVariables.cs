@@ -17,6 +17,7 @@ namespace RabbitMQ_SendClient
     using System.Windows.Controls.DataVisualization.Charting;
     using System.Xml.Linq;
     using EasyModbus;
+    using General_Classes;
     using Properties;
     using RabbitMQ.Client;
 
@@ -41,11 +42,10 @@ namespace RabbitMQ_SendClient
         public static IConnection[] FactoryConnection { get; set; } = new IConnection[0];
         public static IConnectionFactory[] Factory { get; set; } = new IConnectionFactory[0];
         public static JsonObject[] JsonObjects { get; set; } = new JsonObject[0];
-
         public static IPAddressTable[] IpAddressTables { get; set; } = new IPAddressTable[0];
 
         /// <summary>
-        ///     Dictionary of Errors that can be thrown
+        /// Dictionary of Errors that can be thrown 
         /// </summary>
         public static IDictionary<int, string> ErrorType { get; } = new Dictionary<int, string>
         {
@@ -66,7 +66,7 @@ namespace RabbitMQ_SendClient
         };
 
         /// <summary>
-        ///     Standard Baud Rates used by majority of Serial Communcations
+        /// Standard Baud Rates used by majority of Serial Communcations 
         /// </summary>
         public enum BaudRates
         {
@@ -85,7 +85,7 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        ///     Level of error Severity
+        /// Level of error Severity 
         /// </summary>
         public enum LogLevel
         {
@@ -98,23 +98,25 @@ namespace RabbitMQ_SendClient
             None = 0
         }
 
+        public static OpcUaServer[] OpcUaServers = new OpcUaServer[0];
+
         public static bool ReconnectOnStartup;
 
         private static Process _withEventsFieldProcess;
         private static bool _checkProcessIsRunning;
 
         /// <summary>
-        ///     Array for Serial Port Configurations
+        /// Array for Serial Port Configurations 
         /// </summary>
         public static SerialCommunication[] SerialCommunications = new SerialCommunication[0];
 
         /// <summary>
-        ///     Array for available Serial Ports in the system
+        /// Array for available Serial Ports in the system 
         /// </summary>
         public static SerialPort[] SerialPorts = new SerialPort[0];
 
         /// <summary>
-        ///     RabbitMQ Server Information
+        /// RabbitMQ Server Information 
         /// </summary>
         public static RabbitServerInformation[] ServerInformation = new RabbitServerInformation[0];
 
@@ -123,7 +125,7 @@ namespace RabbitMQ_SendClient
         public static string[] FriendlyName = new string[0];
 
         /// <summary>
-        ///     JSON Message Parameters.
+        /// JSON Message Parameters. 
         /// </summary>
         public struct JsonObject
         {
@@ -135,7 +137,7 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        ///     RabbitMQ Server Information
+        /// RabbitMQ Server Information 
         /// </summary>
         public struct RabbitServerInformation
         {
@@ -176,40 +178,53 @@ namespace RabbitMQ_SendClient
             public double Ucl { get; set; }
             public double Lcl { get; set; }
 
-            private double[] _x;
+            private double[,] _x;
 
-            public void X()
+            public void SetupX()
             {
-                Array.Resize(ref _x, 0);
-                _x = new double[50];
+                ResizeArray(_x, this.MaximumErrors, 50);
+                _x = new double[this.MaximumErrors, 50];
                 for (var i = 0; i < _x.Length; i++)
                 {
-                    _x[i] = this.MaximumErrors;
+                    _x[StatsGroupings[StatsGroupings.Length - 1], i] = this.MaximumErrors;
                 }
             }
 
-            public void X(int maximumErrors)
+            public void SetupX(int maximumErrors)
             {
-                Array.Resize(ref _x, 0);
-                _x = new double[50];
+                ResizeArray(_x, maximumErrors, 50);
+                _x = new double[maximumErrors, 50];
                 for (var i = 0; i < _x.Length; i++)
                 {
-                    _x[i] = maximumErrors;
+                    _x[StatsGroupings[StatsGroupings.Length - 1], i] = maximumErrors;
                 }
             }
 
             public void SetX(int index, double value)
             {
-                _x[index] = value;
+                _x[StatsGroupings[index], index] = value;
             }
 
             public double GetX(int index)
             {
-                return _x[index];
+                return _x[StatsGroupings[index], index];
             }
         }
 
-        #endregion
+        #endregion Variables & Structures
+
+        private static T[,] ResizeArray<T>(T[,] original, int rows, int cols)
+        {
+            var newArray = new T[rows, cols];
+            var minRows = Math.Min(rows, original.GetLength(0));
+            var minCols = Math.Min(cols, original.GetLength(1));
+            for (var i = 0; i < minRows; i++)
+            for (var j = 0; j < minCols; j++)
+            {
+                newArray[i, j] = original[i, j];
+            }
+            return newArray;
+        }
 
         public static void IncreaseLineSeries(string itemName)
         {
@@ -240,8 +255,14 @@ namespace RabbitMQ_SendClient
 
         public static void DecreaseLineSeries(Guid uidGuid)
         {
-            var index = GetIndex<CheckListItem>(uidGuid);
-            RemoveAtIndex<MessageDataHistory>(index, MessagesSentDataPair);
+            var index = GetIndex<MessageDataHistory>(uidGuid);
+            foreach (var observableCollection in MessagesSentDataPair[index])
+            {
+                if (observableCollection.UidGuid != uidGuid) continue;
+                MessagesSentDataPair[index].Remove(observableCollection);
+                break;
+            }
+            //RemoveAtIndex<MessageDataHistory>(index, MessagesSentDataPair);
             RemoveAtIndex<double>(index, MessagesPerSecond);
             RemoveAtIndex<int>(index, StatsGroupings);
             RemoveAtIndex<LineSeries>(index, Lineseries);
@@ -265,23 +286,24 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        ///     <para>
-        ///         Gets array index based on type of array used.
-        ///     </para>
-        ///     <para>
-        ///         Can be of items: <see cref="SerialCommunication" /> |
-        ///         <see cref="RabbitServerInformation" /> | <see cref="JsonObject" /> |
-        ///         <see cref="CheckListItem" /> | <see cref="MessageDataHistory" />
-        ///     </para>
+        /// <para>
+        /// Gets array index based on type of array used. 
+        /// </para>
+        /// <para>
+        /// Can be of items: <see cref="SerialCommunication" /> |
+        /// <see cref="RabbitServerInformation" /> | <see cref="JsonObject" /> |
+        /// <see cref="CheckListItem" /> | <see cref="MessageDataHistory" /> |
+        /// <see cref="IPAddressTable" /> | <see cref="OpcUaServer" />
+        /// </para>
         /// </summary>
         /// <typeparam name="T">
-        ///     Struct type to check
+        /// Struct type to check 
         /// </typeparam>
         /// <param name="uidGuid">
-        ///     Unique Identifier to match with the stuct
+        /// Unique Identifier to match with the stuct 
         /// </param>
         /// <returns>
-        ///     Int value for index in the array
+        /// Int value for index in the array 
         /// </returns>
         public static int GetIndex<T>(Guid uidGuid)
         {
@@ -343,10 +365,17 @@ namespace RabbitMQ_SendClient
                     }
                 },
                 {
-                    typeof(IPAddressTable),() =>
+                    typeof(IPAddressTable), () =>
                     {
                         index += IpAddressTables.TakeWhile(e => e.UidGuid != uidGuid).Count();
                         if (index > (IpAddressTables.Length - 1)) index = -1;
+                    }
+                },
+                {
+                    typeof(OpcUaServer), () =>
+                    {
+                        index += OpcUaServers.TakeWhile(e => e.UidGuid != uidGuid).Count();
+                        if (index > (OpcUaServers.Length - 1)) index = -1;
                     }
                 }
             };
@@ -363,14 +392,15 @@ namespace RabbitMQ_SendClient
                 AvailableModbusSerialPorts.TakeWhile(
                         checkListItem => checkListItem.UidGuid != uidGuid.ToString())
                     .Count();
-            if (index > AvailableModbusSerialPorts.Count-1)
+            if (index > (AvailableModbusSerialPorts.Count - 1))
                 index = 0;
             else
                 return AvailableSerialPorts[index];
 
-            index += AvailableSerialPorts.TakeWhile(checkListItem => checkListItem.UidGuid != uidGuid.ToString()).Count();
+            index += AvailableSerialPorts.TakeWhile(checkListItem => checkListItem.UidGuid != uidGuid.ToString())
+                .Count();
 
-            if (index > AvailableSerialPorts.Count-1)
+            if (index > (AvailableSerialPorts.Count - 1))
                 return null;
 
             return AvailableModbusSerialPorts[index];
@@ -383,14 +413,15 @@ namespace RabbitMQ_SendClient
                 AvailableModbusSerialPorts.TakeWhile(
                         checkListItem => checkListItem.UidGuid != uidGuid.ToString())
                     .Count();
-            if (index > AvailableModbusSerialPorts.Count-1)
+            if (index > (AvailableModbusSerialPorts.Count - 1))
                 index = 0;
             else
                 return 2;
 
-            index += AvailableSerialPorts.TakeWhile(checkListItem => checkListItem.UidGuid != uidGuid.ToString()).Count();
+            index += AvailableSerialPorts.TakeWhile(checkListItem => checkListItem.UidGuid != uidGuid.ToString())
+                .Count();
 
-            if (index > AvailableSerialPorts.Count-1)
+            if (index > (AvailableSerialPorts.Count - 1))
                 return null;
 
             return 1;
@@ -418,16 +449,16 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        ///     Logs errors to file using System generated error and tracing code location
+        /// Logs errors to file using System generated error and tracing code location 
         /// </summary>
         /// <param name="ex">
-        ///     Error generated by system/debugger
+        /// Error generated by system/debugger 
         /// </param>
         /// <param name="level">
-        ///     LogLevel type indicating severity of error
+        /// LogLevel type indicating severity of error 
         /// </param>
         /// <param name="stackFrame">
-        ///     Stackframe for software line trace
+        /// Stackframe for software line trace 
         /// </param>
         public static void LogError(Exception ex, LogLevel level, StackFrame stackFrame)
         {
@@ -672,6 +703,15 @@ namespace RabbitMQ_SendClient
         public string Name { get; set; }
         public dynamic Value { get; set; }
 
-        #endregion
+        #endregion Variables & Structures
+    }
+
+    public class InfiniteList<T> : List<InfiniteList<T>>
+    {
+        #region Variables & Structures
+
+        public T Value { set; get; }
+
+        #endregion Variables & Structures
     }
 }
