@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace RabbitMQ_SendClient
+﻿namespace RabbitMQ_SendClient
 {
+    using System;
     using System.Globalization;
     using System.Windows.Data;
     using System.Windows.Media.Imaging;
@@ -13,7 +8,11 @@ namespace RabbitMQ_SendClient
     [ValueConversion(typeof(string), typeof(BitmapImage))]
     public class HeaderToImageConverter : IValueConverter
     {
+        #region Variables & Structures
+
         public static HeaderToImageConverter Instance = new HeaderToImageConverter();
+
+        #endregion Variables & Structures
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
@@ -27,14 +26,10 @@ namespace RabbitMQ_SendClient
             var image = "Icons/organization-9.png";
             var pathList = path.Substring(0,
                 path.IndexOf(":", path.IndexOf(":") + 1) + path.IndexOf("/", path.IndexOf("//") + 1));
-            if (pathList != string.Empty && pathList.Contains("/"))
-            {
+            if ((pathList != string.Empty) && pathList.Contains("/"))
                 image = "Icons/organization.png";
-            }
             else if (pathList != string.Empty)
-            {
                 image = "Icons/organization-6.png";
-            }
             return new BitmapImage(new Uri($"pack://application:,,,/{image}"));
         }
 

@@ -4,12 +4,13 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:local="clr-namespace:RabbitMQ_SendClient"
+    xmlns:local1="clr-namespace:RabbitMQ_SendClient.UI"
     x:Class="RabbitMQ_SendClient.UI.OPCControl"
     mc:Ignorable="d"
-    Title="Unisphere" Height="406" Width="597.458" ResizeMode="CanMinimize" WindowStartupLocation="CenterOwner"
+    Title="Unisphere" Height="406" Width="773" ResizeMode="CanMinimize" WindowStartupLocation="CenterOwner"
     Loaded="OPCControl_OnLoaded">
     <Grid>
-        <TabControl HorizontalAlignment="Left" Height="329" Margin="115,10,0,0" VerticalAlignment="Top" Width="466">
+        <TabControl HorizontalAlignment="Left" Height="329" Margin="291,13,0,0" VerticalAlignment="Top" Width="466">
             <TabItem Header="Configuration">
                 <Grid Background="#FFE5E5E5">
                     <TextBlock HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="IP Address"
@@ -21,22 +22,22 @@
                             <ColumnDefinition />
                             <ColumnDefinition />
                         </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0" x:Name="TxtIpAddress1" Text="999" HorizontalContentAlignment="Center"
+                        <TextBox Grid.Column="0" x:Name="TxtIpAddress1" Text="127" HorizontalContentAlignment="Center"
                                  VerticalContentAlignment="Center" PreviewTextInput="NumberValidationTextBox"
-                                 MaxLength="3" LostFocus="IPSection_LostFocus" />
+                                 MaxLength="3" LostFocus="IPSection_LostFocus" GotFocus="TXTIpAddress_GotFocus" />
                         <TextBlock Text="." Grid.Column="0" HorizontalAlignment="Right" VerticalAlignment="Bottom"
                                    Margin="3.5" />
-                        <TextBox Grid.Column="1" x:Name="TxtIpAddress2" Text="999" HorizontalContentAlignment="Center"
+                        <TextBox Grid.Column="1" x:Name="TxtIpAddress2"  GotFocus="TXTIpAddress_GotFocus" Text="0" HorizontalContentAlignment="Center"
                                  VerticalContentAlignment="Center" PreviewTextInput="NumberValidationTextBox"
                                  MaxLength="3" LostFocus="IPSection_LostFocus" />
                         <TextBlock Text="." Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Bottom"
                                    Margin="3.5" />
-                        <TextBox Grid.Column="2" x:Name="TxtIpAddress3" Text="999" HorizontalContentAlignment="Center"
+                        <TextBox Grid.Column="2" x:Name="TxtIpAddress3" GotFocus="TXTIpAddress_GotFocus"  Text="0" HorizontalContentAlignment="Center"
                                  VerticalContentAlignment="Center" PreviewTextInput="NumberValidationTextBox"
                                  MaxLength="3" LostFocus="IPSection_LostFocus" />
                         <TextBlock Text="." Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Bottom"
                                    Margin="3.5" />
-                        <TextBox Grid.Column="3" x:Name="TxtIpAddress4" Text="999" HorizontalContentAlignment="Center"
+                        <TextBox Grid.Column="3" x:Name="TxtIpAddress4" GotFocus="TXTIpAddress_GotFocus"  Text="1" HorizontalContentAlignment="Center"
                                  VerticalContentAlignment="Center" PreviewTextInput="NumberValidationTextBox"
                                  MaxLength="3" LostFocus="IPSection_LostFocus" />
                     </Grid>
@@ -44,9 +45,9 @@
                                VerticalAlignment="Top" />
                     <TextBox x:Name="TxtPortNumber" HorizontalAlignment="Left" Height="23" Margin="10,71,0,0"
                              TextWrapping="Wrap"
-                             Text="502" VerticalAlignment="Top" Width="155"
+                             Text="49320" VerticalAlignment="Top" Width="155"
                              PreviewTextInput="TxtPortNumber_TextChanged" LostFocus="TxtPortNumber_OnLostFocus" />
-                    <ComboBox x:Name="CboNodeSecurity" Text="None" HorizontalAlignment="Left" Margin="170,26,0,0"
+                    <ComboBox x:Name="CboNodeSecurity" HorizontalAlignment="Left" Margin="170,26,0,0"
                               VerticalAlignment="Top" Width="162" SelectionChanged="CboNodeSecurity_SelectionChanged">
                         <ComboBoxItem Content="None" HorizontalAlignment="Left" IsSelected="True" />
                         <ComboBoxItem Content="Invalid" HorizontalAlignment="Left" />
@@ -56,7 +57,7 @@
                     <TextBlock HorizontalAlignment="Left" Margin="170,10,0,0" TextWrapping="Wrap" Text="Security Type"
                                VerticalAlignment="Top" />
                     <ComboBox x:Name="CboCertificates" HorizontalAlignment="Left" Margin="170,71,0,0"
-                              VerticalAlignment="Top" Width="162" Text="True"
+                              VerticalAlignment="Top" Width="162"
                               SelectionChanged="CboCertificates_SelectionChanged">
                         <ComboBoxItem Content="True" IsSelected="True" />
                         <ComboBoxItem Content="False" />
@@ -64,8 +65,7 @@
                     <TextBlock HorizontalAlignment="Left" Margin="170,55,0,0" TextWrapping="Wrap"
                                Text="Accept Untrusted Certificates" VerticalAlignment="Top" />
                     <ComboBox x:Name="CboConnectionType" HorizontalAlignment="Left" Margin="10,115,0,0"
-                              VerticalAlignment="Top" Width="155" Text="OPC.TCP"
-                              SelectionChanged="CboConnectionType_SelectionChanged">
+                              VerticalAlignment="Top" Width="155" SelectionChanged="CboConnectionType_SelectionChanged">
                         <ComboBoxItem Content="OPC.TCP" IsSelected="True" />
                         <ComboBoxItem Content="Net.TCP" />
                         <ComboBoxItem Content="http" />
@@ -79,23 +79,26 @@
                 <Grid Background="#FFE5E5E5">
                     <StatusBar HorizontalAlignment="Left" Height="25" VerticalAlignment="Top" Width="460">
                         <StatusBarItem>
-                            <Button BorderThickness="0" Background="Transparent" Click="ConnectDisconnect_ButtonClick">
-                                <Image x:Name="ImgConnection" Source="../Icons/link.png" ToolTip="Connect/Disconnect" />
+                            <Button x:Name="BtnConnectDisconnect" BorderThickness="0"  Background="Transparent" Click="ConnectDisconnect_ButtonClick" Margin="-1">
+                                <Button.Template>
+                                    <ControlTemplate>
+                                        <Image x:Name="ImgConnection" Source="../Icons/link.png"  ToolTip="Connect/Disconnect" />
+                                    </ControlTemplate>
+                                </Button.Template>
                             </Button>
                         </StatusBarItem>
-
                         <StatusBarItem>
                             <TextBlock x:Name="txtNodeInfo" Text="opc.tcp://localhost:49320/" />
                         </StatusBarItem>
                     </StatusBar>
-                    <DataGrid HorizontalAlignment="Left" Height="276" Margin="0,25,0,0" VerticalAlignment="Top"
-                              Width="460" DataContext="{Binding Nodes}">
+                    <DataGrid x:Name="NodeList" HorizontalAlignment="Left" Height="276" Margin="0,25,0,0" VerticalAlignment="Top"
+                              Width="460">
                         <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Header="Monitor" Binding="{Binding IsChecked}">
+                            <DataGridCheckBoxColumn Header="Monitor" Binding="{Binding Monitor}">
                                 <DataGridCheckBoxColumn.CellStyle>
                                     <Style>
-                                        <EventSetter Event="CheckBox.Checked" Handler="Monitor_Checked" />
-                                        <EventSetter Event="CheckBox.Checked" Handler="Monitor_Unchecked" />
+                                        <EventSetter Event="ToggleButton.Checked" Handler="Monitor_Checked" />
+                                        <EventSetter Event="ToggleButton.Checked" Handler="Monitor_Unchecked" />
                                     </Style>
                                 </DataGridCheckBoxColumn.CellStyle>
                             </DataGridCheckBoxColumn>
@@ -109,17 +112,16 @@
                 </Grid>
             </TabItem>
         </TabControl>
-        <TreeView x:Name="TvNodes" HorizontalAlignment="Left" Height="304" Margin="10,35,0,0" VerticalAlignment="Top"
-                  Width="100">
+        <TreeView x:Name="TreeViewNodes" HorizontalAlignment="Left" Height="304" Margin="10,35,0,0" VerticalAlignment="Top"
+                  Width="276">
             <TreeView.Resources>
-                <Style TargetType="TreeViewItem">
+                <Style TargetType="{x:Type TreeViewItem}">
                     <Setter Property="HeaderTemplate">
                         <Setter.Value>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
                                     <Image Width="10" Margin="3"
-                                           Source="{Binding Type,
-                                        Converter={x:Static local:HeaderToImageConverter.Instance}}" />
+                                           Source="{Binding Type, Converter={x:Static local:HeaderToImageConverter.Instance}}" />
                                     <TextBlock VerticalAlignment="Center" Text="{Binding}" />
                                 </StackPanel>
                             </DataTemplate>
@@ -128,9 +130,9 @@
                 </Style>
             </TreeView.Resources>
         </TreeView>
-        <Button x:Name="Cancel" Content="_Cancel" HorizontalAlignment="Left" Margin="506,344,0,0"
+        <Button x:Name="Cancel" Content="_Cancel" HorizontalAlignment="Left" Margin="682,347,0,0"
                 VerticalAlignment="Top" Width="75" IsCancel="True" Click="Cancel_Click" />
-        <Button x:Name="OK" Content="OK" HorizontalAlignment="Left" Margin="426,344,0,0" VerticalAlignment="Top"
+        <Button x:Name="OK" Content="OK" HorizontalAlignment="Left" Margin="602,347,0,0" VerticalAlignment="Top"
                 Width="75" Click="OK_Click" IsDefault="True" />
     </Grid>
 </Window>

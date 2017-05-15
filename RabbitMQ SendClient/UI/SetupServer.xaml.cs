@@ -18,8 +18,6 @@ namespace RabbitMQ_SendClient
     /// </summary>
     public partial class SetupServer
     {
-        private static readonly StackTrace StackTracing = new StackTrace();
-
         public SetupServer(Guid uidGuid)
         {
             this.Index = GetIndex<RabbitServerInformation>(uidGuid);
@@ -27,7 +25,12 @@ namespace RabbitMQ_SendClient
             InitialzeServerSettings();
         }
 
+        #region Variables & Structures
+
         public int Index { get; set; } //number of array that is being configured
+        private static readonly StackTrace StackTracing = new StackTrace();
+
+        #endregion Variables & Structures
 
         private void btnOK_Click(object sender, RoutedEventArgs e)
         {

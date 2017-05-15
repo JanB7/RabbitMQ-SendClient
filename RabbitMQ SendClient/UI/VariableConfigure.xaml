@@ -6,11 +6,16 @@
         mc:Ignorable="d"
         Title="Unisphere" Height="172" Width="400" ResizeMode="CanMinimize" WindowStartupLocation="CenterOwner">
     <Grid>
-        <ComboBox x:Name="CboFriendlies" HorizontalAlignment="Left" Margin="10,26,0,0" VerticalAlignment="Top" Width="372" />
-        <TextBlock HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Friendly ItemName" VerticalAlignment="Top" />
-        <Button x:Name="Cancel" Content="Cancel" HorizontalAlignment="Left" Margin="305,111,0,0" VerticalAlignment="Top" Width="75" IsCancel="True" Click="Cancel_Click" />
-        <Button x:Name="Ok" Content="OK" HorizontalAlignment="Left" Margin="225,111,0,0" VerticalAlignment="Top" Width="75" IsDefault="True" Click="OK_Click" />
-        <GroupBox Header="Reconnect on Start-Up" HorizontalAlignment="Left" Height="58" Margin="10,48,0,0" VerticalAlignment="Top" Width="372">
+        <ComboBox x:Name="CboFriendlies" HorizontalAlignment="Left" Margin="10,26,0,0" VerticalAlignment="Top"
+                  Width="372" />
+        <TextBlock HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Friendly ItemName"
+                   VerticalAlignment="Top" />
+        <Button x:Name="Cancel" Content="Cancel" HorizontalAlignment="Left" Margin="305,111,0,0"
+                VerticalAlignment="Top" Width="75" IsCancel="True" Click="Cancel_Click" />
+        <Button x:Name="Ok" Content="OK" HorizontalAlignment="Left" Margin="225,111,0,0" VerticalAlignment="Top"
+                Width="75" IsDefault="True" Click="OK_Click" />
+        <GroupBox Header="Reconnect on Start-Up" HorizontalAlignment="Left" Height="58" Margin="10,48,0,0"
+                  VerticalAlignment="Top" Width="372">
             <StackPanel Orientation="Horizontal">
                 <RadioButton Content="Yes" Margin="10" IsChecked="True" Checked="ReconnectYes_Checked" />
                 <RadioButton Content="No" Margin="10" Checked="ReconnectNo_Checked" />

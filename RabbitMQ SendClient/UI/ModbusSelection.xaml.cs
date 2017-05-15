@@ -1,10 +1,11 @@
-﻿using static RabbitMQ_SendClient.SystemVariables;
-using static RabbitMQ_SendClient.General_Classes.ModbusConfig;
+﻿using static RabbitMQ_SendClient.General_Classes.ModbusConfig;
+using static RabbitMQ_SendClient.SystemVariables;
 
 // ReSharper disable once CheckNamespace
 
 namespace RabbitMQ_SendClient.UI
 {
+    using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
     using System.Globalization;
@@ -15,7 +16,6 @@ namespace RabbitMQ_SendClient.UI
     using System.Windows.Controls;
     using System.Windows.Forms;
     using System.Xml.Linq;
-    using Newtonsoft.Json;
     using Button = System.Windows.Controls.Button;
     using CheckBox = System.Windows.Controls.CheckBox;
     using DataGridCell = System.Windows.Controls.DataGridCell;
@@ -28,8 +28,6 @@ namespace RabbitMQ_SendClient.UI
     /// </summary>
     public partial class ModbusSelection
     {
-        private List<string> _addresses = new List<string>();
-
         public ModbusSelection()
         {
             for (var i = 0; i < 10000; i++)
@@ -54,13 +52,28 @@ namespace RabbitMQ_SendClient.UI
             RbtnOffset.IsChecked = !this.IsAbsolute;
         }
 
-        public string DeviceAddress { get; set; } //IP Address or COM address
+        #region Variables & Structures
 
-        public string DeviceName { get; set; }
+        public string DeviceAddress { private get; set; } //IP Address or COM address
 
-        public bool IsAbsolute { get; set; } = true;
+        public string DeviceName { private get; set; }
 
-        public List<ModBus> ModbusAddressControl { get; set; } = new List<ModBus>();
+        public bool IsAbsolute { private get; set; } = true;
+
+        private List<ModBus> ModbusAddressControl { get; set; } = new List<ModBus>();
+
+        private struct CsvObject
+        {
+            ///ToDo connect to FriendlyName for load configuration
+            internal string FriendlyName { get; set; }
+
+            internal string Absolute { get; set; }
+            internal string Csv { get; set; }
+        }
+
+        private List<string> _addresses = new List<string>();
+
+        #endregion Variables & Structures
 
         private void LoadSettings()
         {
@@ -106,7 +119,8 @@ namespace RabbitMQ_SendClient.UI
                         {
                             firstOrDefault.IsChecked = bool.Parse(activeElement.Value);
                             if (firstOrDefault.IsChecked)
-                                UpdateAddressList(firstOrDefault.IsChecked, this.ModbusAddressControl.IndexOf(firstOrDefault));
+                                UpdateAddressList(firstOrDefault.IsChecked,
+                                    this.ModbusAddressControl.IndexOf(firstOrDefault));
                         }
                     }
 
@@ -224,8 +238,7 @@ namespace RabbitMQ_SendClient.UI
             var btn = (Button)sender;
             ModbusAddresses.SelectedIndex = int.Parse(
                 btn.Content.ToString()
-                    .Substring(
-                        0,
+                    .Substring(0,
                         btn.Content.ToString().IndexOf("-", StringComparison.Ordinal)));
             ModbusAddresses.ScrollIntoView(ModbusAddresses.SelectedItem);
         }
@@ -784,19 +797,12 @@ namespace RabbitMQ_SendClient.UI
             LoadSettings();
             ModbusAddresses.Items.Refresh();
         }
-
-        private struct CsvObject
-        {
-            ///ToDo connect to FriendlyName for load configuration
-            internal string FriendlyName { get; set; }
-
-            internal string Absolute { get; set; }
-            internal string Csv { get; set; }
-        }
     }
 
     public class ModBus
     {
+        #region Variables & Structures
+
         public bool IsChecked { get; set; }
         public string ModBusAddress { get; set; }
         public string Nickname { get; set; }
@@ -806,5 +812,7 @@ namespace RabbitMQ_SendClient.UI
         public bool ReadDiscrete { get; set; } //Function Code 2
         public bool ReadHoldingRegisters { get; set; } //Function Code 3
         public bool ReadInputRegisters { get; set; } //Function Code 4
+
+        #endregion Variables & Structures
     }
 }

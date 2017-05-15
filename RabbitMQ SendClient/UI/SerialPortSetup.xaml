@@ -8,39 +8,51 @@
         Title="Unisphere" Height="289.741" Width="274"
         KeyDown="SerialPortSetup_OnKeyDown" WindowStartupLocation="CenterOwner" ResizeMode="CanMinimize">
     <Grid>
-        <Slider x:Name="sldReadTimeout" HorizontalAlignment="Left" Margin="10,153,0,0" VerticalAlignment="Top" Width="245" LargeChange="2" Maximum="5000" Minimum="5" SmallChange="1" TickPlacement="BottomRight" Value="1000" TickFrequency="100" Cursor="Hand" ValueChanged="SldReadTimeout_ValueChanged" />
+        <Slider x:Name="sldReadTimeout" HorizontalAlignment="Left" Margin="10,153,0,0" VerticalAlignment="Top"
+                Width="245" LargeChange="2" Maximum="5000" Minimum="5" SmallChange="1" TickPlacement="BottomRight"
+                Value="1000" TickFrequency="100" Cursor="Hand" ValueChanged="SldReadTimeout_ValueChanged" />
         <TextBlock x:Name="textBlock12" HorizontalAlignment="Left" Margin="10,53,0,0"
-            TextWrapping="Wrap" Text="Baud Rate:" VerticalAlignment="Top" />
+                   TextWrapping="Wrap" Text="Baud Rate:" VerticalAlignment="Top" />
         <ComboBox x:Name="cboBaudRate" HorizontalAlignment="Left" Margin="10,69,0,0"
-            VerticalAlignment="Top" Width="120" IsEnabled="False" />
+                  VerticalAlignment="Top" Width="120" IsEnabled="False" />
         <ComboBox x:Name="cboDataBits" HorizontalAlignment="Left" Margin="10,112,0,0"
-            VerticalAlignment="Top" Width="120" IsEnabled="False" />
+                  VerticalAlignment="Top" Width="120" IsEnabled="False" />
         <TextBlock x:Name="textBlock13" HorizontalAlignment="Left" Margin="10,96,0,0"
-            TextWrapping="Wrap" Text="Data Bits:" VerticalAlignment="Top" />
+                   TextWrapping="Wrap" Text="Data Bits:" VerticalAlignment="Top" />
         <TextBlock x:Name="textBlock14" HorizontalAlignment="Left" Margin="10,10,0,0"
-            TextWrapping="Wrap" Text="Parity" VerticalAlignment="Top"
-            RenderTransformOrigin="1.271,0.522" />
+                   TextWrapping="Wrap" Text="Parity" VerticalAlignment="Top"
+                   RenderTransformOrigin="1.271,0.522" />
         <ComboBox x:Name="cboParity" HorizontalAlignment="Left" Margin="10,26,0,0"
-            VerticalAlignment="Top" Width="120" IsEnabled="False" />
+                  VerticalAlignment="Top" Width="120" IsEnabled="False" />
         <TextBlock x:Name="textBlock15" HorizontalAlignment="Left" Margin="135,53,0,0"
-            TextWrapping="Wrap" Text="Stop Bits:" VerticalAlignment="Top" />
+                   TextWrapping="Wrap" Text="Stop Bits:" VerticalAlignment="Top" />
         <ComboBox x:Name="cboStopBits" HorizontalAlignment="Left" Margin="135,69,0,0"
-            VerticalAlignment="Top" Width="120" IsEnabled="False" />
+                  VerticalAlignment="Top" Width="120" IsEnabled="False" />
         <TextBlock x:Name="textBlock16" HorizontalAlignment="Left" Margin="135,96,0,0"
-            TextWrapping="Wrap" Text="Flow Control:" VerticalAlignment="Top" />
+                   TextWrapping="Wrap" Text="Flow Control:" VerticalAlignment="Top" />
         <ComboBox x:Name="cboFlowControl" HorizontalAlignment="Left" Margin="135,112,0,0"
-            VerticalAlignment="Top" Width="120" IsEnabled="False" />
+                  VerticalAlignment="Top" Width="120" IsEnabled="False" />
         <TextBlock x:Name="textBlock17" HorizontalAlignment="Left" Margin="10,139,0,-19"
-            TextWrapping="Wrap" Text="Read Timeout:" VerticalAlignment="Top"
-            RenderTransformOrigin="-0.395,0.146" />
-        <TextBlock x:Name="txtReadTimeout" Margin="96,157,0,0" TextWrapping="Wrap" Text="1000" HorizontalAlignment="Left" Width="74"
-            TextAlignment="Center" IsHitTestVisible="False" IsEnabled="False" Height="16" VerticalAlignment="Top" />
-        <Button x:Name="Cancel" Content="Cancel" HorizontalAlignment="Right" Margin="0,227,11,0" Width="75" Click="Cancel_Click" Height="20" VerticalAlignment="Top" IsCancel="True" />
-        <Button x:Name="OK" Content="OK" HorizontalAlignment="Right" Margin="0,227,98,0" Width="75" Click="OK_Click" Height="20" VerticalAlignment="Top" IsDefault="True" />
-        <TextBlock HorizontalAlignment="Left" Margin="10,182,0,0" TextWrapping="Wrap" Text="Maximum Errors" VerticalAlignment="Top" />
-        <Slider x:Name="sldMaxmumErrors" HorizontalAlignment="Left" Margin="10,198,0,0" VerticalAlignment="Top" Width="245" SmallChange="1" Maximum="1000" Value="10" TickFrequency="25" LargeChange="10" Cursor="Hand" TickPlacement="BottomRight" ValueChanged="SldMaximumErrors_ValueChanged" />
-        <TextBlock x:Name="txtMaximumErrors" HorizontalAlignment="Left" Margin="96,202,0,0" TextWrapping="Wrap" Text="10" VerticalAlignment="Top" IsEnabled="False" TextAlignment="Center" Width="72" />
-        <TextBlock HorizontalAlignment="Left" Margin="135,10,0,0" TextWrapping="Wrap" Text="MessageType" VerticalAlignment="Top" />
-        <ComboBox x:Name="cboMessageType" HorizontalAlignment="Left" Margin="135,26,0,0" VerticalAlignment="Top" Width="120" />
+                   TextWrapping="Wrap" Text="Read Timeout:" VerticalAlignment="Top"
+                   RenderTransformOrigin="-0.395,0.146" />
+        <TextBlock x:Name="txtReadTimeout" Margin="96,157,0,0" TextWrapping="Wrap" Text="1000"
+                   HorizontalAlignment="Left" Width="74"
+                   TextAlignment="Center" IsHitTestVisible="False" IsEnabled="False" Height="16"
+                   VerticalAlignment="Top" />
+        <Button x:Name="Cancel" Content="Cancel" HorizontalAlignment="Right" Margin="0,227,11,0" Width="75"
+                Click="Cancel_Click" Height="20" VerticalAlignment="Top" IsCancel="True" />
+        <Button x:Name="OK" Content="OK" HorizontalAlignment="Right" Margin="0,227,98,0" Width="75" Click="OK_Click"
+                Height="20" VerticalAlignment="Top" IsDefault="True" />
+        <TextBlock HorizontalAlignment="Left" Margin="10,182,0,0" TextWrapping="Wrap" Text="Maximum Errors"
+                   VerticalAlignment="Top" />
+        <Slider x:Name="sldMaxmumErrors" HorizontalAlignment="Left" Margin="10,198,0,0" VerticalAlignment="Top"
+                Width="245" SmallChange="1" Maximum="1000" Value="10" TickFrequency="25" LargeChange="10" Cursor="Hand"
+                TickPlacement="BottomRight" ValueChanged="SldMaximumErrors_ValueChanged" />
+        <TextBlock x:Name="txtMaximumErrors" HorizontalAlignment="Left" Margin="96,202,0,0" TextWrapping="Wrap"
+                   Text="10" VerticalAlignment="Top" IsEnabled="False" TextAlignment="Center" Width="72" />
+        <TextBlock HorizontalAlignment="Left" Margin="135,10,0,0" TextWrapping="Wrap" Text="MessageType"
+                   VerticalAlignment="Top" />
+        <ComboBox x:Name="cboMessageType" HorizontalAlignment="Left" Margin="135,26,0,0" VerticalAlignment="Top"
+                  Width="120" />
     </Grid>
 </Window>

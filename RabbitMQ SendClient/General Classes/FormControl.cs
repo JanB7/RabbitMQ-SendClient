@@ -50,7 +50,7 @@ namespace RabbitMQ_SendClient.General_Classes
             var index = GetIndex<CheckListItem>(uidGuid);
 
             if (cboCheckListItem == null) return;
-            var cbo = (CheckListItem) cboCheckListItem;
+            var cbo = (CheckListItem)cboCheckListItem;
 
             cbo.IsChecked = false;
             CheckListItem item;

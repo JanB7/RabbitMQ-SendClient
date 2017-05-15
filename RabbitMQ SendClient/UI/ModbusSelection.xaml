@@ -4,7 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Unisphere" ResizeMode="CanMinimize" Width="933" Height="446" Margin="0,0,10,10" WindowStartupLocation="CenterOwner"
+        Title="Unisphere" ResizeMode="CanMinimize" Width="933" Height="446" Margin="0,0,10,10"
+        WindowStartupLocation="CenterOwner"
         ContentRendered="ModbusSelection_OnContentRendered">
     <Grid>
         <Grid Margin="10,63,10,0" Height="312" VerticalAlignment="Top">
@@ -73,7 +74,8 @@
                                 </Style>
                             </DataGridCheckBoxColumn.CellStyle>
                         </DataGridCheckBoxColumn>
-                        <DataGridCheckBoxColumn Header="Read Discrete&#x0d;Input (20000)" Binding="{Binding ReadDiscrete}">
+                        <DataGridCheckBoxColumn Header="Read Discrete&#x0d;Input (20000)"
+                                                Binding="{Binding ReadDiscrete}">
                             <DataGridCheckBoxColumn.HeaderStyle>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="HorizontalAlignment" Value="Center" />
@@ -156,19 +158,25 @@
                 VerticalAlignment="Top" Width="75" IsCancel="True" Click="BtnCancel_Click" />
         <Button x:Name="BtnOK" Content="OK" HorizontalAlignment="Left" Margin="380,380,0,0" VerticalAlignment="Top"
                 Width="75" IsDefault="True" Click="BtnOK_Click" />
-        <TextBlock HorizontalAlignment="Left" Margin="310,30,0,0" TextWrapping="Wrap" Text="Search:" VerticalAlignment="Top" />
-        <TextBox x:Name="TxtSearchAddress" HorizontalAlignment="Left" Height="24" Margin="353,26,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" TextChanged="TxtSearchAddress_TextChanged" />
-        <TextBlock HorizontalAlignment="Left" Margin="486,30,0,0" TextWrapping="Wrap" Text="Search Field:" VerticalAlignment="Top" />
-        <ComboBox x:Name="CboSearchField" HorizontalAlignment="Left" Margin="565,27,0,0" VerticalAlignment="Top" Width="120">
+        <TextBlock HorizontalAlignment="Left" Margin="310,30,0,0" TextWrapping="Wrap" Text="Search:"
+                   VerticalAlignment="Top" />
+        <TextBox x:Name="TxtSearchAddress" HorizontalAlignment="Left" Height="24" Margin="353,26,0,0"
+                 TextWrapping="Wrap" VerticalAlignment="Top" Width="120" TextChanged="TxtSearchAddress_TextChanged" />
+        <TextBlock HorizontalAlignment="Left" Margin="486,30,0,0" TextWrapping="Wrap" Text="Search Field:"
+                   VerticalAlignment="Top" />
+        <ComboBox x:Name="CboSearchField" HorizontalAlignment="Left" Margin="565,27,0,0" VerticalAlignment="Top"
+                  Width="120">
             <ComboBoxItem Content="Modbus Address" IsSelected="True" />
             <ComboBoxItem Content="Nickname" />
             <ComboBoxItem Content="Comments" />
         </ComboBox>
-        <ComboBox x:Name="cboAddressFormat" HorizontalAlignment="Left" Margin="705,27,0,0" VerticalAlignment="Top" Width="145" SelectionChanged="cboAddressFormat_SelectionChanged">
+        <ComboBox x:Name="cboAddressFormat" HorizontalAlignment="Left" Margin="705,27,0,0" VerticalAlignment="Top"
+                  Width="145" SelectionChanged="cboAddressFormat_SelectionChanged">
             <ComboBoxItem Content="Hex Addressing" IsSelected="True" />
             <ComboBoxItem Content="Modbus 984 Addressing" />
         </ComboBox>
-        <Button x:Name="BtnLoadCustom" Content="Load Custom Address List" HorizontalAlignment="Left" Margin="10,380,0,0" VerticalAlignment="Top" Width="Auto
+        <Button x:Name="BtnLoadCustom" Content="Load Custom Address List" HorizontalAlignment="Left"
+                Margin="10,380,0,0" VerticalAlignment="Top" Width="Auto
                 " Click="BtnLoadCustom_Click" />
     </Grid>
 </Window>

@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RabbitMQ_SendClient.UI"
         mc:Ignorable="d"
-        Title="Unisphere" Height="176" Width="194" ResizeMode="CanMinimize" Closing="ModbusIpConfig_OnClosing" WindowStartupLocation="CenterOwner">
+        Title="Unisphere" Height="176" Width="194" ResizeMode="CanMinimize" Closing="ModbusIpConfig_OnClosing"
+        WindowStartupLocation="CenterOwner">
     <Grid>
         <TextBlock HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="IP Address"
                    VerticalAlignment="Top" />

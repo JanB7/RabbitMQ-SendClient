@@ -43,8 +43,7 @@ namespace RabbitMQ_SendClient.UI
 
         private void OK_Click(object sender, RoutedEventArgs e)
         {
-            this.IpAddress = IPAddress.Parse(TxtIpAddress1.Text + "." + TxtIpAddress2.Text + "." + TxtIpAddress3.Text +
-                                             "." + TxtIpAddress4.Text);
+            this.IpAddress = IPAddress.Parse($"{TxtIpAddress1.Text}.{TxtIpAddress2.Text}.{TxtIpAddress3.Text}.{TxtIpAddress4.Text}");
             if (!TryParse(TxtPortNumber.Text, out ushort result))
                 result = MinValue;
             this.Port = result;

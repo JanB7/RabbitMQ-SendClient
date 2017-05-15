@@ -18,8 +18,6 @@ namespace RabbitMQ_SendClient.UI
     /// </summary>
     public partial class SerialPortSetup
     {
-        private static readonly StackTrace StackTrace = new StackTrace();
-
         /// <summary>
         /// Main Class for the Serial Port form. Used to initialize the system. 
         /// </summary>
@@ -38,9 +36,14 @@ namespace RabbitMQ_SendClient.UI
             InitializeMessageType();
         }
 
+        #region Variables & Structures
+
         private static Guid UidGuid { get; set; }
 
-        private int SerialPortNum { get; set; } //number of port that is being configured
+        private int SerialPortNum { get; } //number of port that is being configured
+        private static readonly StackTrace StackTrace = new StackTrace();
+
+        #endregion Variables & Structures
 
         private void InitializeBaudRates()
         {

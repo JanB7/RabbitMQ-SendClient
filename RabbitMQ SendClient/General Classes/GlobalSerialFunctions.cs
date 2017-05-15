@@ -4,14 +4,15 @@ using static RabbitMQ_SendClient.SystemVariables;
 
 namespace RabbitMQ_SendClient
 {
-    using RabbitMQ.Client;
     using System;
     using System.Diagnostics;
     using System.IO.Ports;
     using System.Linq;
+    using System.Windows.Controls;
     using System.Windows.Controls.DataVisualization.Charting;
     using System.Windows.Forms;
     using System.Windows.Threading;
+    using RabbitMQ.Client;
     using UI;
 
     public static class GlobalSerialFunctions
@@ -88,7 +89,8 @@ namespace RabbitMQ_SendClient
                 {
                     xbar += SerialCommunications[index].GetX(i);
                 }
-                xbar = xbar / SerialCommunications[index].MaximumErrors; // np̅=(Ʃnp)/k where n = number of defective items and k = number of subgroups
+                xbar = xbar / SerialCommunications[index]
+                           .MaximumErrors; // np̅=(Ʃnp)/k where n = number of defective items and k = number of subgroups
 
                 return xbar > SerialCommunications[index].Ucl;
             }
@@ -96,7 +98,12 @@ namespace RabbitMQ_SendClient
             {
                 var sf = StackTracing.GetFrame(0);
                 LogError(ex, LogLevel.Critical, sf);
-                MessageBox.Show(ex.Message, ex.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                var listBoxItem = new ListBoxItem()
+                {
+                    Content = $"{ex.Message}\n\n{ex.Source}"
+                };
+                ErrorList.Add(listBoxItem);
+                //MessageBox.Show(ex.Message, ex.Source, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return true;
             }
         }
@@ -196,13 +203,16 @@ namespace RabbitMQ_SendClient
            {
                ;
                var i = 0;
-               i += AvailableSerialPorts.TakeWhile(e => Guid.Parse(e.UidGuid) == SerialCommunications[index].UidGuid).Count();
+               i += AvailableSerialPorts.TakeWhile(e => Guid.Parse(e.UidGuid) == SerialCommunications[index].UidGuid)
+                   .Count();
 
-               if (i > AvailableSerialPorts.Count - 1)
+               if (i > (AvailableSerialPorts.Count - 1))
                {
                    i = 0;
-                   i += AvailableModbusSerialPorts.TakeWhile(e => Guid.Parse(e.UidGuid) == SerialCommunications[index].UidGuid).Count();
-                   if (i > AvailableModbusSerialPorts.Count - 1) throw new NullReferenceException();
+                   i += AvailableModbusSerialPorts
+                       .TakeWhile(e => Guid.Parse(e.UidGuid) == SerialCommunications[index].UidGuid)
+                       .Count();
+                   if (i > (AvailableModbusSerialPorts.Count - 1)) throw new NullReferenceException();
 
                    var checklistItem = new CheckListItem
                    {
@@ -254,7 +264,7 @@ namespace RabbitMQ_SendClient
         }
 
         /// <summary>
-        /// Initializes serial port with settings from global settings file. TODO write settings to file 
+        /// Initializes serial port with settings from global settings file. TODO write settings to file
         /// </summary>
         /// <param name="index">
         /// Index of Global Variable related to CheckboxList 

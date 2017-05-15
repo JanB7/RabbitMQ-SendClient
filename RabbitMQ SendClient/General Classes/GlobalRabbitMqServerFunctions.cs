@@ -9,6 +9,7 @@ namespace RabbitMQ_SendClient
     using System.Diagnostics;
     using System.Net;
     using System.Windows.Forms;
+    using General_Classes;
     using RabbitMQ.Client;
     using RabbitMQ.Client.Exceptions;
 
@@ -180,7 +181,9 @@ namespace RabbitMQ_SendClient
         private static void SetupFactory(Guid uidGuid)
         {
             var index = GetIndex<CheckListItem>(uidGuid);
+            if (index == -1) index = GetIndex<OpcUaServer>(uidGuid);
             if (index == -1) return;
+
             Array.Resize(ref ServerInformation, ServerInformation.Length + 1);
             ServerInformation[ServerInformation.Length - 1] = SetDefaultSettings(uidGuid);
 

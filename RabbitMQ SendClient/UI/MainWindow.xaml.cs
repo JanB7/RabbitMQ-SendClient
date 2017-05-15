@@ -1,9 +1,10 @@
 ﻿using static RabbitMQ_SendClient.General_Classes.FormControl;
+using static RabbitMQ_SendClient.General_Classes.GlocalTCPFunctions;
 using static RabbitMQ_SendClient.General_Classes.ModbusConfig;
 using static RabbitMQ_SendClient.GlobalRabbitMqServerFunctions;
 using static RabbitMQ_SendClient.GlobalSerialFunctions;
 using static RabbitMQ_SendClient.SystemVariables;
-using static RabbitMQ_SendClient.General_Classes.GlocalTCPFunctions;
+using static RabbitMQ_SendClient.General_Classes.GlobalOpcFunctions;
 
 namespace RabbitMQ_SendClient
 {
@@ -25,8 +26,12 @@ namespace RabbitMQ_SendClient
     using System.Windows.Threading;
     using EasyModbus.Exceptions;
     using Newtonsoft.Json;
+    using Opc.UaFx;
+    using Opc.UaFx.Client;
     using RabbitMQ.Client;
     using RabbitMQ.Client.Exceptions;
+    using UI;
+    using Button = System.Windows.Controls.Button;
     using CheckBox = System.Windows.Controls.CheckBox;
     using MessageBox = System.Windows.Forms.MessageBox;
 
@@ -48,6 +53,7 @@ namespace RabbitMQ_SendClient
             InitializeSerialPorts();
             InitializeHeartBeatTimer();
             lstModbusTCP.DataContext = ModbusTcp;
+            //lstErrors.DataContext = ErrorList;
 
             _systemTimer.Start();
         }
@@ -64,7 +70,12 @@ namespace RabbitMQ_SendClient
         protected internal static readonly ObservableCollection<CheckListItem> AvailableSerialPorts =
             new ObservableCollection<CheckListItem>();
 
-        private static readonly ObservableCollection<CheckListItem> ModbusTcp = new ObservableCollection<CheckListItem>();
+        private static readonly ObservableCollection<CheckListItem> ModbusTcp =
+            new ObservableCollection<CheckListItem>();
+
+        public static readonly ObservableCollection<ListBoxItem> ErrorList = new ObservableCollection<ListBoxItem>();
+
+        public static readonly ObservableCollection<CheckListItem> OpcUaList = new ObservableCollection<CheckListItem>();
 
         /// <summary>
         /// <para>
@@ -80,13 +91,13 @@ namespace RabbitMQ_SendClient
         /// </code>
         /// </example> 
         /// </summary>
-
         internal static ObservableCollection<MessageDataHistory>[] MessagesSentDataPair =
             new ObservableCollection<MessageDataHistory>[0];
 
         private static readonly StackTrace StackTracing = new StackTrace();
 
         internal static double[] MessagesPerSecond = new double[0];
+        private static readonly Dispatcher UiDispatcher = Dispatcher.CurrentDispatcher;
 
         public struct CheckListItem
         {
@@ -104,6 +115,9 @@ namespace RabbitMQ_SendClient
             internal KeyValuePair<string, double> KeyPair { get; set; }
             internal Guid UidGuid { get; set; }
         }
+
+        private readonly DateTime _previousTime = new DateTime();
+        private readonly DispatcherTimer _systemTimer = new DispatcherTimer();
 
         #endregion Variables & Structures
 
@@ -126,10 +140,6 @@ namespace RabbitMQ_SendClient
             if (_systemTimer.IsEnabled)
                 _systemTimer.Stop();
         }
-
-        private readonly DateTime _previousTime = new DateTime();
-        private readonly DispatcherTimer _systemTimer = new DispatcherTimer();
-        private static readonly Dispatcher UiDispatcher = Dispatcher.CurrentDispatcher;
 
         private void GetFriendlyDeviceNames()
         {
@@ -167,19 +177,19 @@ namespace RabbitMQ_SendClient
                 if (SerialCommunications[index].MessageType == "JSON")
                     try
                     {
-                        CalculateNpChart(index);
+                        //CalculateNpChart(index);
                         JsonConvert.DeserializeObject<Messages[]>(message);
                         properties.ContentType = "jsonObject";
                     }
                     catch (JsonException ex)
                     {
-                        if (OutOfControl(index))
+                        /*if (OutOfControl(index))
                         {
                             var sf = StackTracing.GetFrame(0);
                             LogError(ex, LogLevel.Critical, sf);
                             CloseSerialPortUnexpectedly(index, UiDispatcher);
                             return true;
-                        }
+                        }*/
                     }
                 else
                     properties.ContentType = "plain-text";
@@ -233,7 +243,14 @@ namespace RabbitMQ_SendClient
             {
                 while (model.IsOpen)
                 {
-                    model.Close();
+                    try
+                    {
+                        model.Close();
+                    }
+                    catch (TimeoutException)
+                    {
+                        continue;
+                    }
                 }
             }
         }
@@ -258,7 +275,7 @@ namespace RabbitMQ_SendClient
                 var index = GetIndex<SerialCommunication>(Guid.Parse(AvailableSerialPorts[i].UidGuid));
 
                 SerialCommunications[index].TotalInformationReceived++;
-                CalculateNpChart(index);
+                //CalculateNpChart(index);
 
                 ProtectData(Guid.Parse(AvailableSerialPorts[index].UidGuid), spdata, sp.PortName);
 
@@ -447,7 +464,8 @@ namespace RabbitMQ_SendClient
             }
             else
             {
-                tbmarquee.Text += $"Serial Port {AvailableSerialPorts[GetIndex<CheckListItem>(uidGuid)].ItemName} Active ";
+                tbmarquee.Text +=
+                    $"Serial Port {AvailableSerialPorts[GetIndex<CheckListItem>(uidGuid)].ItemName} Active ";
             }
         }
 
@@ -463,7 +481,8 @@ namespace RabbitMQ_SendClient
         private void SerialModbusEnabled_OnUnchecked(object sender, RoutedEventArgs e)
         {
             var uidGuid = Guid.Parse(((CheckBox)sender).Uid);
-            tbmarquee.Text = tbmarquee.Text.Replace($"Serial Port {AvailableModbusSerialPorts[GetIndex<CheckListItem>(uidGuid)].ItemName} Active ", "");
+            tbmarquee.Text = tbmarquee.Text.Replace(
+                $"Serial Port {AvailableModbusSerialPorts[GetIndex<CheckListItem>(uidGuid)].ItemName} Active ", "");
         }
 
         /// <summary>
@@ -494,7 +513,7 @@ namespace RabbitMQ_SendClient
                 return;
             }
 
-            if ((!ModbusClients[ModbusClients.Length - 1].Connected) || (!UserConfigureFactory(uidGuid) ?? true))
+            if (!ModbusClients[ModbusClients.Length - 1].Connected || (!UserConfigureFactory(uidGuid) ?? true))
             {
                 UserCancelConfigureModbusAddresses(uidGuid);
                 ShutdownFactory(uidGuid);
@@ -506,7 +525,8 @@ namespace RabbitMQ_SendClient
                 InitializeModbusClient(SerialPorts[SerialPorts.Length - 1]);
                 InitializeRead(uidGuid);
                 ModbusControls[ModbusControls.Length - 1].ModbusTimers.IsEnabled = true;
-                tbmarquee.Text += $"Serial Port {AvailableModbusSerialPorts[GetIndex<CheckListItem>(uidGuid)].ItemName} Active";
+                tbmarquee.Text +=
+                    $"Serial Port {AvailableModbusSerialPorts[GetIndex<CheckListItem>(uidGuid)].ItemName} Active";
             }
         }
 
@@ -527,7 +547,7 @@ namespace RabbitMQ_SendClient
                     try
                     {
                         SerialCommunications[index].TotalInformationReceived++;
-                        CalculateNpChart(index);
+                        //CalculateNpChart(index);
                         while (true)
                         {
                             try
@@ -558,7 +578,7 @@ namespace RabbitMQ_SendClient
                     }
                     catch (CRCCheckFailedException crcCheckFailedException)
                     {
-                        if (OutOfControl(index))
+                        /*if (OutOfControl(index))
                         {
                             var sf = StackTracing.GetFrame(0);
                             LogError(crcCheckFailedException, LogLevel.Critical, sf);
@@ -567,14 +587,14 @@ namespace RabbitMQ_SendClient
                             CloseModbusUnexpectedly(uidGuid);
                             ResetCheckBox(AvailableModbusSerialPorts[index]);
                             return;
-                        }
+                        }*/
                     }
 
                 if (modbusAddress.Item2)
                     try
                     {
                         SerialCommunications[index].TotalInformationReceived++;
-                        CalculateNpChart(index);
+                        //CalculateNpChart(index);
 
                         while (true)
                         {
@@ -607,7 +627,7 @@ namespace RabbitMQ_SendClient
                     }
                     catch (CRCCheckFailedException crcCheckFailedException)
                     {
-                        if (OutOfControl(index))
+                        /*if (OutOfControl(index))
                         {
                             var sf = StackTracing.GetFrame(0);
                             LogError(crcCheckFailedException, LogLevel.Critical, sf);
@@ -616,14 +636,14 @@ namespace RabbitMQ_SendClient
                             CloseModbusUnexpectedly(uidGuid);
                             ResetCheckBox(AvailableModbusSerialPorts[index]);
                             return;
-                        }
+                        }*/
                     }
 
                 if (modbusAddress.Item3)
                     try
                     {
                         SerialCommunications[index].TotalInformationReceived++;
-                        CalculateNpChart(index);
+                        //CalculateNpChart(index);
 
                         while (true)
                         {
@@ -656,7 +676,7 @@ namespace RabbitMQ_SendClient
                     }
                     catch (CRCCheckFailedException crcCheckFailedException)
                     {
-                        if (OutOfControl(index))
+                        /*if (OutOfControl(index))
                         {
                             var sf = StackTracing.GetFrame(0);
                             LogError(crcCheckFailedException, LogLevel.Critical, sf);
@@ -665,14 +685,14 @@ namespace RabbitMQ_SendClient
                             CloseModbusUnexpectedly(uidGuid);
                             ResetCheckBox(AvailableModbusSerialPorts[index]);
                             return;
-                        }
+                        }*/
                     }
 
                 if (modbusAddress.Item4)
                     try
                     {
                         SerialCommunications[index].TotalInformationReceived++;
-                        CalculateNpChart(index);
+                        //CalculateNpChart(index);
 
                         while (true)
                         {
@@ -705,7 +725,7 @@ namespace RabbitMQ_SendClient
                     }
                     catch (CRCCheckFailedException crcCheckFailedException)
                     {
-                        if (OutOfControl(index))
+                        /*if (OutOfControl(index))
                         {
                             var sf = StackTracing.GetFrame(0);
                             LogError(crcCheckFailedException, LogLevel.Critical, sf);
@@ -714,7 +734,7 @@ namespace RabbitMQ_SendClient
                             CloseModbusUnexpectedly(uidGuid);
                             ResetCheckBox(AvailableModbusSerialPorts[index]);
                             return;
-                        }
+                        }*/
                     }
             }
         }
@@ -749,7 +769,8 @@ namespace RabbitMQ_SendClient
                    IsChecked = false
                };
 
-               if (AvailableSerialPorts.Any(availableSerialPort => checkListItem.UidGuid == availableSerialPort.UidGuid))
+               if (AvailableSerialPorts.Any(
+                   availableSerialPort => checkListItem.UidGuid == availableSerialPort.UidGuid))
                {
                    AvailableSerialPorts.Remove(AvailableSerialPorts[index]);
                    AvailableSerialPorts.Insert(index, checkList);
@@ -843,6 +864,18 @@ namespace RabbitMQ_SendClient
 
         private void AddModbusTCP_Click(object sender, RoutedEventArgs e)
         {
+            if (AddModbusTCP.Content != null && AddModbusTCP.Content.ToString() == "Add") AddModbusTCPConfig();
+        }
+
+        private void ModbusTCP_EnableChecked(object sender, RoutedEventArgs e)
+        {
+            AddModbusTCP.Content = "Edit";
+
+            ModbusTCPRemove.IsEnabled = true;
+        }
+
+        private void AddModbusTCPConfig()
+        {
             var uidGuid = Guid.NewGuid();
             if (!UserConfigureIp(uidGuid) ?? true) return;
 
@@ -874,21 +907,159 @@ namespace RabbitMQ_SendClient
                                IpAddressTables[IpAddressTables.Length - 1].Port
                 };
                 ModbusTcp.Add(checkListItem);
-                InitializeModbusClient(IpAddressTables[IpAddressTables.Length - 1].IpAddress.ToString(), IpAddressTables[IpAddressTables.Length - 1].Port, false);
+                InitializeModbusClient(IpAddressTables[IpAddressTables.Length - 1].IpAddress.ToString(),
+                    IpAddressTables[IpAddressTables.Length - 1].Port, false);
                 InitializeRead(uidGuid);
                 ModbusControls[ModbusControls.Length - 1].ModbusTimers.IsEnabled = true;
+                tbmarquee.Text += $"Serial Port {ModbusTcp[GetIndex<CheckListItem>(uidGuid)].ItemName} Active";
                 tbmarquee.Text += $"Serial Port {ModbusTcp[GetIndex<CheckListItem>(uidGuid)].ItemName} Active";
             }
         }
 
-        private void ModbusTCP_EnableChecked(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
         private void ModbusTCP_EnableUnchecked(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            if (lstModbusTCP.Items.Cast<object>()
+                .Any(checkListItem => ((CheckListItem)checkListItem).IsChecked)) return;
+            AddModbusTCP.Content = "Add";
+
+            var anychecked = false;
+
+            foreach (var item in lstModbusTCP.Items)
+            {
+                if (!((CheckListItem)item).IsChecked)
+                {
+                    continue;
+                }
+                anychecked = true;
+            }
+
+            ModbusTCPRemove.IsEnabled = anychecked;
+        }
+
+        public static void HandleIsStartedChanged(object sender, OpcDataChangeEventArgs e) //General Data Change update
+        {
+            var nodeId = (OpcNodeId)sender;
+
+            //var node = GetNode(nodeId);
+
+            //node.NodeValue = e.Item.Value.Value.ToString();
+        }
+
+        private void ModbusTCPRemove_OnClick(object sender, RoutedEventArgs e)
+        {
+            foreach (CheckListItem item in lstModbusTCP.Items)
+            {
+                if (item.IsChecked)
+                {
+                    ModbusClients[ModbusTcp.IndexOf(item)].Disconnect();
+                    ModbusTcp.Remove(item);
+                }
+            }
+        }
+
+        private void BtnOpcUaRemove_OnClick(object sender, RoutedEventArgs e)
+        {
+            foreach (CheckListItem item in LstOpcUa.Items)
+            {
+                if (item.IsChecked)
+                {
+                    OpcUaServers[OpcUaList.IndexOf(item)].Client.Disconnect();
+                    OpcUaList.Remove(item);
+                }
+            }
+        }
+
+        private void BtnOpcUaAddEdit_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            OPCControl addOpc;
+            if (button != null && button.Content.ToString().ToLower() == "add")
+            {
+                addOpc = new OPCControl
+                {
+                    IsEdit = false
+                };
+            }
+            else if (button != null)
+            {
+                addOpc = new OPCControl
+                {
+                    IsEdit = true
+                };
+                foreach (CheckListItem item in LstOpcUa.Items)
+                {
+                    if (!item.IsChecked) continue;
+                    addOpc.UidGuid = Guid.Parse(item.UidGuid);
+                    break;
+                }
+            }
+            else return;
+
+            var success = addOpc.ShowDialog();
+
+            if (success.HasValue && success.Value) //true
+            {
+                if (button.Content.ToString().ToLower() == "add")
+                {
+                    var configureRabbit = UserConfigureFactory(addOpc.UidGuid);
+
+                    if (configureRabbit.HasValue && !configureRabbit.Value) //False
+                    {
+                        var listBoxItem = new ListBoxItem()
+                        {
+                            Content = "Unable to configure RabbitMQ server"
+                        };
+                        lstErrors.Items.Add(listBoxItem);
+                    }
+                }
+
+                var opcList = new CheckListItem
+                {
+                    UidGuid = addOpc.UidGuid.ToString(),
+                    Content = OpcUaServers[OpcUaServers.Length - 1].ServerUri.ToString(),
+                    IsChecked = false,
+                    ItemName = OpcUaServers[OpcUaServers.Length - 1].Client.SessionName
+                };
+                OpcUaList.Add(opcList);
+            }
+            else
+            {
+                var listBoxItem = new ListBoxItem { Content = $"Unable to {button.Content} OPC UA server" };
+                lstErrors.Items.Add(listBoxItem);
+            }
+        }
+
+        private void BtnClearErrors_Click(object sender, RoutedEventArgs e)
+        {
+            ErrorList.Clear();
+            lstErrors.Items.Clear();
+        }
+
+        private void OpcUACheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            var singleCheck = LstOpcUa.Items.Cast<CheckListItem>().Count(item => item.IsChecked);
+
+            if (singleCheck > 1)
+            {
+                BtnOpcUaAddEdit.Content = "Add";
+                BtnOpcUaRemove.IsEnabled = true;
+            }
+            else
+            {
+                BtnOpcUaAddEdit.Content = "Edit";
+                BtnOpcUaRemove.IsEnabled = true;
+            }
+        }
+
+        private void OpcUaCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            var anychecked = LstOpcUa.Items.Cast<object>().Any(item => ((CheckListItem)item).IsChecked);
+            BtnOpcUaRemove.IsEnabled = anychecked;
+
+            if (!anychecked) //None Checked
+            {
+                BtnOpcUaAddEdit.Content = "Add";
+            }
         }
     }
 }

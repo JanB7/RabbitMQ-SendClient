@@ -143,6 +143,9 @@
     <Reference Include="EasyModbus">
       <HintPath>..\..\..\Sample Code\EasyModbus V2.8\EasyModbusLibrary for .NET (DLL)\EasyModbus.dll</HintPath>
     </Reference>
+    <Reference Include="EnvDTE, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>C:\WINDOWS\assembly\GAC\EnvDTE\8.0.0.0__b03f5f7f11d50a3a\EnvDTE.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.VisualStudio.Modeling.Sdk.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.Modeling.Sdk.Diagrams.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.Modeling.Sdk.Integration.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
@@ -326,9 +329,9 @@
     <Content Include="Icons\broken-link.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Icons\link.png">
+    <Resource Include="Icons\link.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    </Resource>
     <Resource Include="Icons\organization-1.png" />
     <Resource Include="Icons\organization-2.png" />
     <Resource Include="Icons\organization-3.png" />

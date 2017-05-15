@@ -6,6 +6,7 @@ using static RabbitMQ_SendClient.SystemVariables;
 // ReSharper disable once CheckNamespace
 namespace RabbitMQ_SendClient.General_Classes
 {
+    using EasyModbus;
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
@@ -13,7 +14,6 @@ namespace RabbitMQ_SendClient.General_Classes
     using System.Linq;
     using System.Windows.Controls.DataVisualization.Charting;
     using System.Windows.Threading;
-    using EasyModbus;
     using UI;
 
     public static class ModbusConfig
@@ -44,7 +44,7 @@ namespace RabbitMQ_SendClient.General_Classes
             var port = new SerialPort
             {
                 PortName = SerialCommunications[index].ComPort,
-                BaudRate = (int) SerialCommunications[index].BaudRate,
+                BaudRate = (int)SerialCommunications[index].BaudRate,
                 Parity = SerialCommunications[index].SerialParity,
                 StopBits = SerialCommunications[index].SerialStopBits,
                 DataBits = SerialCommunications[index].SerialBits,
@@ -136,7 +136,8 @@ namespace RabbitMQ_SendClient.General_Classes
                 UidGuid = uidGuid,
                 MaximumErrors = 10
             };
-            SerialCommunications[SerialCommunications.Length - 1].SetupX(SerialCommunications[SerialCommunications.Length -1].MaximumErrors);
+            SerialCommunications[SerialCommunications.Length - 1]
+                .SetupX(SerialCommunications[SerialCommunications.Length - 1].MaximumErrors);
         }
 
         public static void InitializeModbusClient(ModbusClient client)
@@ -161,7 +162,6 @@ namespace RabbitMQ_SendClient.General_Classes
             ModbusClients[ModbusClients.Length - 1] = new ModbusClient(port.PortName)
             {
                 Baudrate = port.BaudRate,
-                
 
                 Parity = port.Parity,
                 StopBits = port.StopBits,
@@ -232,9 +232,9 @@ namespace RabbitMQ_SendClient.General_Classes
             }
             var setupSerialForm = new SerialPortSetup(uidGuid)
             {
-                cboMessageType = {SelectedIndex = 1},
-                cboBaudRate = {SelectedIndex = 8},
-                cboStopBits = {SelectedIndex = 1}
+                cboMessageType = { SelectedIndex = 1 },
+                cboBaudRate = { SelectedIndex = 8 },
+                cboStopBits = { SelectedIndex = 1 }
             };
 
             return setupSerialForm.ShowDialog(); //Confirm Settings
