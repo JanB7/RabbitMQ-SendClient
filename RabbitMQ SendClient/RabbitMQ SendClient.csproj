@@ -11,7 +11,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RabbitMQ_SendClient</RootNamespace>
     <AssemblyName>RabbitMQ SendClient</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
@@ -33,6 +33,7 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -146,36 +147,40 @@
     <Reference Include="EnvDTE, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <HintPath>C:\WINDOWS\assembly\GAC\EnvDTE\8.0.0.0__b03f5f7f11d50a3a\EnvDTE.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.Modeling.Sdk.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.VisualStudio.Modeling.Sdk.Diagrams.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.Diagnostics.Tracing.EventSource, Version=1.1.28.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Diagnostics.Tracing.EventSource.Redist.1.1.28\lib\net40\Microsoft.Diagnostics.Tracing.EventSource.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Modeling.Sdk.15.0, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.Modeling.Sdk.Diagrams.15.0, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.Modeling.Sdk.Integration.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="microsoft.visualstudio.modeling.sdk.integration.shell.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="Microsoft.VisualStudio.Modeling.Sdk.Shell.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.OLE.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-    <Reference Include="Microsoft.VisualStudio.Shell.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.Shell.Immutable.10.0, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.Shell.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.VisualStudio.Shell.Interop.8.0, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.VisualStudio.VSHelp, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="Opc.UaFx.Advanced, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0220af0d33d50236, processorArchitecture=MSIL">
-      <HintPath>..\packages\Opc.UaFx.Advanced.1.5.11.5\lib\net45\Opc.UaFx.Advanced.dll</HintPath>
-    </Reference>
-    <Reference Include="RabbitMQ.Client, Version=4.0.0.0, Culture=neutral, PublicKeyToken=89e7d7c5feba84ce, processorArchitecture=MSIL">
-      <HintPath>..\packages\RabbitMQ.Client.4.1.1\lib\net451\RabbitMQ.Client.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="RabbitMQ.Client, Version=5.0.0.0, Culture=neutral, PublicKeyToken=89e7d7c5feba84ce, processorArchitecture=MSIL">
+      <HintPath>..\packages\RabbitMQ.Client.5.0.1-rc1\lib\net451\RabbitMQ.Client.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.IdentityModel" />
-    <Reference Include="System.Windows.Controls.DataVisualization.Toolkit, Version=3.5.40128.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="System.Windows.Controls.DataVisualization.Toolkit, Version=3.5.40128.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\WPFToolkit.DataVisualization.3.5.50211.1\lib\System.Windows.Controls.DataVisualization.Toolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Controls.Input.Toolkit, Version=3.5.40128.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\WPFToolkit.3.5.50211.1\lib\System.Windows.Controls.Input.Toolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Controls.Layout.Toolkit, Version=3.5.40128.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\WPFToolkit.3.5.50211.1\lib\System.Windows.Controls.Layout.Toolkit.dll</HintPath>
+    </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -184,13 +189,28 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="UIAutomationClient" />
     <Reference Include="UIAutomationProvider" />
     <Reference Include="UIAutomationTypes" />
+    <Reference Include="UnifiedAutomation.UaBase, Version=2.0.0.0, Culture=neutral, PublicKeyToken=90c158e6f23d82c1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files (x86)\UnifiedAutomation\UaSdkNetBundleEval\assemblies\NET_4.6\UnifiedAutomation.UaBase.dll</HintPath>
+    </Reference>
+    <Reference Include="UnifiedAutomation.UaClient, Version=2.0.0.0, Culture=neutral, PublicKeyToken=90c158e6f23d82c1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files (x86)\UnifiedAutomation\UaSdkNetBundleEval\assemblies\NET_4.6\UnifiedAutomation.UaClient.dll</HintPath>
+    </Reference>
+    <Reference Include="UnifiedAutomation.UaServer, Version=2.0.0.0, Culture=neutral, PublicKeyToken=90c158e6f23d82c1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Licence\UnifiedAutomation.UaServer.dll</HintPath>
+    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="WindowsFormsIntegration" />
-    <Reference Include="WPFToolkit, Version=3.5.40128.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="WPFToolkit, Version=3.5.40128.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\WPFToolkit.3.5.50211.1\lib\WPFToolkit.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="Config Files\App.xaml">
@@ -204,26 +224,67 @@
     <Compile Include="General Classes\GlocalTCPFunctions.cs" />
     <Compile Include="General Classes\HeaderToImageConverter.cs" />
     <Compile Include="General Classes\ModbusConfig.cs" />
-    <Compile Include="UI\ModbusIPConfig.xaml.cs">
+    <Compile Include="UI\WinForms\AttributeListControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\WinForms\AttributeListControl.designer.cs">
+      <DependentUpon>AttributeListControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\WinForms\BrowseControls.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\WinForms\BrowseControls.designer.cs">
+      <DependentUpon>BrowseControls.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\WinForms\EndpointWrapper.cs" />
+    <Compile Include="UI\WinForms\Forms\TrustCertificateDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\WinForms\Forms\TrustCertificateDialog.designer.cs">
+      <DependentUpon>TrustCertificateDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\WinForms\MainForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\WinForms\MainForm.designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\WinForms\MonitoredItemsControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\WinForms\MonitoredItemsControl.designer.cs">
+      <DependentUpon>MonitoredItemsControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\WinForms\Program.cs" />
+    <Compile Include="UI\WinForms\PublishingIntervalDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\WinForms\PublishingIntervalDialog.designer.cs">
+      <DependentUpon>PublishingIntervalDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\WinForms\WriteValuesDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\WinForms\WriteValuesDialog.designer.cs">
+      <DependentUpon>WriteValuesDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\WPF\ModbusIPConfig.xaml.cs">
       <DependentUpon>ModbusIPConfig.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UI\ModbusSelection.xaml.cs">
+    <Compile Include="UI\WPF\ModbusSelection.xaml.cs">
       <DependentUpon>ModbusSelection.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UI\OPCControl.xaml.cs">
-      <DependentUpon>OPCControl.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="UI\SerialPortSetup.xaml.cs">
+    <Compile Include="UI\WPF\SerialPortSetup.xaml.cs">
       <DependentUpon>SerialPortSetup.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UI\SetupServer.xaml.cs">
+    <Compile Include="UI\WPF\SetupServer.xaml.cs">
       <DependentUpon>SetupServer.xaml</DependentUpon>
     </Compile>
     <Compile Include="General Classes\SystemVariables.cs" />
-    <Compile Include="UI\VariableConfigure.xaml.cs">
+    <Compile Include="UI\WPF\VariableConfigure.xaml.cs">
       <DependentUpon>VariableConfigure.xaml</DependentUpon>
     </Compile>
-    <Page Include="UI\MainWindow.xaml">
+    <Page Include="UI\WPF\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -231,31 +292,27 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="UI\MainWindow.xaml.cs">
+    <Compile Include="UI\WPF\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="UI\ModbusIPConfig.xaml">
+    <Page Include="UI\WPF\ModbusIPConfig.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\ModbusSelection.xaml">
+    <Page Include="UI\WPF\ModbusSelection.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\OPCControl.xaml">
+    <Page Include="UI\WPF\SerialPortSetup.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\SerialPortSetup.xaml">
+    <Page Include="UI\WPF\SetupServer.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\SetupServer.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="UI\VariableConfigure.xaml">
+    <Page Include="UI\WPF\VariableConfigure.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -278,9 +335,32 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <None Include="Config Files\packages.config" />
-    <None Include="Opc.UaFx.Advanced\Opc.UaFx.Advanced.chm" />
+    <EmbeddedResource Include="UI\WinForms\AttributeListControl.resx">
+      <DependentUpon>AttributeListControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\WinForms\BrowseControls.resx">
+      <DependentUpon>BrowseControls.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\WinForms\Forms\TrustCertificateDialog.resx">
+      <DependentUpon>TrustCertificateDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\WinForms\MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\WinForms\MonitoredItemsControl.resx">
+      <DependentUpon>MonitoredItemsControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\WinForms\PublishingIntervalDialog.resx">
+      <DependentUpon>PublishingIntervalDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\WinForms\WriteValuesDialog.resx">
+      <DependentUpon>WriteValuesDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="app.config" />
+    <None Include="Licence\License.lic" />
     <None Include="packages.config" />
+    <None Include="Resources\Resources.resx" />
+    <None Include="Config Files\packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -325,6 +405,25 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <DependentUpon>MessageData.mdf</DependentUpon>
     </Content>
+    <Content Include="Licence\UnifiedAutomation.UaBase.dll" />
+    <Content Include="Licence\UnifiedAutomation.UaClient.dll" />
+    <Content Include="Licence\UnifiedAutomation.UaServer.dll" />
+    <None Include="Resources\warning.png" />
+    <None Include="Resources\view.png" />
+    <None Include="Resources\variabletype.png" />
+    <None Include="Resources\variable.png" />
+    <None Include="Resources\type.png" />
+    <None Include="Resources\treefolder.png" />
+    <None Include="Resources\success.png" />
+    <None Include="Resources\reftype.png" />
+    <None Include="Resources\property.png" />
+    <None Include="Resources\objecttype.png" />
+    <None Include="Resources\object.png" />
+    <None Include="Resources\method.png" />
+    <None Include="Resources\error.png" />
+    <None Include="Resources\datatype.png" />
+    <None Include="Resources\browse_online.png" />
+    <None Include="Resources\browse.png" />
     <None Include="Resources\Connect.png" />
     <Content Include="Icons\broken-link.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -342,12 +441,10 @@
     <Resource Include="Icons\organization-8.png" />
     <Resource Include="Icons\organization-9.png" />
     <Resource Include="Icons\organization.png" />
-    <Content Include="Opc.UaFx.Advanced\Opc.UaFx.Advanced.dll" />
-    <Content Include="Opc.UaFx.Advanced\OpcWatch.exe" />
-    <Resource Include="Opc.UaFx.Advanced\Version.txt" />
     <None Include="Resources\ModbusAddresses.txt" />
     <None Include="Resources\DefaultModbusSettingsFile.txt" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

@@ -1,0 +1,182 @@
+﻿<Window x:Class="RabbitMQ_SendClient.UI.ModbusSelection"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Unisphere" ResizeMode="CanMinimize" Width="933" Height="446" Margin="0,0,10,10"
+        WindowStartupLocation="CenterOwner"
+        ContentRendered="ModbusSelection_OnContentRendered">
+    <Grid>
+        <Grid Margin="10,63,10,0" Height="312" VerticalAlignment="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0" HorizontalAlignment="Stretch">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Button x:Name="Btn1_100" Content="1-100" Grid.Row="0" Grid.Column="0"
+                        Click="ChangeSelectionIndex_ButtonClick" />
+                <Button x:Name="Btn101_1000" Content="101-1000" Grid.Row="1" Grid.Column="0"
+                        Click="ChangeSelectionIndex_ButtonClick" />
+                <Button x:Name="Btn1001_2000" Content="1001-2000" Grid.Row="2" Grid.Column="0"
+                        Click="ChangeSelectionIndex_ButtonClick" />
+                <Button x:Name="Btn2001_3000" Content="2001-3000" Grid.Row="3" Grid.Column="0"
+                        Click="ChangeSelectionIndex_ButtonClick" />
+                <Button x:Name="Btn3001_4000" Content="3001-4000" Grid.Row="4" Grid.Column="0"
+                        Click="ChangeSelectionIndex_ButtonClick" />
+                <Button x:Name="Btn4001_5000" Content="4001-5000" Grid.Row="5" Grid.Column="0"
+                        Click="ChangeSelectionIndex_ButtonClick" />
+                <Button x:Name="Btn5001_6000" Content="5001-6000" Grid.Row="6" Grid.Column="0"
+                        Click="ChangeSelectionIndex_ButtonClick" />
+                <Button x:Name="Btn6001_7000" Content="6001-7000" Grid.Row="7" Grid.Column="0"
+                        Click="ChangeSelectionIndex_ButtonClick" />
+                <Button x:Name="Btn7001_8000" Content="7001-8000" Grid.Row="8" Grid.Column="0"
+                        Click="ChangeSelectionIndex_ButtonClick" />
+                <Button x:Name="Btn8001_9000" Content="8001-9000" Grid.Row="9" Grid.Column="0"
+                        Click="ChangeSelectionIndex_ButtonClick" />
+                <Button x:Name="Btn9001_9999" Content="9001-9999" Grid.Row="10" Grid.Column="0"
+                        Click="ChangeSelectionIndex_ButtonClick" />
+            </Grid>
+            <Grid Grid.Column="1" HorizontalAlignment="Stretch">
+                <DataGrid x:Name="ModbusAddresses" HorizontalAlignment="Stretch" CanUserResizeColumns="False"
+                          CanUserSortColumns="True" CanUserDeleteRows="False" AutoGenerateColumns="False"
+                          CanUserAddRows="False" SelectionMode="Single" HorizontalScrollBarVisibility="Hidden">
+                    <DataGrid.Columns>
+                        <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsChecked}">
+                            <DataGridCheckBoxColumn.CellStyle>
+                                <Style>
+                                    <EventSetter Event="CheckBox.Checked" Handler="Checkbox_Checked" />
+                                    <EventSetter Event="CheckBox.Unchecked" Handler="Checkbox_Checked" />
+                                </Style>
+                            </DataGridCheckBoxColumn.CellStyle>
+                        </DataGridCheckBoxColumn>
+                        <DataGridCheckBoxColumn Header="Read Coils&#x0d;(10000)" Binding="{Binding ReadCoil}">
+                            <DataGridCheckBoxColumn.CellStyle>
+                                <Style>
+                                    <EventSetter Event="CheckBox.Checked" Handler="Function1Checkbox_Checked" />
+                                    <EventSetter Event="CheckBox.Unchecked" Handler="Function1Checkbox_Checked" />
+                                </Style>
+                            </DataGridCheckBoxColumn.CellStyle>
+                        </DataGridCheckBoxColumn>
+                        <DataGridCheckBoxColumn Header="Read Discrete&#x0d;Input (20000)"
+                                                Binding="{Binding ReadDiscrete}">
+                            <DataGridCheckBoxColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="HorizontalAlignment" Value="Center" />
+                                    <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                </Style>
+                            </DataGridCheckBoxColumn.HeaderStyle>
+                            <DataGridCheckBoxColumn.CellStyle>
+                                <Style>
+                                    <EventSetter Event="CheckBox.Checked" Handler="Function2Checkbox_Checked" />
+                                    <EventSetter Event="CheckBox.Unchecked" Handler="Function2Checkbox_Checked" />
+                                </Style>
+                            </DataGridCheckBoxColumn.CellStyle>
+                        </DataGridCheckBoxColumn>
+                        <DataGridCheckBoxColumn Header="Read Holding&#x0d;Registers (30000)"
+                                                Binding="{Binding ReadHoldingRegisters}">
+                            <DataGridCheckBoxColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="HorizontalAlignment" Value="Center" />
+                                    <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                </Style>
+                            </DataGridCheckBoxColumn.HeaderStyle>
+                            <DataGridCheckBoxColumn.CellStyle>
+                                <Style>
+                                    <EventSetter Event="CheckBox.Checked" Handler="Function3Checkbox_Checked" />
+                                    <EventSetter Event="CheckBox.Unchecked" Handler="Function3Checkbox_Checked" />
+                                </Style>
+                            </DataGridCheckBoxColumn.CellStyle>
+                        </DataGridCheckBoxColumn>
+                        <DataGridCheckBoxColumn Header="Read Input&#x0d;Registers (40000)"
+                                                Binding="{Binding ReadInputRegisters}">
+                            <DataGridCheckBoxColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="HorizontalAlignment" Value="Center" />
+                                    <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                </Style>
+                            </DataGridCheckBoxColumn.HeaderStyle>
+                            <DataGridCheckBoxColumn.CellStyle>
+                                <Style>
+                                    <EventSetter Event="CheckBox.Checked" Handler="Function4Checkbox_Checked" />
+                                    <EventSetter Event="CheckBox.Unchecked" Handler="Function4Checkbox_Checked" />
+                                </Style>
+                            </DataGridCheckBoxColumn.CellStyle>
+                        </DataGridCheckBoxColumn>
+                        <DataGridTextColumn IsReadOnly="True" MinWidth="100" Header="Modbus Address"
+                                            Binding="{Binding ModBusAddress}" />
+                        <DataGridTextColumn Header="Nickname" MinWidth="168" Binding="{Binding Nickname, Mode=TwoWay}">
+                            <DataGridTextColumn.CellStyle>
+                                <Style>
+                                    <EventSetter Event="TextBox.SelectionChanged" Handler="Nickname_SelectionChanged" />
+                                </Style>
+                            </DataGridTextColumn.CellStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Comments" MinWidth="169" Binding="{Binding Comments, Mode=TwoWay}">
+                            <DataGridTextColumn.CellStyle>
+                                <Style>
+                                    <EventSetter Event="TextBox.SelectionChanged" Handler="Comment_SelectionChanged" />
+                                </Style>
+                            </DataGridTextColumn.CellStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Grid>
+        <GroupBox Header="Addressing Type" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel.Resources>
+                    <Style TargetType="{x:Type RadioButton}">
+                        <Setter Property="Margin" Value="10,5,0,0" />
+                    </Style>
+                </StackPanel.Resources>
+                <RadioButton x:Name="RbtnAbsolute" Content="Absolute Addressing" HorizontalAlignment="Left"
+                             VerticalAlignment="Center" Height="20" GroupName="Addressing"
+                             Checked="RbtnAbsolute_Checked" IsChecked="True" />
+                <RadioButton x:Name="RbtnOffset" Content="Offset Addressing" HorizontalAlignment="Left"
+                             VerticalAlignment="Center" Height="20" GroupName="Addressing"
+                             Checked="RbtnOffset_OnChecked" />
+            </StackPanel>
+        </GroupBox>
+        <Button x:Name="BtnCancel" Content="Cancel" HorizontalAlignment="Left" Margin="460,380,0,0"
+                VerticalAlignment="Top" Width="75" IsCancel="True" Click="BtnCancel_Click" />
+        <Button x:Name="BtnOK" Content="OK" HorizontalAlignment="Left" Margin="380,380,0,0" VerticalAlignment="Top"
+                Width="75" IsDefault="True" Click="BtnOK_Click" />
+        <TextBlock HorizontalAlignment="Left" Margin="310,30,0,0" TextWrapping="Wrap" Text="Search:"
+                   VerticalAlignment="Top" />
+        <TextBox x:Name="TxtSearchAddress" HorizontalAlignment="Left" Height="24" Margin="353,26,0,0"
+                 TextWrapping="Wrap" VerticalAlignment="Top" Width="120" TextChanged="TxtSearchAddress_TextChanged" />
+        <TextBlock HorizontalAlignment="Left" Margin="486,30,0,0" TextWrapping="Wrap" Text="Search Field:"
+                   VerticalAlignment="Top" />
+        <ComboBox x:Name="CboSearchField" HorizontalAlignment="Left" Margin="565,27,0,0" VerticalAlignment="Top"
+                  Width="120">
+            <ComboBoxItem Content="Modbus Address" IsSelected="True" />
+            <ComboBoxItem Content="Nickname" />
+            <ComboBoxItem Content="Comments" />
+        </ComboBox>
+        <ComboBox x:Name="cboAddressFormat" HorizontalAlignment="Left" Margin="705,27,0,0" VerticalAlignment="Top"
+                  Width="145" SelectionChanged="cboAddressFormat_SelectionChanged">
+            <ComboBoxItem Content="Hex Addressing" IsSelected="True" />
+            <ComboBoxItem Content="Modbus 984 Addressing" />
+        </ComboBox>
+        <Button x:Name="BtnLoadCustom" Content="Load Custom Address List" HorizontalAlignment="Left"
+                Margin="10,380,0,0" VerticalAlignment="Top" Width="Auto
+                " Click="BtnLoadCustom_Click" />
+    </Grid>
+</Window>
